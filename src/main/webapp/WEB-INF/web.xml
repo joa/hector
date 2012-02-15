@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE web-app
+    PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+    "http://java.sun.com/dtd/web-app_2_3.dtd">
+<web-app>
+  <display-name>Hector Testing</display-name>
+
+  <filter>
+    <filter-name>HectorFilter</filter-name>
+    <display-name>Hector Filter</display-name>
+    <description>Filter to route requests into Hector.</description>
+    <filter-class>hector.HectorFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>HectorFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+</web-app>

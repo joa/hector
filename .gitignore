@@ -1,4 +1,6 @@
 target/
+.idea/dictionaries
+.idea/highlighting.xml
 .idea/.name
 .idea/IdeaProject.iml
 .idea/compiler.xml
