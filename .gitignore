@@ -1,2 +1,16 @@
 target/
-project/
+.idea/.name
+.idea/IdeaProject.iml
+.idea/compiler.xml
+.idea/copyright/
+.idea/encodings.xml
+.idea/libraries/
+.idea/misc.xml
+.idea/modules.xml
+.idea/projectCodeStyle.xml
+.idea/scopes/
+.idea/vcs.xml
+.idea/workspace.xml
+.idea_modules/
+hector.iml
+

@@ -6,4 +6,6 @@ scalaVersion := "2.9.1"
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
-libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0-RC1"            
+libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0-RC1"
+
+libraryDependencies += "javax.servlet" % "servlet-api" % "2.5" % "provided->default"

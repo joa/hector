@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectCodeStyleSettingsManager">
+    <option name="PER_PROJECT_SETTINGS">
+      <value>
+        <option name="OTHER_INDENT_OPTIONS">
+          <value>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+            <option name="USE_TAB_CHARACTER" value="false" />
+            <option name="SMART_TABS" value="false" />
+            <option name="LABEL_INDENT_SIZE" value="0" />
+            <option name="LABEL_INDENT_ABSOLUTE" value="false" />
+            <option name="USE_RELATIVE_INDENTS" value="false" />
+          </value>
+        </option>
+        <option name="LINE_SEPARATOR" value="&#10;" />
+        <option name="GENERATE_FINAL_LOCALS" value="true" />
+        <option name="GENERATE_FINAL_PARAMETERS" value="true" />
+        <option name="USE_EXTERNAL_ANNOTATIONS" value="true" />
+        <option name="STATIC_FIELDS_ORDER_WEIGHT" value="2" />
+        <option name="FIELDS_ORDER_WEIGHT" value="3" />
+        <option name="CONSTRUCTORS_ORDER_WEIGHT" value="4" />
+        <option name="STATIC_METHODS_ORDER_WEIGHT" value="5" />
+        <option name="METHODS_ORDER_WEIGHT" value="6" />
+        <option name="STATIC_INNER_CLASSES_ORDER_WEIGHT" value="7" />
+        <option name="INNER_CLASSES_ORDER_WEIGHT" value="1" />
+        <option name="RIGHT_MARGIN" value="100" />
+        <option name="HTML_DO_NOT_INDENT_CHILDREN_OF" value="" />
+        <option name="BLANK_LINES_AROUND_FIELD" value="1" />
+        <option name="BLANK_LINES_BEFORE_METHOD_BODY" value="1" />
+        <option name="BLANK_LINES_AROUND_FIELD_IN_INTERFACE" value="1" />
+        <option name="ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION" value="true" />
+        <option name="SPACE_AFTER_TYPE_CAST" value="false" />
+        <option name="SPACE_BEFORE_IF_PARENTHESES" value="false" />
+        <option name="SPACE_BEFORE_WHILE_PARENTHESES" value="false" />
+        <option name="SPACE_BEFORE_FOR_PARENTHESES" value="false" />
+        <option name="SPACE_BEFORE_CATCH_PARENTHESES" value="false" />
+        <option name="SPACE_BEFORE_SWITCH_PARENTHESES" value="false" />
+        <option name="SPACE_BEFORE_SYNCHRONIZED_PARENTHESES" value="false" />
+        <option name="IF_BRACE_FORCE" value="3" />
+        <option name="DOWHILE_BRACE_FORCE" value="3" />
+        <option name="WHILE_BRACE_FORCE" value="3" />
+        <option name="FOR_BRACE_FORCE" value="3" />
+        <ECMA4CodeStyleSettings>
+          <option name="INDENT_PACKAGE_CHILDREN" value="1" />
+          <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
+          <option name="SPACES_NEAR_TYPE" value="2" />
+        </ECMA4CodeStyleSettings>
+        <JSCodeStyleSettings>
+          <option name="INDENT_PACKAGE_CHILDREN" value="1" />
+          <option name="USE_SEMICOLON_AFTER_STATEMENT" value="false" />
+          <option name="SPACES_NEAR_TYPE" value="2" />
+        </JSCodeStyleSettings>
+        <ScalaCodeStyleSettings>
+          <option name="ADD_FULL_QUALIFIED_IMPORTS" value="true" />
+        </ScalaCodeStyleSettings>
+        <XML>
+          <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
+        </XML>
+        <ADDITIONAL_INDENT_OPTIONS fileType="groovy">
+          <option name="INDENT_SIZE" value="2" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="gsp">
+          <option name="INDENT_SIZE" value="2" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="haml">
+          <option name="INDENT_SIZE" value="2" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="sass">
+          <option name="INDENT_SIZE" value="2" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <ADDITIONAL_INDENT_OPTIONS fileType="yml">
+          <option name="INDENT_SIZE" value="2" />
+        </ADDITIONAL_INDENT_OPTIONS>
+        <codeStyleSettings language="CSS">
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+        </codeStyleSettings>
+        <codeStyleSettings language="ECMA Script Level 4">
+          <option name="BLANK_LINES_AFTER_PACKAGE" value="1" />
+          <option name="ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION" value="true" />
+          <option name="SPACE_BEFORE_IF_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_WHILE_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_FOR_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_CATCH_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_SWITCH_PARENTHESES" value="false" />
+          <option name="IF_BRACE_FORCE" value="3" />
+          <option name="DOWHILE_BRACE_FORCE" value="3" />
+          <option name="WHILE_BRACE_FORCE" value="3" />
+          <option name="FOR_BRACE_FORCE" value="3" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+          <indentOptions>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+            <option name="USE_TAB_CHARACTER" value="true" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="JAVA">
+          <option name="BLANK_LINES_AROUND_FIELD" value="1" />
+          <option name="BLANK_LINES_BEFORE_METHOD_BODY" value="1" />
+          <option name="BLANK_LINES_AROUND_FIELD_IN_INTERFACE" value="1" />
+          <option name="ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION" value="true" />
+          <option name="SPACE_AFTER_TYPE_CAST" value="false" />
+          <option name="SPACE_BEFORE_IF_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_WHILE_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_FOR_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_CATCH_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_SWITCH_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_SYNCHRONIZED_PARENTHESES" value="false" />
+          <option name="IF_BRACE_FORCE" value="3" />
+          <option name="DOWHILE_BRACE_FORCE" value="3" />
+          <option name="WHILE_BRACE_FORCE" value="3" />
+          <option name="FOR_BRACE_FORCE" value="3" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+          <indentOptions>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="JavaScript">
+          <option name="ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION" value="true" />
+          <option name="SPACE_BEFORE_IF_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_WHILE_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_FOR_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_CATCH_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_SWITCH_PARENTHESES" value="false" />
+          <option name="IF_BRACE_FORCE" value="3" />
+          <option name="DOWHILE_BRACE_FORCE" value="3" />
+          <option name="WHILE_BRACE_FORCE" value="3" />
+          <option name="FOR_BRACE_FORCE" value="3" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+          <indentOptions>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="2" />
+            <option name="TAB_SIZE" value="2" />
+            <option name="USE_TAB_CHARACTER" value="true" />
+          </indentOptions>
+        </codeStyleSettings>
+        <codeStyleSettings language="SQL">
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+        </codeStyleSettings>
+        <codeStyleSettings language="Scala">
+          <option name="BLANK_LINES_AROUND_FIELD" value="1" />
+          <option name="BLANK_LINES_BEFORE_METHOD_BODY" value="1" />
+          <option name="BLANK_LINES_AROUND_FIELD_IN_INTERFACE" value="1" />
+          <option name="SPACE_BEFORE_IF_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_WHILE_PARENTHESES" value="false" />
+          <option name="SPACE_BEFORE_FOR_PARENTHESES" value="false" />
+          <option name="IF_BRACE_FORCE" value="3" />
+          <option name="DOWHILE_BRACE_FORCE" value="3" />
+          <option name="WHILE_BRACE_FORCE" value="3" />
+          <option name="FOR_BRACE_FORCE" value="3" />
+          <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+        </codeStyleSettings>
+        <codeStyleSettings language="XML">
+          <indentOptions>
+            <option name="INDENT_SIZE" value="2" />
+            <option name="CONTINUATION_INDENT_SIZE" value="4" />
+            <option name="TAB_SIZE" value="2" />
+          </indentOptions>
+        </codeStyleSettings>
+      </value>
+    </option>
+    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
+  </component>
+</project>
+
