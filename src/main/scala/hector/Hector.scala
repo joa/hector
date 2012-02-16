@@ -1,12 +1,13 @@
 package hector
 
-import akka.actor.{Actor, ActorSystem}
 import akka.pattern.ask
 import akka.util.duration._
 
 import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import akka.util.Timeout
+import akka.routing.{DefaultResizer, RoundRobinRouter}
+import akka.actor.{Props, Actor, ActorSystem}
 
 
 /**
@@ -14,6 +15,11 @@ import akka.util.Timeout
  */
 object Hector {
   val system = ActorSystem("hector")
+  val root =
+    system.actorOf(
+      Props[Hector].
+        withRouter(
+          RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))))
 
   sealed trait HectorMessage
   case class HandleAsync(asyncContext: AsyncContext) extends HectorMessage
@@ -31,9 +37,6 @@ final class Hector extends Actor {
   private[this] implicit val timeout = Timeout(10.seconds)
 
   override protected def receive = {
-    case "ping?" =>
-      println("Got ping!")
-      sender ! "pong!"
     case HandleAsync(asyncContext) =>
       println("Handle Async")
 
@@ -47,7 +50,7 @@ final class Hector extends Actor {
 
       request onComplete {
         case _ =>
-          println("Completed async request in "+(System.currentTimeMillis() - t0)+"ms")
+          println("Completed async request in "+(System.currentTimeMillis() - t0)+"ms.")
           asyncContext.complete()
       }
 
@@ -55,6 +58,10 @@ final class Hector extends Actor {
       println("Handle Request")
 
       httpResponse.getOutputStream.println("Hello World!")
+
+      // Something very expensive that happens here ...
+      Thread.sleep(32L)
+
       httpResponse.getOutputStream.flush()
 
       sender ! true

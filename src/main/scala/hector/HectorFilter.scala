@@ -19,9 +19,11 @@ final class HectorFilter extends Filter {
         response match {
           case httpResponse: HttpServletResponse =>
             doFilter(httpRequest, httpResponse, chain)
-          case _ => chain.doFilter(request, response)
+          case _ =>
+            chain.doFilter(request, response)
         }
-      case _ => chain.doFilter(request, response)
+      case _ =>
+        chain.doFilter(request, response)
     }
   }
 
@@ -48,7 +50,7 @@ final class HectorFilter extends Filter {
     println("Do work Async")
 
     val hector =
-      Hector.system.actorOf(Props[Hector])
+      Hector.root
 
     hector ! Hector.HandleAsync(asyncContext)
   }
@@ -65,8 +67,14 @@ final class HectorFilter extends Filter {
     implicit val timeout = Timeout(10 seconds)
 
     val hector =
-      Hector.system.actorOf(Props[Hector])
+      Hector.root
 
-    Await.result(hector ? Hector.HandleRequest(httpRequest, httpResponse), 10 seconds)
+    val t0 = System.currentTimeMillis()
+
+    try {
+      Await.result(hector ? Hector.HandleRequest(httpRequest, httpResponse), 10 seconds)
+    } finally {
+      println("Completed sync request in "+(System.currentTimeMillis() - t0)+"ms.")
+    }
   }
 }
