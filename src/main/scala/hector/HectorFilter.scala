@@ -4,13 +4,26 @@ import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import javax.servlet.annotation.WebFilter
 import akka.actor.{ActorRef, Props}
+import hector.actor.RootActor
+import scala.xml.Node
 
 /**
  * @author Joa Ebert
  */
 final class HectorFilter extends Filter {
   def init(filterConfig: FilterConfig) {
-    Hector.system.actorOf(Props[Hector], name = "hector")
+    // Warm-up:
+    //
+
+    Hector.system
+    Hector.root
+  }
+
+  def destroy() {
+    // Shutdown
+    //
+
+    Hector.system.shutdown()
   }
 
   def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
@@ -35,24 +48,40 @@ final class HectorFilter extends Filter {
     }
   }
 
-  def destroy() {
-    Hector.system.shutdown()
-  }
-
   private[this] def filterAsync(httpRequest: HttpServletRequest, httpResponse: HttpServletResponse, chain: FilterChain) {
     // We try to enter the async state as soon as possible
     //
 
     val asyncContext = httpRequest.startAsync(httpRequest, httpResponse)
 
-    //TODO(joa): Pass to chain if we do not handle the request
+    // Add a listener to check if we handled the response.
+    // If that is not the case we pass it to the chain.
+    //
 
-    println("Do work Async")
+    asyncContext.addListener(
+      new AsyncListener {
+        def onError(event: AsyncEvent) {
+          //TODO(joa): Should not happen but generate proper 500 just in case
+        }
 
-    val hector =
-      Hector.root
+        def onTimeout(event: AsyncEvent) {
+          //TODO(joa): Could happen so generate 500
+        }
 
-    hector ! Hector.HandleAsync(asyncContext)
+        def onStartAsync(event: AsyncEvent) {}
+
+        def onComplete(event: AsyncEvent) {
+          if(!event.getSuppliedResponse.isCommitted) {
+            chain.doFilter(httpRequest, httpResponse)
+          }
+        }
+      }
+    )
+
+    // Tell Hector we have an asynchronous context
+    //
+
+    Hector.root ! RootActor.HandleAsync(asyncContext)
   }
 
   private[this] def filterSync(httpRequest: HttpServletRequest, httpResponse: HttpServletResponse, chain: FilterChain) {
@@ -60,19 +89,29 @@ final class HectorFilter extends Filter {
     import akka.util.duration._
     import akka.util.Timeout
     import akka.dispatch.Await
-
-    //TODO(joa): Pass to chain if we do not handle the request
+    import java.util.concurrent.{TimeoutException => JTimeoutException}
 
     //TODO(joa): See Hector class. Timeout needs to be configurable
-    implicit val timeout = Timeout(10 seconds)
-
-    val hector =
-      Hector.root
+    implicit val timeout = Timeout(10.seconds)
 
     val t0 = System.currentTimeMillis()
 
     try {
-      Await.result(hector ? Hector.HandleRequest(httpRequest, httpResponse), 10 seconds)
+      val future =
+        Hector.root ? RootActor.HandleRequest(httpRequest, httpResponse)
+
+      Await.result(
+        awaitable = future.mapTo[Option[Node]],
+        atMost = 10.seconds
+      ) match {
+        case Some(_) =>
+        case None => chain.doFilter(httpRequest, httpResponse)
+      }
+    } catch {
+      case timeout: JTimeoutException =>
+        //TODO(joa): timeout needs to be logged. we need to generate a 505 response
+      case _ =>
+        // We have nothing to do here. RootActor should have already performed the necessary work.
     } finally {
       println("Completed sync request in "+(System.currentTimeMillis() - t0)+"ms.")
     }
