@@ -20,5 +20,5 @@ libraryDependencies ++= Seq(
   "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
   "org.scalatest" %% "scalatest" % "1.7.1" % "test",
   "com.google.guava" % "guava" % "11.0.1",
-  "com.typesafe.akka" % "akka-actor" % "2.0-RC1"
+  "com.typesafe.akka" % "akka-actor" % "2.0"
 )
