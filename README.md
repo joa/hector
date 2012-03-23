@@ -7,15 +7,15 @@ Although Hector in its current state requires a Servlet 3.0 container it is ment
 Some of the key concepts that Hector tries to fullfil.
 
 ##  State
-The framework itself is trying to make very small use of stateful data. This data is stored with the session. This is transparent and easy to understand.
+The framework itself is trying to make very small use of stateful data. This data is stored with the session which makes its easy to understand.
 
 ## DSLs
-There is no plan in writing lots of DSLs for every single task one can imagine. The key concept is that the user only needs to understand how to use Akka, not Hector.
+There is no plan in writing DSLs for every single task. The key concept is that the user only needs to understand how to use Akka, not Hector.
 
-However as a user you are able to import implicit conversions so code like `window.alert("Hello World")` creates an actual abstract syntax tree that can be emitted as minified JavaScript.
+However as a user you are able to import implicit conversions. That way `window.alert("Hello World")` creates an actual abstract syntax tree which can be emitted as minified JavaScript.
 
 ## Libraries
-Since there are many frameworks available in the wild Hector will not come with an ORM. It is also debatable whether or not Hector itself will ever implement any templating mechanism.
+Since there are many good frameworks already available Hector will not come with an ORM. It is also debatable whether or not Hector itself will ever implement any templating mechanism.
 
 There are four core parts:
 - HTTP
