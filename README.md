@@ -18,6 +18,7 @@ However as a user you are able to import implicit conversions. That way `window.
 Since there are many good frameworks already available Hector will not come with an ORM. It is also debatable whether or not Hector itself will ever implement any templating mechanism.
 
 There are four core parts:
+
 * HTTP
 * HTML/XML
 * CSS
