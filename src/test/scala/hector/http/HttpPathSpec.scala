@@ -7,12 +7,16 @@ import hector.HectorSpec
  */
 final class HttpPathSpec extends HectorSpec {
   describe("HttpPath.fromString") {
+    it("should return No_/ for null") {
+      HttpPath.fromString(null) should be (No_/)
+    }
+
     it("should parse a URI without a trailing slash") {
       val uri = "/foo/bar"
 
       HttpPath.fromString(uri) match {
-        case 'foo /: 'bar /: No_/ =>
-        case other => fail("Did not expect "+other)
+        case "foo" /: "bar" /: No_/ ⇒
+        case other ⇒ fail("Did not expect "+other)
       }
     }
 
@@ -20,8 +24,8 @@ final class HttpPathSpec extends HectorSpec {
       val uri = "/foo/bar/"
 
       HttpPath.fromString(uri) match {
-        case 'foo /: 'bar /: Required_/ =>
-        case other => fail("Did not expect "+other)
+        case "foo" /: "bar" /: Required_/ ⇒
+        case other ⇒ fail("Did not expect "+other)
       }
     }
 
@@ -29,15 +33,15 @@ final class HttpPathSpec extends HectorSpec {
       val uri = "/"
 
       HttpPath.fromString(uri) match {
-        case Required_/ =>
-        case other => fail("Did not expect "+other)
+        case Required_/ ⇒
+        case other ⇒ fail("Did not expect "+other)
       }
     }
 
     it("should parse \"\" as No_/") {
       HttpPath.fromString("") match {
-        case No_/ =>
-        case other => fail("Did not expect "+other)
+        case No_/ ⇒
+        case other ⇒ fail("Did not expect "+other)
       }
     }
 
@@ -45,8 +49,8 @@ final class HttpPathSpec extends HectorSpec {
       val uri = "/foo//bar/baz"
 
       HttpPath.fromString(uri) match {
-        case 'foo /: 'bar /: 'baz /: _ =>
-        case other => fail("Did not expect "+other)
+        case "foo" /: "bar" /: "baz" /: _ ⇒
+        case other ⇒ fail("Did not expect "+other)
       }
     }
 
@@ -54,8 +58,8 @@ final class HttpPathSpec extends HectorSpec {
       val uri = "/foo//bar.baz"
 
       HttpPath.fromString(uri) match {
-        case 'foo /: Symbol("bar.baz") /: No_/ =>
-        case other => fail("Did not expect "+other)
+        case "foo" /: "bar.baz" /: No_/ ⇒
+        case other ⇒ fail("Did not expect "+other)
       }
     }
   }

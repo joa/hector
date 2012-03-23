@@ -2,10 +2,8 @@ package hector
 
 import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import javax.servlet.annotation.WebFilter
-import akka.actor.{ActorRef, Props}
-import hector.actor.RootActor
-import scala.xml.Node
+
+import hector.actor.RequestActor
 
 /**
  * @author Joa Ebert
@@ -16,7 +14,11 @@ final class HectorFilter extends Filter {
     //
 
     Hector.system
-    Hector.root
+    Hector.requests
+    Hector.session
+    Hector.callback
+    Hector.statistics
+    Hector.utilities
   }
 
   def destroy() {
@@ -28,14 +30,15 @@ final class HectorFilter extends Filter {
 
   def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
     request match {
-      case httpRequest: HttpServletRequest =>
+      case httpRequest: HttpServletRequest ⇒
         response match {
-          case httpResponse: HttpServletResponse =>
+          case httpResponse: HttpServletResponse ⇒
+            //TODO(joa): create custom HttpRequest / HttpResponse object here
             doFilter(httpRequest, httpResponse, chain)
-          case _ =>
+          case _ ⇒
             chain.doFilter(request, response)
         }
-      case _ =>
+      case _ ⇒
         chain.doFilter(request, response)
     }
   }
@@ -49,6 +52,8 @@ final class HectorFilter extends Filter {
   }
 
   private[this] def filterAsync(httpRequest: HttpServletRequest, httpResponse: HttpServletResponse, chain: FilterChain) {
+    import akka.pattern.ask
+
     // We try to enter the async state as soon as possible
     //
 
@@ -62,10 +67,16 @@ final class HectorFilter extends Filter {
       new AsyncListener {
         def onError(event: AsyncEvent) {
           //TODO(joa): Should not happen but generate proper 500 just in case
+          if(!event.getSuppliedResponse.isCommitted) {
+            chain.doFilter(httpRequest, httpResponse)
+          }
         }
 
         def onTimeout(event: AsyncEvent) {
           //TODO(joa): Could happen so generate 500
+          if(!event.getSuppliedResponse.isCommitted) {
+            chain.doFilter(httpRequest, httpResponse)
+          }
         }
 
         def onStartAsync(event: AsyncEvent) {}
@@ -78,10 +89,12 @@ final class HectorFilter extends Filter {
       }
     )
 
-    // Tell Hector we have an asynchronous context
+    // Tell Hector we have an asynchronous context and act upon it.
     //
 
-    Hector.root ! RootActor.HandleAsync(asyncContext)
+    (Hector.requests ? RequestActor.HandleAsync(asyncContext))(asyncContext.getTimeout) onComplete {
+      case _ ⇒ asyncContext.complete()
+    }
   }
 
   private[this] def filterSync(httpRequest: HttpServletRequest, httpResponse: HttpServletResponse, chain: FilterChain) {
@@ -89,7 +102,7 @@ final class HectorFilter extends Filter {
     import akka.util.duration._
     import akka.util.Timeout
     import akka.dispatch.Await
-    import java.util.concurrent.{TimeoutException => JTimeoutException}
+    import java.util.concurrent.{TimeoutException ⇒ JTimeoutException}
 
     //TODO(joa): See Hector class. Timeout needs to be configurable
     implicit val timeout = Timeout(10.seconds)
@@ -98,19 +111,19 @@ final class HectorFilter extends Filter {
 
     try {
       val future =
-        Hector.root ? RootActor.HandleRequest(httpRequest, httpResponse)
+        Hector.requests ? RequestActor.HandleRequest(httpRequest, httpResponse)
 
       Await.result(
-        awaitable = future.mapTo[Option[Node]],
+        awaitable = future.mapTo[Option[Unit]],
         atMost = 10.seconds
       ) match {
-        case Some(_) =>
-        case None => chain.doFilter(httpRequest, httpResponse)
+        case Some(_) ⇒
+        case None ⇒ chain.doFilter(httpRequest, httpResponse)
       }
     } catch {
-      case timeout: JTimeoutException =>
+      case timeout: JTimeoutException ⇒
         //TODO(joa): timeout needs to be logged. we need to generate a 505 response
-      case _ =>
+      case _ ⇒
         // We have nothing to do here. RootActor should have already performed the necessary work.
     } finally {
       println("Completed sync request in "+(System.currentTimeMillis() - t0)+"ms.")

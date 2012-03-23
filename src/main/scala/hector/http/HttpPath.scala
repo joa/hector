@@ -6,8 +6,8 @@ import javax.servlet.http.HttpServletRequest
  * @author Joa Ebert
  */
 object HttpPath {
-  import com.google.common.base.{Splitter => GSplitter}
-  import java.util.{Iterator => JIterator}
+  import com.google.common.base.{Splitter ⇒ GSplitter}
+  import java.util.{Iterator ⇒ JIterator}
 
   private[this] val slashSplitter = GSplitter.on('/')
 
@@ -15,15 +15,19 @@ object HttpPath {
     fromString(httpRequest.getRequestURI)
 
   def fromString(value: String) = {
-    iteratorToPath(
-      iterator = slashSplitter.split(value).iterator(),
-      endsWithSlash = value endsWith "/")
+    if(value == null) {
+      No_/
+    } else {
+      iteratorToPath(
+        iterator = slashSplitter.split(value).iterator(),
+        endsWithSlash = value endsWith "/")
+    }
   }
 
   //TODO(joa): get rid of recursion
   private[this] def iteratorToPath(iterator: JIterator[String], endsWithSlash: Boolean): HttpPath =
     iterator.hasNext match {
-      case true =>
+      case true ⇒
         var head = ""
 
         do {
@@ -32,17 +36,17 @@ object HttpPath {
 
         if(head == "") {
           endsWithSlash match {
-            case true => Required_/
-            case false => No_/
+            case true ⇒ Required_/
+            case false ⇒ No_/
           }
         } else {
-          new /:(Symbol(head), iteratorToPath(iterator, endsWithSlash))
+          new /:(head, iteratorToPath(iterator, endsWithSlash))
         }
 
-      case false =>
+      case false ⇒
         endsWithSlash match {
-          case true => Required_/
-          case false => No_/
+          case true ⇒ Required_/
+          case false ⇒ No_/
         }
     }
 }
@@ -62,25 +66,25 @@ object HttpPath {
  *{{{  val path: HttpPath
  *
  *   path match {
- *     case 'foo /: 'bar /: 'baz /: No_/ => println("Got /foo/bar/baz")
- *     case 'foo /: 'bar /: 'baz /: Required_/ => println("Got /foo/bar/baz/")
- *     case 'f00 /: 'b4r /: 'b4z /: _ => println("Got /f00/b4r/b4z or /f00/b4r/b4z/ or /f00/b4r/b4z/[unknown]")
+ *     case 'foo /: 'bar /: 'baz /: No_/ ⇒ println("Got /foo/bar/baz")
+ *     case 'foo /: 'bar /: 'baz /: Required_/ ⇒ println("Got /foo/bar/baz/")
+ *     case 'f00 /: 'b4r /: 'b4z /: _ ⇒ println("Got /f00/b4r/b4z or /f00/b4r/b4z/ or /f00/b4r/b4z/[unknown]")
  *   }
  * }}}</p>
  */
 sealed trait HttpPath extends Serializable {
   /**
-   * Concatenates this path with the given symbol.
+   * Concatenates this path with the given string.
    *
    * @param that The new head.
    * @return <code>that /: this</code>
    */
-  def /:(that: Symbol) = new /:(that, this)
+  def /:(that: String) = new /:(that, this)
 
   /**
    * The head of the path.
    */
-  def head: Symbol
+  def head: String
 
   /**
    * The tail of the path.
@@ -91,7 +95,7 @@ sealed trait HttpPath extends Serializable {
    * The head as an Option.
    * @return <code>Some</code> if the path is not empty; <code>None</code> otherwise.
    */
-  def headOption: Option[Symbol]
+  def headOption: Option[String]
 
   /** <code>true</code> if the path is empty; <code>false</code> otherwise. */
   def isEmpty: Boolean
@@ -104,11 +108,11 @@ sealed trait HttpPath extends Serializable {
  * The HttpPathNil trait represents the end of an HttpPath.
  */
 sealed trait HttpPathNil extends HttpPath {
-  override def head: Symbol = throw new NoSuchElementException("Head of empty HttpPath.")
+  override def head: String = throw new NoSuchElementException("Head of empty HttpPath.")
 
   override def tail: HttpPath = this
 
-  override def headOption: Option[Symbol] = None
+  override def headOption: Option[String] = None
 
   override def isEmpty: Boolean = true
 
@@ -121,7 +125,7 @@ sealed trait HttpPathNil extends HttpPath {
  * @param head The head of the path.
  * @param tail The tail of the path.
  */
-final case class /:(head: Symbol, tail: HttpPath) extends HttpPath {
+final case class /:(head: String, tail: HttpPath) extends HttpPath {
   override def headOption = Some(head)
   override def isEmpty = false
   override def nonEmpty = true

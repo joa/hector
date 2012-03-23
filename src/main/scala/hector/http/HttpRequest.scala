@@ -14,7 +14,7 @@ object HttpRequestConversion {
 /**
  * @author Joa Ebert
  */
-case class HttpRequest(method: HttpMethod, path: HttpPath) {
+final case class HttpRequest(method: HttpMethod, path: HttpPath) {
   //TODO(joa): params, cookies, headers, ...
 }
 

@@ -11,18 +11,18 @@ object HttpMethod {
 
   def fromString(method: String) =
     Symbol(method.toUpperCase) match {
-      case 'OPTIONS => Options
-      case 'GET => Get
-      case 'HEAD => Head
-      case 'POST => Post
-      case 'PUT => Put
-      case 'DELETE => Delete
-      case 'TRACE => Trace
-      case 'CONNECT => Connect
+      case 'OPTIONS ⇒ Options
+      case 'GET ⇒ Get
+      case 'HEAD ⇒ Head
+      case 'POST ⇒ Post
+      case 'PUT ⇒ Put
+      case 'DELETE ⇒ Delete
+      case 'TRACE ⇒ Trace
+      case 'CONNECT ⇒ Connect
     }
 }
 
-sealed trait HttpMethod
+sealed trait HttpMethod extends Serializable
 
 case object Options extends HttpMethod
 case object Get extends HttpMethod
