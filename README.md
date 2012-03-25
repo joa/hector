@@ -74,7 +74,25 @@ class HelloWorldActor extends Actor {
 }
 ```
 
-The most easy way to achieve this is to use Akka's pipe pattern. It is very important to note that we do not perform any blocking action here.
-The user greeting could access a database and lookup the real-name for a given public key.
+The most easy way to achieve this is to use Akka's pipe pattern. The response processing is done by using custom code or some of Hector's built-in features like JavaScript callbacks which can be bound to logic on the server-side. 
+All actions should happen in a non-blocking fashion. That means creating a greeting for the user by fetching it's name from the database is done in parallel while a new JavaScript callback is being created.
+
+The JavaScript callback created with the `NewCallback` message will be bound to a session variable which stores the message that should be dispatched to a given actor. In this case `"Message"` is being dispatched to `snippetActor` when the JavaScript code is executed on click.
+
+Hector comes with a set of built-in components like support for HTML5 EventSource.
+
+### JavaScript Callbacks
+
+{TODO}
+
+## Configuration
+
+{TODO}
+
+## Fault Tolerance
+
+{TODO}
+
+## Clustering
 
 {TODO}
