@@ -85,7 +85,32 @@ Hector comes with a set of built-in components like support for HTML5 EventSourc
 
 ### JavaScript Callbacks
 
-{TODO}
+A JavaScript callback is implemented as a message which will be sent to an actor. The actor may respond to that message with additional JavaScript code that is executed on the client or HTML which is appended to the &lt;body&gt; of the HTML document.
+
+When user code requests a new callback via `Hector.callback ? NewCallback(request, target, message)`  Hector will create a session variable that establishes a connection between the callback on the client side and the `target` actor on the server side. Since writing to the session storage is a non-blocking operation creating a callback becomes a `Future[JsAST]`. The user can mix the result either with other JavaScript code or use it with an anchor tag.
+
+Here is what the `snippetActor` from the earlier code snippet performs when it receives `"Message"`:
+
+```
+import hector.js._
+import JsImplicits._
+import JsToplevel.{jsWindow ⇒ window}
+    
+def receive = {
+  case "Message" ⇒
+    val response = ((window.status := "hello") & window.alert(2 * window.status.length))
+    sender ! response
+}
+```
+
+In this case the user will receive a message that displays "10". But what happens here? JavaScript is treated as a first-class citizen and Hector comes with a complete library of the JavaScript top-level.
+Writing JavaScript with Hector should be as easy as possible and it is up to the user whether or not to use implicits or to build an AST manually.
+
+Top-level variabes and functions are all prefixed with *js* so they do not accidentaly clash with user code or Scala's default imports like ```String```. 
+
+`window` is a `JsObj` with the `JsWindowType` trait mixed in. `window.status` evaluates to a `JsMember` with the `JsStringType` mixed in. Since members can be bound to variables the `:=` method is defined which will evaluate to a `JsAssignment`. The list continues but it basically shows how easy it becomes to write JavaScript with Hector by making use of IDE auto-completion.
+
+On a side-note: JsAST is not of type HttpResponse. Hector performs automatic response conversion for a set of types. Those include `JsAST`, `Seq[JsStatement]`, `Node` or `String`. However it is clearly stated which types are converted to a response. Only in development Hector will tell the developer which actor did not create a response suitable for automatic conversion.
 
 ## Configuration
 
