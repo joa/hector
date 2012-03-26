@@ -110,7 +110,7 @@ Top-level variabes and functions are all prefixed with *js* so they do not accid
 
 `window` is a `JsObj` with the `JsWindowType` trait mixed in. `window.status` evaluates to a `JsMember` with the `JsStringType` mixed in. Since members can be bound to variables the `:=` method is defined which will evaluate to a `JsAssignment`. The list continues but it basically shows how easy it becomes to write JavaScript with Hector by making use of IDE auto-completion.
 
-On a side-note: JsAST is not of type HttpResponse. Hector performs automatic response conversion for a set of types. Those include `JsAST`, `Seq[JsStatement]`, `Node` or `String`. However it is clearly stated which types are converted to a response. Only in development Hector will tell the developer which actor did not create a response suitable for automatic conversion.
+On a side-note: `JsAST` is not of type `HttpResponse`. Hector performs automatic response conversion for a set of types. Those include `JsAST`, `Seq[JsStatement]`, `Node` or `String`. However it is clearly stated which types are converted to a response. Only in development Hector will tell the developer which actor did not create a response suitable for automatic conversion.
 
 ## Configuration
 
