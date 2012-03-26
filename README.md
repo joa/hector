@@ -38,7 +38,7 @@ User-code can always specify a custom timeout for each route and a recovery stra
 
 ## Request Processing
 
-Once Hector knows which actor should handle a response it will send the `CreateResponse` message to that actor with the given arguments. So in case of the route result `Route(context.actorOf(Props[HelloWorldActor]), Some(publicKey))` the message `CreateResponse(request, Some(publicKey))` would be dispatched to `HelloWorldActor`.
+Once Hector knows which actor should handle a response it will send the `CreateResponse` message to that actor with the given arguments. So in case of the route result `Route(helloWorldActor, Some(publicKey))` the message `CreateResponse(request, Some(publicKey))` would be dispatched to `HelloWorldActor`.
 The `HelloWorldActor` is now responsible for generating an `HttpResponse` object and should reply it to its sender.
 
 ```
