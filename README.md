@@ -11,8 +11,10 @@ The message parameter is essential since it is the machanism to send arguments w
 Here is an example of a user-defined route:
 
 ```
+val helloWorldActor = context.actorOf(Props[HelloWorldActor])
+
 def routes = {
-  case HttpRequest(Get, "user" /: publicKey /: _) ⇒  Route(context.actorOf(Props[HelloWorldActor]), Some(publicKey))
+  case HttpRequest(Get, "user" /: publicKey /: _) ⇒  Route(helloWorldActor, Some(publicKey))
 }
 ```
 
