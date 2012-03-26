@@ -16,7 +16,7 @@ def routes = {
 }
 ```
 
-This will match a GET request that starts with <em>user</em>, followed by an arbitrary string which is bound to the variable `publicKey` and ends with arbitrary data.
+This will match a GET request that starts with *user*, followed by an arbitrary string which is bound to the variable `publicKey` and ends with arbitrary data.
 Here are some examples that are matched by this definition:
 
 * /user/hector
@@ -24,9 +24,9 @@ Here are some examples that are matched by this definition:
 * /user/hector/whatever
 * /user/hector/whatever/
 
-The path including <em>whatever</em> is matched because we did not specify how the request should end. Instead we used Scala's wildcard operator. 
-If we want to match only <em>/user/hector/</eam>  we could use `"user" /: publicKey /: Required_/` and if we want to match <em>/user/hector</em> we would use `"user" /: publicKey /: No_/`.
-`Required_/` and `No_/` are to important objects since they specify how a request is matched and clearly state wheter a slash is required or not.
+The path including *whatever* is matched because we did not specify how the request should end. Instead we used Scala's wildcard operator. 
+If we want to match */user/hector/* and nothing else  we could use `"user" /: publicKey /: Required_/`. If we want to match */user/hector* instead we would use `"user" /: publicKey /: No_/`.
+`Required_/` and `No_/` are two important objects since they specify how a request is matched and clearly state wheter a slash is required or not.
 
 If the user does not match a given request Hector will either show a 404-page or hand the request processing over to the servlet container if existing. This means a custom 404-page would be created by using `case _ ⇒ ...`.
 
