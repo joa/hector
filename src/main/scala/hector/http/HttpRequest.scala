@@ -1,21 +1,13 @@
 package hector.http
 
-import javax.servlet.http.HttpServletRequest
+trait HttpRequest extends Serializable {
+  def method: HttpMethod
 
-object HttpRequestConversion {
-  def fromHttpServletRequest(httpServletRequest: HttpServletRequest): HttpRequest = {
-    HttpRequest(
-      method = HttpMethod fromHttpServletRequest httpServletRequest,
-      path = HttpPath fromHttpServletRequest httpServletRequest
-    )
-  }
+  def path: HttpPath
+
+  def cookies: Seq[HttpCookie]
+
+  def headers: Seq[HttpHeader]
+
+  def authType: Option[HttpAuthType]
 }
-
-/**
- * @author Joa Ebert
- */
-final case class HttpRequest(method: HttpMethod, path: HttpPath) {
-  //TODO(joa): params, cookies, headers, ...
-}
-
-

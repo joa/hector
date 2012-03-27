@@ -2,8 +2,6 @@ package hector.http
 
 /**
  * The HttpCookie class represents a cookie.
- *
- * @author Joa Ebert
  */
 final case class HttpCookie(
   /** The name of the cookie. */
@@ -20,25 +18,3 @@ final case class HttpCookie(
   httpOnly: Option[Boolean],
   /** Whether or not the cookie should be transmitted only for secure connections like HTTPS/SSL. */
   secure: Option[Boolean])
-
-object HttpCookieConversion {
-  import javax.servlet.http.Cookie
-
-  /**
-   * Converts a Hector cookie to a Servlet cookie representation.
-   *
-   * @param cookie The Hector cookie representation.
-   * @return The servlet cookie representation.
-   */
-  def toServletCookie(cookie: HttpCookie): Cookie = {
-    val result = new Cookie(cookie.name, cookie.value)
-
-    cookie.maxAge foreach result.setMaxAge
-    cookie.path map { _.toString } foreach result.setPath
-    cookie.domain foreach result.setDomain
-    cookie.httpOnly foreach result.setHttpOnly
-    cookie.secure foreach result.setSecure
-
-    result
-  }
-}

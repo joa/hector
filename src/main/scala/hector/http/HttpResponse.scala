@@ -1,19 +1,18 @@
 package hector.http
 
-import hector.util.MimeType
+import akka.actor.ActorRef
+import akka.util.Timeout
+import akka.dispatch.{ExecutionContext, Future}
+
+import hector.http.header.{Connection, CacheControl}
 import hector.js.{JsEmitter, JsAST}
+import hector.util.MimeType
 
 import java.nio.charset.{Charset ⇒ JCharset}
 
 import scala.xml.Node
-import akka.actor.ActorRef
-import akka.util.Timeout
-import akka.dispatch.{ExecutionContext, Future}
-import hector.http.headers.{Connection, CacheControl}
-
 
 /**
- * @author Joa Ebert
  */
 sealed trait HttpResponse extends Serializable {
   /**

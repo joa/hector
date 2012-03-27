@@ -9,7 +9,7 @@ import akka.util.Timeout
 import hector.Hector
 import hector.util._
 import akka.actor.{ActorRef, OneForOneStrategy, Props, Actor}
-import hector.http.{HttpStatus, EmptyResponse, HttpRequest}
+import hector.http.{EmptyResponse, HttpRequest}
 
 object EventStreamSupervisor {
   case class Create(request: HttpRequest, timeout: Timeout, retry: Option[Duration] = None)
@@ -19,7 +19,6 @@ object EventStreamSupervisor {
 }
 
 /**
- * @author Joa Ebert
  */
 final class EventStreamSupervisor extends Actor {
   import EventStreamSupervisor._
@@ -54,13 +53,15 @@ final class EventStreamSupervisor extends Actor {
       } pipeTo sender
 
     case message @ CreateResponse(request, Some(ReRoute(name))) ⇒
+      import hector.http.status.NoContent
+
       val actorRefFuture =
         (Hector.session ? SessionActor.Load(request, "hector:eventStream:"+name)).mapTo[Option[ActorRef]]
 
       val response =
         actorRefFuture flatMap {
           case Some(actor) ⇒ actor ? message
-          case None ⇒ Promise.successful(EmptyResponse(status = HttpStatus.NoContent))
+          case None ⇒ Promise.successful(EmptyResponse(status = NoContent))
         }
 
       response pipeTo sender

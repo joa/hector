@@ -3,7 +3,6 @@ package hector.js
 import java.io.{Writer, StringWriter}
 
 /**
- * @author Joa Ebert
  */
 object JsEmitter {
   // The JsEmitter is a quick and dirty solution and could be enhanced a whole lot. For instance

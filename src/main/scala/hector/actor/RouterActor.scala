@@ -1,11 +1,15 @@
 package hector.actor
 
-import hector.http._
-import akka.actor.{Props, ActorRef, Actor}
 import hector.Hector
+import hector.http._
+import hector.http.extractors._
 import hector.util.letItCrash
+
+import akka.actor.{Props, ActorRef, Actor}
 import akka.util.Timeout
 import akka.util.duration._
+import akka.routing.{RoundRobinRouter, DefaultResizer}
+
 import user.HelloWorldActor
 
 object RouterActor {
@@ -24,7 +28,6 @@ object RouterActor {
 }
 
 /**
- * @author Joa Ebert
  */
 final class RouterActor extends Actor {
   import RouterActor._
@@ -42,16 +45,18 @@ final class RouterActor extends Actor {
   }
 
   private[this] val internalRoutes: PartialFunction[HttpRequest, Route[Any]] = {
-    case HttpRequest(_, InternalPrefix /: "cb" /: callback /: _) ⇒ Route(Hector.callback, Some(CallbackActor.Execute(callback)))
+    case Any(InternalPrefix /: "cb" /: callback /: _) ⇒ Route(Hector.callback, Some(CallbackActor.Execute(callback)))
 
-    case HttpRequest(_, InternalPrefix /: "es" /: name /: _) ⇒
+    case Any(InternalPrefix /: "es" /: name /: _) ⇒
       Route(Hector.eventStream, Some(EventStreamSupervisor.ReRoute(name)))
 
-    case HttpRequest(_, InternalPrefix /: "stats.txt" /: No_/) ⇒  Route(Hector.statistics)
+    case Any(InternalPrefix /: "stats.txt" /: No_/) ⇒  Route(Hector.statistics)
   }
 
+  private[this] val helloWorld = context.actorOf(Props[HelloWorldActor].withRouter(RoundRobinRouter(nrOfInstances = 128)))
+
   private[this] val externalRoutes: PartialFunction[HttpRequest, Route[Any]] = {
-    case HttpRequest(Get, "user" /: publicKey /: _) ⇒  Route(context.actorOf(Props[HelloWorldActor]), Some(publicKey))
+    case Get("user" /: publicKey /: _) ⇒  Route(helloWorld, Some(publicKey))
     //case _ ⇒ <html><title>404!</title><body>404</body></html>
   }
 

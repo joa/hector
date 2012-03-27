@@ -8,7 +8,6 @@ case class Join(actor: ActorRef)
 case class Leave(actor: ActorRef)
 
 /**
- * @author Joa Ebert
  */
 final class ChatRoom extends Actor {
   private var members = Set.empty[ActorRef]

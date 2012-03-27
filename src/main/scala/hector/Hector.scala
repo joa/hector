@@ -7,7 +7,6 @@ import akka.actor.{Props, ActorSystem}
 import hector.actor._
 
 /**
- * @author Joa Ebert
  */
 object Hector {
   //TODO(joa): get rid of me after on

@@ -8,8 +8,6 @@ package hector.http
  * request or a response.</p>
  *
  * <p>Several headers like <code>Via(...)</code> can be part of the request and the response.</p>
- *
- * @author Joa Ebert
  */
 abstract class HttpHeader(val name: String, val value: String) extends Serializable
 

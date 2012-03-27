@@ -10,7 +10,6 @@ import akka.util.Timeout
 import akka.actor.{ActorRef, Props}
 
 /**
- * @author Joa Ebert
  */
 final class UtilityActorSpec extends HectorSpec {
   import UtilityActor._

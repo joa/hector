@@ -1,9 +1,6 @@
 package hector.http
 
-/**
- * @author Joa Ebert
- */
-object HttpStatus {
+package object status {
   // Informational
   val Continue = 100
   val SwitchingProtocols = 101

@@ -1,7 +1,6 @@
 package hector.js
 
 /**
- * @author Joa Ebert
  */
 object JsImplicits {
   implicit def jsExpToJsStmt(jsExp: JsExpression): JsStatement = JsExpStatement(jsExp)

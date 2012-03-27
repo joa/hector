@@ -1,55 +1,5 @@
 package hector.http
 
-import javax.servlet.http.HttpServletRequest
-
-/**
- * @author Joa Ebert
- */
-object HttpPath {
-  import com.google.common.base.{Splitter ⇒ GSplitter}
-  import java.util.{Iterator ⇒ JIterator}
-
-  private[this] val slashSplitter = GSplitter.on('/')
-
-  def fromHttpServletRequest(httpRequest: HttpServletRequest) =
-    fromString(httpRequest.getRequestURI)
-
-  def fromString(value: String) = {
-    if(value == null) {
-      No_/
-    } else {
-      iteratorToPath(
-        iterator = slashSplitter.split(value).iterator(),
-        endsWithSlash = value endsWith "/")
-    }
-  }
-
-  //TODO(joa): get rid of recursion
-  private[this] def iteratorToPath(iterator: JIterator[String], endsWithSlash: Boolean): HttpPath =
-    iterator.hasNext match {
-      case true ⇒
-        var head = ""
-
-        do {
-          head = iterator.next()
-        } while(head == "" && iterator.hasNext)
-
-        if(head == "") {
-          endsWithSlash match {
-            case true ⇒ Required_/
-            case false ⇒ No_/
-          }
-        } else {
-          new /:(head, iteratorToPath(iterator, endsWithSlash))
-        }
-
-      case false ⇒
-        endsWithSlash match {
-          case true ⇒ Required_/
-          case false ⇒ No_/
-        }
-    }
-}
 
 /**
  * The HttpPath trait represents a request URI.
@@ -139,8 +89,6 @@ final case class /:(head: String, tail: HttpPath) extends HttpPath {
  *   that is not ending in "/". For example "/foo" does not end in "/"
  *   so its end would be represented with <code>No_/</code>.
  * </p>
- *
- * @author Joa Ebert
  */
 case object No_/ extends HttpPath with HttpPathNil
 
@@ -152,7 +100,5 @@ case object No_/ extends HttpPath with HttpPathNil
  *   that is ending in "/". For example "/foo/" does end in "/"
  *   so its end would be represented with <code>Required_/</code>.
  * </p>
- *
- * @author Joa Ebert
  */
 case object Required_/ extends HttpPath with HttpPathNil

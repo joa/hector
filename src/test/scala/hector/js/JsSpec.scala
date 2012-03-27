@@ -3,7 +3,6 @@ package hector.js
 import hector.HectorSpec
 
 /**
- * @author Joa Ebert
  */
 final class JsSpec extends HectorSpec {
   describe("JsEmitter") {

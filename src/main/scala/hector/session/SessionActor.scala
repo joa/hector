@@ -25,7 +25,6 @@ object SessionActor {
  * sessionActor ! Store(request, "count", 0)
  * val count = (sessionActor ? Load(request, "count")).mapTo[Option[Int]]
  * }}}
- * @author Joa Ebert
  */
 final class SessionActor extends Actor {
   import SessionActor._

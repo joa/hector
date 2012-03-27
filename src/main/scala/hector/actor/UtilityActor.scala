@@ -11,7 +11,6 @@ import hector.util.{convertBytesToHexString, letItCrash}
 
 
 /**
- * @author Joa Ebert
  */
 object UtilityActor {
   sealed trait UtilityActorMessage

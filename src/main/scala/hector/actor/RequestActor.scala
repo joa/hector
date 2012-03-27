@@ -13,7 +13,7 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import hector.Hector
 import hector.util.letItCrash
 import akka.pattern.{AskTimeoutException, ask}
-import hector.http.{HttpStatus, HttpCookieConversion, HttpResponse}
+import hector.http.HttpResponse
 
 object RequestActor {
   sealed trait RootMessage
@@ -22,7 +22,6 @@ object RequestActor {
 }
 
 /**
- * @author Joa Ebert
  */
 final class RequestActor extends Actor {
   import RequestActor._
@@ -34,7 +33,7 @@ final class RequestActor extends Actor {
             RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))))
 
   //TODO(joa): Default request timeout (needs to be configurable)
-  private[this] implicit val implicitTimeout = Timeout(60.seconds)
+  private[this] implicit val askTimeout = Timeout(60.seconds)
 
   override protected def receive = {
     case HandleAsync(asyncContext) ⇒
@@ -77,7 +76,8 @@ final class RequestActor extends Actor {
       import com.google.common.base.Charsets
       import context.dispatcher
       import hector.actor.RouterActor.Route
-      import hector.http.{HttpCookieConversion, OutputStreamHttpResponseOutput, HttpResponse, HttpRequestConversion, HttpStatus}
+      import hector.http.{OutputStreamHttpResponseOutput, HttpResponse}
+      import hector.http.conversion._
 
       // Create a Hector HttpRequest form a given ServletRequest
 
@@ -121,9 +121,11 @@ final class RequestActor extends Actor {
       val output: Future[Option[Unit]] =
         response flatMap {
           case Some(value) ⇒
+            import hector.http.status.NoContent
+
             letItCrash()
 
-            if(value.status == HttpStatus.NoContent) {
+            if(value.status == NoContent) {
               // This is a workaround for Jetty which is quite annoying. If we do not flush
               // the buffer or create an output stream the NoContent header is replaced with
               // 200. If we omit the flushBuffer() the servlet container creates a 404.
@@ -192,6 +194,9 @@ final class RequestActor extends Actor {
   }
 
   private def fillServletResponse(source: HttpResponse,  target: HttpServletResponse) {
+    import hector.http.conversion._
+    import hector.http.status.NoContent
+
     // Send our headers and cookies
 
     source.contentLength foreach target.setContentLength
@@ -200,7 +205,7 @@ final class RequestActor extends Actor {
 
     letItCrash()
 
-    if(source.status != HttpStatus.NoContent) {
+    if(source.status != NoContent) {
       target.setContentType(source.contentType)
     }
 
@@ -210,7 +215,7 @@ final class RequestActor extends Actor {
 
   private def createTypeErrorResponse(actor: ActorRef,  value: Any) = {
     import hector.http.HtmlResponse
-    import hector.http.HttpStatus
+    import hector.http.status.InternalServerError
     import hector.html.DocType
 
     HtmlResponse(
@@ -225,7 +230,7 @@ final class RequestActor extends Actor {
         </body>
       </html>,
       DocType.`HTML 5`,
-      HttpStatus.InternalServerError
+      InternalServerError
     )
   }
 

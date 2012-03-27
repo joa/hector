@@ -1,5 +1,7 @@
 package hector
 
+import com.google.common.base.Strings
+
 package object util {
   def convertBytesToHexString(hash: Array[Byte]): String =
     convertBytesToHexString(new StringBuilder(hash.length << 1), hash)
@@ -31,4 +33,17 @@ package object util {
       throw new RuntimeException("Let it Crash!")
     }
   }
+
+  def trimToOption(value: String): Option[String] =
+    if(null == value || value.length == 0) {
+      None
+    } else {
+      val trimmedString = value.trim
+
+      if(trimmedString.length == 0) {
+        None
+      } else {
+        Some(trimmedString)
+      }
+    }
 }

@@ -2,7 +2,6 @@ package hector.util
 
 /**
  * @see http://en.wikipedia.org/wiki/Internet_media_type
- * @author Joa Ebert
  */
 object MimeType {
   object application {

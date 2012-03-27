@@ -16,7 +16,6 @@ import hector.actor.EventStreamSupervisor.EventStream
 
 
 /**
- * @author Joa Ebert
  */
 final class HelloWorldActor extends Actor {
   val snippetActor = context.actorOf(Props[SnippetActor])
@@ -25,29 +24,32 @@ final class HelloWorldActor extends Actor {
 
   protected override def receive = {
     case CreateResponse(request: HttpRequest, Some(publicKey: String)) ⇒
-      val streamFuture = (Hector.eventStream ? EventStreamSupervisor.Create(request, 10.minutes)).mapTo[EventStream]
+      //val streamFuture = (Hector.eventStream ? EventStreamSupervisor.Create(request, 10.minutes)).mapTo[EventStream]
       val dateFuture = (snippetActor ? "giveMeTheDate")
       val greetingFuture = (snippetActor ? publicKey)
       val jsCallback = Hector.callback ? CallbackActor.NewCallback(request, snippetActor, "Message")
 
       val result =
         for {
-          stream ← streamFuture
+          //stream ← streamFuture
           date ← dateFuture.mapTo[Node]
           greeting ← greetingFuture.mapTo[Node]
           callback ← jsCallback.mapTo[JsAST]
         } yield {
-          SomeState.room ! Join(stream.actor)
+          //SomeState.room ! Join(stream.actor)
 
+          /*
+          <script type="text/javascript">{Unparsed("""
+          var source = new EventSource('"""+stream.url+"""')
+          source.addEventListener('message', function(e) {
+            console.log(e.data);
+          }, false)
+                        """)}</script>
+           */
           HtmlResponse(<html>
             <head>
-              <title>Hector</title>{Hector.clientSupport}
-              <script type="text/javascript">{Unparsed("""
-var source = new EventSource('"""+stream.url+"""')
-source.addEventListener('message', function(e) {
-  console.log(e.data);
-}, false)
-              """)}</script>
+              <title>Hector</title>
+              {Hector.clientSupport}
             </head>
             <body>
               <h1>Hello

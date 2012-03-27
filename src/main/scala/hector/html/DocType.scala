@@ -5,8 +5,6 @@ package hector.html
  *
  * @see http://www.w3schools.com/tags/tag_doctype.asp
  * @see http://en.wikipedia.org/wiki/Document_Type_Declaration
- *
- * @author Joa Ebert
  */
 object DocType {
   /** The case-insensitive HTML 5 DOCTYPE. */

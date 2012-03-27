@@ -5,8 +5,6 @@ import java.io.{OutputStream ⇒ JOutputStream}
 
 /**
  * The HttpResponseOutput trait defines methods to generate the actual body of a HttpResponse.
- *
- * @author Joa Ebert
  */
 trait HttpResponseOutput {
   def print(value: Byte)
@@ -74,8 +72,6 @@ trait HttpResponseOutput {
  *
  * @param encoding The encoding of the HttpResponseOutput.
  * @param output The Java OutputStream to wrap.
- *
- * @author Joa Ebert
  */
 final class OutputStreamHttpResponseOutput(
     private[this] val encoding: JCharset,

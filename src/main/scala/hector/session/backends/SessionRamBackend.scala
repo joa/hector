@@ -6,7 +6,6 @@ import hector.http.HttpRequest
 import akka.dispatch._
 
 /**
- * @author Joa Ebert
  */
 final class SessionRamBackend(private[this] val context: ExecutionContext) extends SessionBackend {
   //XXX(joa): how does the scala wrapper for ConcurrentHashMap behave exactly? is this correct?

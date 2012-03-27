@@ -6,7 +6,6 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import hector.actor.RequestActor
 
 /**
- * @author Joa Ebert
  */
 final class HectorFilter extends Filter {
   def init(filterConfig: FilterConfig) {

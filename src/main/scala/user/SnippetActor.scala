@@ -5,7 +5,6 @@ import akka.actor.Actor
 import java.util.Date
 
 /**
- * @author Joa Ebert
  */
 final class SnippetActor extends Actor {
   override protected def receive = {

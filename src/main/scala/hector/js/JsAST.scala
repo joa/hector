@@ -3,7 +3,6 @@ package hector.js
 import scala.xml.Node
 
 /**
- * @author Joa Ebert
  */
 sealed trait JsAST extends Serializable {
   def emit(humanReadable: Boolean = false): String = JsEmitter.toString(this, humanReadable)

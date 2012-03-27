@@ -10,7 +10,6 @@ import hector.http.HttpRequest
 import akka.actor.Props
 
 /**
- * @author Joa Ebert
  */
 object SomeState {
   val room = Hector.system.actorOf(Props[ChatRoom])

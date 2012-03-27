@@ -10,7 +10,6 @@ object StatisticsActor {
 }
 
 /**
- * @author Joa Ebert
  */
 final class StatisticsActor extends Actor {
   import StatisticsActor._

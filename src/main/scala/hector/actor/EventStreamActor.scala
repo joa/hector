@@ -10,7 +10,6 @@ object EventStreamActor {
 
 /**
  * @see http://dev.w3.org/html5/eventsource/
- * @author Joa Ebert
  */
 final class EventStreamActor(private[this] val timeout: Timeout, private[this] val retryOpt: Option[Duration] = None) extends Actor {
   // STATEFUL!

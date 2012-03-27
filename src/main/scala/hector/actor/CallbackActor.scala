@@ -12,10 +12,9 @@ import hector.util.convertBytesToHexString
 
 import akka.dispatch.Promise
 import hector.js.JsAST
-import hector.http.{HttpStatus, HttpRequest, HttpResponse}
+import hector.http.{HttpRequest, HttpResponse}
 
 /**
- * @author Joa Ebert
  */
 object CallbackActor {
   sealed trait CallbackActorMessage
@@ -237,11 +236,12 @@ final class CallbackActor extends Actor {
    * @return The result of executing the callback.
    */
   private[this] def executeCallback(request: HttpRequest, callbackName: String) = {
-    import hector.http.{HttpStatus, PlainTextResponse}
+    import hector.http.PlainTextResponse
+    import hector.http.status.{BadRequest, NotFound}
 
     if(callbackName.length != 64) {
       // The user provided an illegal callback name.
-      sender ! PlainTextResponse("Invalid callback.\n", HttpStatus.BadRequest)
+      sender ! PlainTextResponse("Invalid callback.\n", BadRequest)
     } else {
       //TODO(joa) check if callback contains only valid characters
 
@@ -257,7 +257,7 @@ final class CallbackActor extends Actor {
               Promise.successful(
                 PlainTextResponse(
                   text = "No such callback.\n",
-                  status = HttpStatus.NotFound
+                  status = NotFound
                 )
               )
           }
@@ -315,10 +315,11 @@ final class CallbackActor extends Actor {
         //TODO(joa): log a warning in release, do something useful during debug
         import hector.js.JsImplicits._
         import hector.js.JsToplevel.{jsWindow ⇒ window}
+        import hector.http.status.Accepted
 
         JsResponse(
           js = window.alert("Error: Cannot convert "+other+" to a response.\nThe actor "+actor+" is responsible.\nVisit TODO for more help."),
-          status = HttpStatus.Accepted
+          status = Accepted
         )
     }
   }

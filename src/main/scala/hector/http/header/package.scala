@@ -1,4 +1,4 @@
-package hector.http.headers
+package hector.http.header
 
 import hector.http.{HttpHeader, HttpRequestHeader, HttpResponseHeader}
 
