@@ -53,7 +53,7 @@ final class RouterActor extends Actor {
     case Any(InternalPrefix /: "stats.txt" /: No_/) ⇒  Route(Hector.statistics)
   }
 
-  private[this] val helloWorld = context.actorOf(Props[HelloWorldActor].withRouter(RoundRobinRouter(nrOfInstances = 128)))
+  private[this] val helloWorld = context.actorOf(Props[HelloWorldActor])//.withRouter(RoundRobinRouter(nrOfInstances = 128)))
 
   private[this] val externalRoutes: PartialFunction[HttpRequest, Route[Any]] = {
     case Get("user" /: publicKey /: _) ⇒  Route(helloWorld, Some(publicKey))
