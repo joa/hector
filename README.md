@@ -14,7 +14,7 @@ Here is an example of a user-defined route:
 val helloWorldActor = context.actorOf(Props[HelloWorldActor])
 
 def routes = {
-  case HttpRequest(Get, "user" /: publicKey /: _) ⇒  Route(helloWorldActor, Some(publicKey))
+  case Get("user" /: publicKey /: _) ⇒  Route(helloWorldActor, Some(publicKey))
 }
 ```
 
