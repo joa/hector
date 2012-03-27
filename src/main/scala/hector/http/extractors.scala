@@ -11,6 +11,8 @@ trait MethodBasedPathExtractor {
 }
 
 object extractors {
+  //TODO(joa): does this belong into a routing package?
+
   object Options extends MethodBasedPathExtractor {
     def unapply(request: HttpRequest): Option[HttpPath] = extract(request, HttpMethods.Options)
   }
