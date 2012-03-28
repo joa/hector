@@ -18,10 +18,10 @@ final class UtilityActorSpec extends HectorSpec {
 
   private[this] implicit val timeout = Timeout(1.second)
 
-  describe("UtilityActor.NewRandomHash") {
+  describe("UtilityActor.NewUniqueHash") {
     it("replies with 32-byte long hashes") {
       val future =
-        (utilityActor ? NewRandomHash).mapTo[String]
+        (utilityActor ? NewUniqueHash).mapTo[String]
 
       val hash =
         Await.result(future, 1.second)
@@ -32,7 +32,7 @@ final class UtilityActorSpec extends HectorSpec {
     it("replies unique hashes") {
       val hashes = new Array[String](1000)
 
-      fillArray(hashes, utilityActor, NewRandomHash)
+      fillArray(hashes, utilityActor, NewUniqueHash)
 
       mustNotContainDuplicates(hashes)
     }

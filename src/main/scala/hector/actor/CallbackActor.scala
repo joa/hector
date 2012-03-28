@@ -203,7 +203,7 @@ final class CallbackActor extends Actor {
    */
   private[this] def newCallback(request: HttpRequest, target: ActorRef, message: Any) = {
     val callbackFuture =
-      (Hector.utilities ? UtilityActor.NewRandomHash).mapTo[String]
+      (Hector.utilities ? UtilityActor.NewUniqueHash).mapTo[String]
 
     val jsFunctionFuture =
       callbackFuture map {

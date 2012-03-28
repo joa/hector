@@ -41,7 +41,7 @@ final class EventStreamSupervisor extends Actor {
   override protected def receive = {
     case Create(request, timeout, retry) ⇒
       val randomHashFuture =
-        (Hector.utilities ? UtilityActor.NewRandomHash).mapTo[String]
+        (Hector.utilities ? UtilityActor.NewUniqueHash).mapTo[String]
 
       randomHashFuture flatMap {
         hash ⇒

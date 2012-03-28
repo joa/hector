@@ -16,7 +16,7 @@ object UtilityActor {
   /**
    * Creates and returns a new random hash of 32 characters.
    */
-  case object NewRandomHash extends UtilityActorMessage
+  case object NewUniqueHash extends UtilityActorMessage
 
   /**
    * Creates and returns a new random hash of 32 characters preceded with a "_".
@@ -35,7 +35,7 @@ final class UtilityActor extends Actor {
 
 
   override protected def receive = {
-    case NewRandomHash ⇒
+    case NewUniqueHash ⇒
       letItCrash()
 
       val hash: Future[String] =
@@ -50,7 +50,7 @@ final class UtilityActor extends Actor {
       letItCrash()
 
       val hashFuture =
-        (self ? NewRandomHash).mapTo[String] recover {
+        (self ? NewUniqueHash).mapTo[String] recover {
           case timeout: AskTimeoutException =>
             JUUID.randomUUID().toString.replace("-", "")
         }
