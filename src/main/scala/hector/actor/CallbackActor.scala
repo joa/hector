@@ -139,7 +139,7 @@ final class CallbackActor extends Actor {
   import CallbackActor._
 
   //TODO(joa): Default request timeout (needs to be configurable)
-  private[this] implicit val implicitTimeout = Timeout(1.second)
+  private[this] implicit val askTimeout = Timeout(1.second)
 
   private[this] implicit val implicitDispatcher = context.dispatcher
 
@@ -203,7 +203,7 @@ final class CallbackActor extends Actor {
    */
   private[this] def newCallback(request: HttpRequest, target: ActorRef, message: Any) = {
     val callbackFuture =
-      (Hector.utilities ? UtilityActor.NewRandomHash).mapTo[Array[Byte]] map convertBytesToHexString
+      (Hector.utilities ? UtilityActor.NewRandomHash).mapTo[String]
 
     val jsFunctionFuture =
       callbackFuture map {

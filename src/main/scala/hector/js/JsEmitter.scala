@@ -188,6 +188,7 @@ object JsEmitter {
       case JsNop(expr) ⇒ write(expr)
 
       case JsIdentifier(name) ⇒
+        //TODO(joa): perform the alloc etc. only if we know its not valid
         val oldIdentifier = name.name
         val newIdentifier = new StringBuilder(oldIdentifier.length)
 

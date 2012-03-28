@@ -1,14 +1,12 @@
 package hector.actor
 
-import akka.pattern.pipe
-import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
 import akka.actor.Actor
 import akka.dispatch.Future
 
 import hector.util.{convertBytesToHexString, letItCrash}
-
+import akka.pattern.{AskTimeoutException, pipe, ask}
 
 /**
  */
@@ -16,37 +14,34 @@ object UtilityActor {
   sealed trait UtilityActorMessage
 
   /**
-   * Creates and returns a new random hash of 32 bytes.
+   * Creates and returns a new random hash of 32 characters.
    */
   case object NewRandomHash extends UtilityActorMessage
 
   /**
-   * Creates and returns a new random hash of 32 bytes preceded with a "_".
+   * Creates and returns a new random hash of 32 characters preceded with a "_".
    */
   case object NewFunctionName extends UtilityActorMessage
 }
 
 final class UtilityActor extends Actor {
+  import java.util.{UUID => JUUID}
+
   import UtilityActor._
-  import java.security.{SecureRandom ⇒ JSecureRandom}
 
-  //XXX(joa): hashes are random, but not unique!
-
-  private[this] val secureRandom: JSecureRandom = new JSecureRandom()
-
-  private[this] implicit val implicitTimeout = Timeout(1.second)
+  private[this] implicit val askTimeout = Timeout(1.second)
 
   private[this] implicit val implicitContext = context.dispatcher
+
 
   override protected def receive = {
     case NewRandomHash ⇒
       letItCrash()
 
-      val hash: Future[Array[Byte]] =
+      val hash: Future[String] =
         Future {
-          val bytes = new Array[Byte](32)
-          secureRandom.nextBytes(bytes)
-          bytes
+          val uuid = JUUID.randomUUID().toString
+          uuid.replace("-", "")
         }
 
       hash pipeTo sender
@@ -54,17 +49,21 @@ final class UtilityActor extends Actor {
     case NewFunctionName ⇒
       letItCrash()
 
-      val hash =
-        (self ? NewRandomHash).mapTo[Array[Byte]]
+      val hashFuture =
+        (self ? NewRandomHash).mapTo[String] recover {
+          case timeout: AskTimeoutException =>
+            JUUID.randomUUID().toString.replace("-", "")
+        }
 
       val functionName: Future[String] =
-        hash map {
-          bytes ⇒
-            val stringBuilder = new StringBuilder(65) // 32 bytes * 2 char per byte + 1 char ("_")
+        hashFuture map {
+          hash ⇒
+            val stringBuilder = new StringBuilder(33) // 32 characters + preceding _
 
-            stringBuilder append '_'
+            stringBuilder.append('_')
+            stringBuilder.append(hash)
 
-            convertBytesToHexString(stringBuilder, bytes)
+            stringBuilder.toString()
         }
 
       functionName pipeTo sender

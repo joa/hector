@@ -21,7 +21,7 @@ final class UtilityActorSpec extends HectorSpec {
   describe("UtilityActor.NewRandomHash") {
     it("replies with 32-byte long hashes") {
       val future =
-        (utilityActor ? NewRandomHash).mapTo[Array[Byte]]
+        (utilityActor ? NewRandomHash).mapTo[String]
 
       val hash =
         Await.result(future, 1.second)
@@ -30,7 +30,7 @@ final class UtilityActorSpec extends HectorSpec {
     }
 
     it("replies unique hashes") {
-      val hashes = new Array[Array[Byte]](1000)
+      val hashes = new Array[String](1000)
 
       fillArray(hashes, utilityActor, NewRandomHash)
 
@@ -39,14 +39,14 @@ final class UtilityActorSpec extends HectorSpec {
   }
 
   describe("UtilityActor.NewFunctionName") {
-    it("replies with a 65 character long function name") {
+    it("replies with a 33 character long function name") {
       val future =
         (utilityActor ? NewFunctionName).mapTo[String]
 
       val functionName =
         Await.result(future, 1.second)
 
-      functionName must have length (65)
+      functionName must have length (33)
     }
 
     it("replies with a function name that begins with an underscore") {

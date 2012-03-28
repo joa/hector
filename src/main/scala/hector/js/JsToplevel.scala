@@ -56,6 +56,8 @@ object JsToplevel {
 
   def jsString = new JsIdentifier('String) with JsStringType
 
+  def jsWindow = new JsIdentifier('window) with JsDOMWindowType
+
   trait JsObjectType {
     self: JsExpression ⇒
 
@@ -355,8 +357,6 @@ object JsToplevel {
 
     def test = new JsMember(this, JsIdentifier('test)) with JsBooleanType
   }
-
-  def jsWindow = new JsIdentifier('window) with JsDOMWindowType
 
   // Browser Objects
 
