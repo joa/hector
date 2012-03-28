@@ -2,6 +2,8 @@ package hector.js
 
 import java.io.{Writer, StringWriter}
 
+import hector.util.escapeJavaScriptString
+
 /**
  */
 object JsEmitter {
@@ -418,7 +420,7 @@ object JsEmitter {
         write(property)
 
       case JsString(value) ⇒
-        print(encodeString(value))
+        print(escapeJavaScriptString(value))
 
       case JsArray(elements) ⇒
         print("[")
@@ -454,42 +456,6 @@ object JsEmitter {
         print(value.toString())
     }
   }
-
-  private def encodeString(value: String): String = {
-    if(null == value) {
-      "null"
-    } else {
-      val stringBuilder = new StringBuilder(value.length + 2)
-      val n = value.length
-      var i = 0
-
-      stringBuilder.append('"')
-
-      while(i < n) {
-        value.charAt(i) match {
-          case char @ '\\' ⇒ stringBuilder.append(escape(char))
-          case char @ '\'' ⇒ stringBuilder.append(escape(char))
-          case '"' ⇒ stringBuilder.append("\\\"")
-          case char if char < ' ' || char > '~' || char == ']' || char.toInt >= 127 ⇒ stringBuilder.append(escape(char))
-          case other ⇒ stringBuilder.append(other)
-        }
-        i += 1
-      }
-
-      stringBuilder.append('"')
-      stringBuilder.toString()
-    }
-  }
-
-  private def escape(char: Char) =
-    char.toInt match {
-      case 0            ⇒ "\\u0000"
-      case x if x < 0x10 ⇒ "\\u000"+x
-      case x if x < 0x100 ⇒ "\\u00"+x
-      case x if x < 0x1000 ⇒ "\\u0"+x
-      case x if x < 0x10000 ⇒ "\\u"+x
-      case _ ⇒ ""
-    }
 
   private def writeOptional(keyword: String, value: Option[JsAST])(implicit writer: JsWriter) {
     import writer.{print, println, printIndent}

@@ -24,7 +24,7 @@ final class JsSpec extends HectorSpec {
           )
         )
 
-      ast.emit() must be ("if((true==false))(window.alert(\"true == false\"));if((true!=false))(window.alert(\"true != false\"));")
+      ast.emit() must be ("if((true==false))(window.alert('true == false'));if((true!=false))(window.alert('true != false'));")
     }
 
     it("can convert a Map to a JsObj") {
@@ -33,7 +33,7 @@ final class JsSpec extends HectorSpec {
       val ast: JsAST =
         Map[JsIdentifier, JsExpression]('Abc → "Def", 'X → true)
 
-      ast.emit() must be ("{Abc:\"Def\",X:true}")
+      ast.emit() must be ("{Abc:'Def',X:true}")
     }
 
     it("can convert an illegal identifier to a valid one") {
