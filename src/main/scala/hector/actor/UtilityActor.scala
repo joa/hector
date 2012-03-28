@@ -25,7 +25,7 @@ object UtilityActor {
 }
 
 final class UtilityActor extends Actor {
-  import java.util.{UUID => JUUID}
+  import java.util.{UUID ⇒ JUUID}
 
   import UtilityActor._
 
@@ -51,7 +51,7 @@ final class UtilityActor extends Actor {
 
       val hashFuture =
         (self ? NewUniqueHash).mapTo[String] recover {
-          case timeout: AskTimeoutException =>
+          case timeout: AskTimeoutException ⇒
             JUUID.randomUUID().toString.replace("-", "")
         }
 

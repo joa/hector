@@ -125,9 +125,9 @@ package object util {
 
     while(i < n) {
       chars(i) match {
-        case '"' => quoteCount += 1
-        case '\'' => aposCount += 1
-        case _ =>
+        case '"' ⇒ quoteCount += 1
+        case '\'' ⇒ aposCount += 1
+        case _ ⇒
       }
 
       i += 1
@@ -160,15 +160,15 @@ package object util {
 
         val escape: Int =
           c match {
-            case '\b' => 'b'
-            case '\f' => 'f'
-            case '\n' => 'n'
-            case '\r' => 'r'
-            case '\t' => 'r'
-            case '"' => '"'   // Will be reached only if c == quoteChar
-            case '\'' => '\'' // Will be reached only if c == quoteChar
-            case '\\' => '\\'
-            case _ => -1
+            case '\b' ⇒ 'b'
+            case '\f' ⇒ 'f'
+            case '\n' ⇒ 'n'
+            case '\r' ⇒ 'r'
+            case '\t' ⇒ 'r'
+            case '"' ⇒ '"'   // Will be reached only if c == quoteChar
+            case '\'' ⇒ '\'' // Will be reached only if c == quoteChar
+            case '\\' ⇒ '\\'
+            case _ ⇒ -1
           }
 
         result.append('\\')
