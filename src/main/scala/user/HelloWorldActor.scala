@@ -53,7 +53,7 @@ final class HelloWorldActor extends Actor {
               <h1>Hello
                 {greeting}
               </h1>{date}<p>
-              <a href="#" onclick={callback.emit()}>click me</a>
+              <a href="#" title={"test \" escaping"} onclick={callback.emit()}>click me</a>
             </p>
             </body>
           </html>, DocTypes.`HTML 5`)

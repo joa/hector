@@ -29,9 +29,7 @@ object HtmlEmitter {
   private[this] val CharsProcInstrClose = "?>".toCharArray
 
   def toString(html: Node, docType: DocType = DocTypes.`HTML 5`, stripComments: Boolean = false, trim: Boolean = false, humanReadable: Boolean = false, omitDocType: Boolean = false): String = {
-    // The average website is 25.000 bytes according to http://www.optimizationweek.com/reviews/average-web-page/
-
-    val stringWriter = new StringWriter(25000)
+    val stringWriter = new StringWriter()
     val printWriter = new PrintWriter(stringWriter)
     val writer = new HtmlWriter(printWriter, humanReadable)
 
@@ -170,10 +168,51 @@ object HtmlEmitter {
             if(null != value) {
               writer.print('=')
               writer.print('"')
-              value foreach {
-                element ⇒
-                  _string(toString(element, docType, stripComments, trim = false, humanReadable = humanReadable, omitDocType = true), false)
+
+              if(value forall { _.isInstanceOf[Text] }) {
+                // The common case: All attribute elements are text nodes. Who would have
+                // thought about that?!
+
+                // This is an evil side-effect we are willing to introduce into our beautiful
+                // map operation so we do not have to call (stringSequence map { _.length }).sum
+                // which makes us traverse the sequence again.
+                var totalLength = 0
+
+                val stringSequence: Seq[String] = value map {
+                  textNode ⇒
+                    val result = textNode.asInstanceOf[Text].data
+                    totalLength += result.length
+                    result
+                }
+
+                // Use "totalLength" instead of "(stringSequence map { _.length }).sum" here.
+                val stringBuilder = new StringBuilder(totalLength)
+
+                stringSequence foreach stringBuilder.append
+
+                // Never trim any attributes because this is absolutely the decision of the
+                // person generating an attribute in the first place.
+
+                _string(stringBuilder.toString(), trim = false)
+              } else {
+                // Whatever this is ...
+
+                value foreach {
+                  element ⇒
+                    //TODO(joa): remove before going into prod
+                    println("#####################################################################")
+                    println("# JACKPOT: "+element)
+                    println("#####################################################################")
+
+                    // However we do not perform any additional escaping since toString(...) will
+                    // already contain an escaped sequence. But we might want to look for
+                    // any closing XML tag
+
+                    //TODO(joa): escape closing XML tags
+                    writer.print(toString(element, docType, stripComments, trim = false, humanReadable = humanReadable, omitDocType = true))
+                }
               }
+
               writer.print('"')
             }
         }
