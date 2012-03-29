@@ -1,53 +1,75 @@
-package hector.js
+package hector.js.emitter
 
+import hector.js._
 import hector.util.escapeJavaScriptString
 
 import java.io.{PrintWriter, StringWriter}
 import javax.annotation.concurrent.NotThreadSafe
 
-import scala.annotation.switch
-
 object JsEmitter {
   private[JsEmitter] val CharsBreak = "break".toCharArray
+
   private[JsEmitter] val CharsCase = "case".toCharArray
+
   private[JsEmitter] val CharsCatch = "catch".toCharArray
+
   private[JsEmitter] val CharsContinue = "continue".toCharArray
+
   private[JsEmitter] val CharsDebugger = "debugger".toCharArray
+
   private[JsEmitter] val CharsDefault = "default".toCharArray
+
   private[JsEmitter] val CharsDo = "do".toCharArray
+
   private[JsEmitter] val CharsElse = "else".toCharArray
+
   private[JsEmitter] val CharsFalse = "false".toCharArray
+
   private[JsEmitter] val CharsFinally = "finally".toCharArray
+
   private[JsEmitter] val CharsFor = "for".toCharArray
+
   private[JsEmitter] val CharsFunction = "function".toCharArray
+
   private[JsEmitter] val CharsIf = "if".toCharArray
+
   private[JsEmitter] val CharsIn = "in".toCharArray
+
   private[JsEmitter] val CharsNew = "new".toCharArray
+
   private[JsEmitter] val CharsNull = "null".toCharArray
+
   private[JsEmitter] val CharsReturn = "return".toCharArray
+
   private[JsEmitter] val CharsSwitch = "switch".toCharArray
+
   private[JsEmitter] val CharsThis = "this".toCharArray
+
   private[JsEmitter] val CharsThrow = "throw".toCharArray
+
   private[JsEmitter] val CharsTrue = "true".toCharArray
+
   private[JsEmitter] val CharsTry = "try".toCharArray
+
   private[JsEmitter] val CharsVar = "var".toCharArray
+
   private[JsEmitter] val CharsWhile = "while".toCharArray
 
   def toNode(ast: JsAST, humanReadable: Boolean = false) = {
     import scala.xml.Unparsed
 
-    <script type="text/javascript">{
-      Unparsed(data = toString(ast, humanReadable))
-    }</script>
+    <script type="text/javascript">
+      {Unparsed(data = toString(ast, humanReadable))}
+    </script>
   }
 
   def toString(ast: JsAST, humanReadable: Boolean = false) = {
-    val stringWriter = new StringWriter(0x100)
+    val stringWriter = new StringWriter()
     val printWriter = new PrintWriter(stringWriter)
-    implicit val writer = new JsWriter(printWriter, humanReadable)
+    val writer = new JsWriter(printWriter, humanReadable)
 
     val emitter = new JsEmitter()
-    emitter.visit(ast)
+    emitter.visit(ast)(writer)
 
     printWriter.flush()
     printWriter.close()
@@ -59,6 +81,7 @@ object JsEmitter {
  */
 @NotThreadSafe
 private final class JsEmitter {
+
   import JsEmitter._
 
   // this is the only variable keeping us from making this an object and threadsafe ...!
@@ -72,16 +95,39 @@ private final class JsEmitter {
   //visit(body)
   //_nestedPop(body)
 
+  //TODO(joa): get rid of code duplicates ...
   def visit(ast: JsAST)(implicit writer: JsWriter) {
+
     ast match {
       case JsProgram(statements) ⇒
+        val last = statements.last
+
+        for { statement <- statements } {
+          needSemi = true
+
+          visit(statement)
+
+          _finish(statement, last)
+        }
 
       case JsEmptyStatement ⇒
+      // Nothing.
 
       case JsBlock(statements) ⇒
+        _blockOpen()
+        val last = statements.last
 
-      case JsExpStatement(exp) ⇒
-        val surroundWithParentheses = false //TODO(joa): JsFirstExpressionVisitor.exec(x);
+        for {statement <- statements} {
+          needSemi = true
+
+          visit(statement)
+
+          _finish(statement, last)
+        }
+        _blockClose()
+
+      case x @ JsExpStatement(exp) ⇒
+        val surroundWithParentheses = JsFirstExpressionVisitor.exec(x)
 
         if(surroundWithParentheses) {
           _lparen()
@@ -145,7 +191,10 @@ private final class JsEmitter {
             _space()
             _ident(value)
         }
+
       case JsWith(obj, body) ⇒
+        //TODO(joa): need to support stupid with-statement
+        error("Who on earth would use with(obj) { ... } anyways?!")
 
       case JsReturn(value) ⇒
         _return()
@@ -170,11 +219,12 @@ private final class JsEmitter {
         visit(body)
         _nestedPop(body)
 
-      case x @ JsDoWhile(test,  body) ⇒
+      case x @ JsDoWhile(test, body) ⇒
         _do()
         _nestedPush(body, true)
         visit(body)
         _nestedPop(body)
+
         if(needSemi) {
           _semi()
           _newLineOpt()
@@ -182,6 +232,7 @@ private final class JsEmitter {
           _spaceOpt()
           needSemi = true
         }
+
         _while()
         _spaceOpt()
         _lparen()
@@ -216,7 +267,7 @@ private final class JsEmitter {
         visit(body)
         _nestedPop(body)
 
-      case JsForIn(left, right,  body) ⇒
+      case JsForIn(left, right, body) ⇒
         _for()
         _spaceOpt()
         _lparen()
@@ -253,6 +304,7 @@ private final class JsEmitter {
         }
 
       case JsNop(expr) ⇒
+        visit(expr)
 
       case x @ JsIdentifier(_) ⇒
         _ident(x)
@@ -303,44 +355,42 @@ private final class JsEmitter {
         visit(body)
         needSemi = true
 
-      case JsSeq(exp) ⇒
-
-      case JsUnary(op, value) ⇒
-
       case x @ JsBinary(left, op, right) ⇒
         _parenPush(x, left, !op.isLeftAssociative)
         visit(left)
+
         if(op.isKeyword) {
           _parenPopOrSpace(x, left, !op.isLeftAssociative)
         } else {
           _parenPop(x, left, !op.isLeftAssociative)
           _spaceOpt()
         }
+
         writer.print(op.symbol)
+
         if(_spaceCalc(op, right)) {
           _parenPushOrSpace(x, right, op.isLeftAssociative)
         } else {
           _spaceOpt()
           _parenPush(x, right, op.isLeftAssociative)
         }
+
         visit(right)
         _parenPop(x, right, op.isLeftAssociative)
 
-      case JsAssignment(left, op, right) ⇒
-
-      case x @ JsPrefix(op, exp) ⇒
+      case x @ JsPrefix(op, value) ⇒
         writer.print(op.symbol)
-        if(_spaceCalc(op, exp)) {
+        if(_spaceCalc(op, value)) {
           _space()
         }
-        _parenPush(x, exp, false)
-        visit(exp)
-        _parenPop(x, exp, false)
+        _parenPush(x, value, false)
+        visit(value)
+        _parenPop(x, value, false)
 
-      case x @ JsPostfix(op, exp) ⇒
-        _parenPush(x, exp, false)
-        visit(exp)
-        _parenPop(x, exp, false)
+      case x @ JsPostfix(op, value) ⇒
+        _parenPush(x, value, false)
+        visit(value)
+        _parenPop(x, value, false)
         writer.print(op.symbol)
 
       case x @ JsCondition(test, trueCase, falseCase) ⇒
@@ -381,6 +431,7 @@ private final class JsEmitter {
           _commaSeparated(arguments)
           _rparen()
         }
+
       case x @ JsCall(callee, arguments) ⇒
         _parenPush(x, callee, false)
         visit(callee)
@@ -390,8 +441,12 @@ private final class JsEmitter {
         _rparen()
 
       case x @ JsMember(obj, property) ⇒
-        _parenPush(x,obj, false)
+        _parenPush(x, obj, false)
         visit(obj)
+        obj match {
+          case JsNumber(_) => _space()
+          case _ =>
+        }
         _parenPop(x, obj, false)
         _dot()
         visit(property)
@@ -442,39 +497,155 @@ private final class JsEmitter {
       _parenPopIfCommaExpr(expression)
     }
   }
-  private[this] def _pushIndent()(implicit writer: JsWriter) { writer.pushIndent() }
-  private[this] def _popIndent()(implicit writer: JsWriter) { writer.popIndent() }
-  private[this] def _stringLiteral(value: String)(implicit writer: JsWriter) { writer.print(escapeJavaScriptString(value)) }
-  private[this] def _newLine()(implicit writer: JsWriter) { writer.newLine() }
-  private[this] def _newLineOpt()(implicit writer: JsWriter) { writer.newLineOpt() }
-  private[this] def _space()(implicit writer: JsWriter) { writer.print(' ') }
-  private[this] def _spaceOpt()(implicit writer: JsWriter) { writer.printOpt(' ') }
-  private[this] def _assignment()(implicit writer: JsWriter) { writer.print('=') }
-  private[this] def _blockClose()(implicit writer: JsWriter) { writer.popIndent(); writer.print('}'); _newLineOpt() }
-  private[this] def _blockOpen()(implicit writer: JsWriter) { writer.print('{'); writer.pushIndent();  _newLineOpt() }
-  private[this] def _break()(implicit writer: JsWriter) { writer.print(CharsBreak) }
-  private[this] def _case()(implicit writer: JsWriter) { writer.print(CharsCase) }
-  private[this] def _catch()(implicit writer: JsWriter) { writer.print(CharsCatch) }
-  private[this] def _colon()(implicit writer: JsWriter) { writer.print(':') }
-  private[this] def _continue()(implicit writer: JsWriter) { writer.print(CharsContinue) }
-  private[this] def _debugger()(implicit writer: JsWriter) { writer.print(CharsDebugger) }
-  private[this] def _default()(implicit writer: JsWriter) { writer.print(CharsDefault) }
-  private[this] def _do()(implicit writer: JsWriter) { writer.print(CharsDo) }
-  private[this] def _dot()(implicit writer: JsWriter) { writer.print('.') }
-  private[this] def _else()(implicit writer: JsWriter) { writer.print(CharsElse) }
-  private[this] def _false()(implicit writer: JsWriter) { writer.print(CharsFalse) }
-  private[this] def _finally()(implicit writer: JsWriter) { writer.print(CharsFinally) }
-  private[this] def _for()(implicit writer: JsWriter) { writer.print(CharsFor) }
-  private[this] def _function()(implicit writer: JsWriter) { writer.print(CharsFunction) }
-  private[this] def _if()(implicit writer: JsWriter) { writer.print(CharsIf) }
-  private[this] def _in()(implicit writer: JsWriter) { writer.print(CharsIn) }
-  private[this] def _lbrace()(implicit writer: JsWriter) { writer.print('{') }
-  private[this] def _lparen()(implicit writer: JsWriter) { writer.print('(') }
-  private[this] def _lbrack()(implicit writer: JsWriter) { writer.print('[') }
-  private[this] def _rbrace()(implicit writer: JsWriter) { writer.print('}') }
-  private[this] def _rparen()(implicit writer: JsWriter) { writer.print(')') }
-  private[this] def _rbrack()(implicit writer: JsWriter) { writer.print(']') }
-  private[this] def _ident(identifier: JsIdentifier)(implicit writer: JsWriter) { writer.print(identifier.name.name) }
+
+  private[this] def _finish(currentStatement: JsStatement, lastStatement: JsStatement)(implicit writer: JsWriter) {
+    val isFunctionStatement = currentStatement match {
+      case JsExpStatement(JsFunc(_, _, _)) => true
+      case _ => false
+    }
+
+    val isLastStatement: Boolean = currentStatement.eq(lastStatement)
+
+    if(isFunctionStatement) {
+      if(isLastStatement) {
+        _newLineOpt()
+      } else {
+        _newLine()
+      }
+    } else {
+      if(isLastStatement) {
+        _semiOpt()
+      } else {
+        _semi()
+      }
+      _newLineOpt()
+    }
+  }
+
+  private[this] def _stringLiteral(value: String)(implicit writer: JsWriter) {
+    writer.print(escapeJavaScriptString(value))
+  }
+
+  private[this] def _newLine()(implicit writer: JsWriter) {
+    writer.newLine()
+  }
+
+  private[this] def _newLineOpt()(implicit writer: JsWriter) {
+    writer.newLineOpt()
+  }
+
+  private[this] def _space()(implicit writer: JsWriter) {
+    writer.print(' ')
+  }
+
+  private[this] def _spaceOpt()(implicit writer: JsWriter) {
+    writer.printOpt(' ')
+  }
+
+  private[this] def _assignment()(implicit writer: JsWriter) {
+    writer.print('=')
+  }
+
+  private[this] def _blockClose()(implicit writer: JsWriter) {
+    writer.popIndent(); writer.print('}'); _newLineOpt()
+  }
+
+  private[this] def _blockOpen()(implicit writer: JsWriter) {
+    writer.print('{'); writer.pushIndent(); _newLineOpt()
+  }
+
+  private[this] def _break()(implicit writer: JsWriter) {
+    writer.print(CharsBreak)
+  }
+
+  private[this] def _case()(implicit writer: JsWriter) {
+    writer.print(CharsCase)
+  }
+
+  private[this] def _catch()(implicit writer: JsWriter) {
+    writer.print(CharsCatch)
+  }
+
+  private[this] def _colon()(implicit writer: JsWriter) {
+    writer.print(':')
+  }
+
+  private[this] def _continue()(implicit writer: JsWriter) {
+    writer.print(CharsContinue)
+  }
+
+  private[this] def _debugger()(implicit writer: JsWriter) {
+    writer.print(CharsDebugger)
+  }
+
+  private[this] def _default()(implicit writer: JsWriter) {
+    writer.print(CharsDefault)
+  }
+
+  private[this] def _do()(implicit writer: JsWriter) {
+    writer.print(CharsDo)
+  }
+
+  private[this] def _dot()(implicit writer: JsWriter) {
+    writer.print('.')
+  }
+
+  private[this] def _else()(implicit writer: JsWriter) {
+    writer.print(CharsElse)
+  }
+
+  private[this] def _false()(implicit writer: JsWriter) {
+    writer.print(CharsFalse)
+  }
+
+  private[this] def _finally()(implicit writer: JsWriter) {
+    writer.print(CharsFinally)
+  }
+
+  private[this] def _for()(implicit writer: JsWriter) {
+    writer.print(CharsFor)
+  }
+
+  private[this] def _function()(implicit writer: JsWriter) {
+    writer.print(CharsFunction)
+  }
+
+  private[this] def _if()(implicit writer: JsWriter) {
+    writer.print(CharsIf)
+  }
+
+  private[this] def _in()(implicit writer: JsWriter) {
+    writer.print(CharsIn)
+  }
+
+  private[this] def _lbrace()(implicit writer: JsWriter) {
+    writer.print('{')
+  }
+
+  private[this] def _lparen()(implicit writer: JsWriter) {
+    writer.print('(')
+  }
+
+  private[this] def _lbrack()(implicit writer: JsWriter) {
+    writer.print('[')
+  }
+
+  private[this] def _rbrace()(implicit writer: JsWriter) {
+    writer.print('}')
+  }
+
+  private[this] def _rparen()(implicit writer: JsWriter) {
+    writer.print(')')
+  }
+
+  private[this] def _rbrack()(implicit writer: JsWriter) {
+    writer.print(']')
+  }
+
+  private[this] def _ident(identifier: JsIdentifier)(implicit writer: JsWriter) {
+    writer.print(identifier.name.name)
+  }
+
   private[this] def _nestedPop(statement: JsStatement)(implicit writer: JsWriter) =
     statement match {
       case _: JsBlock ⇒ false
@@ -482,11 +653,13 @@ private final class JsEmitter {
         writer.popIndent()
         true
     }
+
   private[this] def _nestedPush(statement: JsStatement, needSpace: Boolean)(implicit writer: JsWriter) =
     statement match {
       case _: JsBlock ⇒
         _spaceOpt()
         false
+
       case _ ⇒
         if(needSpace) {
           _space()
@@ -495,14 +668,22 @@ private final class JsEmitter {
         _newLineOpt()
         true
     }
-  private[this] def _new()(implicit writer: JsWriter) { writer.print(CharsNew) }
-  private[this] def _null()(implicit writer: JsWriter) { writer.print(CharsNull) }
+
+  private[this] def _new()(implicit writer: JsWriter) {
+    writer.print(CharsNew)
+  }
+
+  private[this] def _null()(implicit writer: JsWriter) {
+    writer.print(CharsNull)
+  }
+
   private[this] def _parenCalc(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
-    val parentPrec = -1//TODO(joa): JsPrecedenceVisitor.exec(parent)
-    val childPrec = -1//TODO(joa): JsPrecedenceVisitor.exec(child)
+    val parentPrec = -1 //TODO(joa): JsPrecedenceVisitor.exec(parent)
+    val childPrec = -1 //TODO(joa): JsPrecedenceVisitor.exec(child)
 
     parentPrec > childPrec || (parentPrec == childPrec && wrongAssoc)
   }
+
   private[this] def _parenPop(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
     val doPop = _parenCalc(parent, child, wrongAssoc)
 
@@ -512,6 +693,7 @@ private final class JsEmitter {
 
     doPop
   }
+
   private[this] def _parenPopIfCommaExpr(expression: JsExpression)(implicit writer: JsWriter) =
     expression match {
       case binOp: JsBinary if binOp.op == JsBinops.`,` ⇒
@@ -520,6 +702,7 @@ private final class JsEmitter {
       case _ ⇒
         false
     }
+
   private[this] def _parenPopOrSpace(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
     val doPop = _parenCalc(parent, child, wrongAssoc)
 
@@ -531,6 +714,7 @@ private final class JsEmitter {
 
     doPop
   }
+
   private[this] def _parenPush(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
     val doPush = _parenCalc(parent, child, wrongAssoc)
 
@@ -540,6 +724,7 @@ private final class JsEmitter {
 
     doPush
   }
+
   private[this] def _parenPushIfCommaExpr(expression: JsExpression)(implicit writer: JsWriter) =
     expression match {
       case binOp: JsBinary if binOp.op == JsBinops.`,` ⇒
@@ -548,7 +733,9 @@ private final class JsEmitter {
       case _ ⇒
         false
     }
+
   private[this] def _parenPushOrSpace(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
+
     val doPush = _parenCalc(parent, child, wrongAssoc)
 
     if(doPush) {
@@ -559,99 +746,61 @@ private final class JsEmitter {
 
     doPush
   }
-  private[this] def _questionMark()(implicit writer: JsWriter) { writer.print('?') }
-  private[this] def _return()(implicit writer: JsWriter) { writer.print(CharsReturn) }
-  private[this] def _semi()(implicit writer: JsWriter) { writer.print(';') }
-  private[this] def _semiOpt()(implicit writer: JsWriter) { writer.printOpt(';') }
+
+  private[this] def _questionMark()(implicit writer: JsWriter) {
+    writer.print('?')
+  }
+
+  private[this] def _return()(implicit writer: JsWriter) {
+    writer.print(CharsReturn)
+  }
+
+  private[this] def _semi()(implicit writer: JsWriter) {
+    writer.print(';')
+  }
+
+  private[this] def _semiOpt()(implicit writer: JsWriter) {
+    writer.printOpt(';')
+  }
+
   private[this] def _sepCommaOptSpace(sep: Boolean)(implicit writer: JsWriter) {
     if(sep) {
       writer.print(',')
       _spaceOpt()
     }
   }
-  private[this] def _slash()(implicit writer: JsWriter) { writer.print('/') }
+
+  private[this] def _slash()(implicit writer: JsWriter) {
+    writer.print('/')
+  }
+
   private[this] def _spaceCalc(op: JsOperator, expression: JsExpression)(implicit writer: JsWriter) = false //TODO(joa): needs impl
-  private[this] def _switch()(implicit writer: JsWriter) { writer.print(CharsSwitch) }
-  private[this] def _this()(implicit writer: JsWriter) { writer.print(CharsThis) }
-  private[this] def _throw()(implicit writer: JsWriter) { writer.print(CharsThrow) }
-  private[this] def _true()(implicit writer: JsWriter) { writer.print(CharsTrue) }
-  private[this] def _try()(implicit writer: JsWriter) { writer.print(CharsTry) } 
-  private[this] def _var()(implicit writer: JsWriter) { writer.print(CharsVar) }
-  private[this] def _while()(implicit writer: JsWriter) { writer.print(CharsWhile) }
-}
 
-@NotThreadSafe
-private final class JsWriter(private[this] val writer: PrintWriter, private[this] val humanReadable: Boolean) {
-  private[this] var indentLevel = 0
-  private[this] var indents = Array.empty[Array[Char]]
-  private[this] var wasNewline = false
-
-  def pushIndent() {
-    indentLevel += 1
-
-    if(indentLevel >= indents.length) {
-      val newIndentLevel = Array.fill(indentLevel << 1) { ' ' }
-      val newIndents = new Array[Array[Char]](indents.length + 1)
-
-      System.arraycopy(indents, 0, newIndents, 0, indents.length)
-
-      newIndents(indentLevel) = newIndentLevel
-    }
+  private[this] def _switch()(implicit writer: JsWriter) {
+    writer.print(CharsSwitch)
   }
 
-  def popIndent() {
-    indentLevel -= 1
+  private[this] def _this()(implicit writer: JsWriter) {
+    writer.print(CharsThis)
   }
 
-  def newLine() {
-    writer.print('\n')
-    wasNewline = true
+  private[this] def _throw()(implicit writer: JsWriter) {
+    writer.print(CharsThrow)
   }
 
-  def newLineOpt() {
-    if(humanReadable) {
-      newLine()
-    }
+  private[this] def _true()(implicit writer: JsWriter) {
+    writer.print(CharsTrue)
   }
 
-  def print(value: Char) {
-    maybeIndent()
-    writer.print(value)
-    wasNewline = false
+  private[this] def _try()(implicit writer: JsWriter) {
+    writer.print(CharsTry)
   }
 
-  def print(value: Array[Char]) {
-    maybeIndent()
-    writer.print(value)
-    wasNewline = false
+  private[this] def _var()(implicit writer: JsWriter) {
+    writer.print(CharsVar)
   }
 
-  def print(value: String) {
-    print(value.toCharArray)
-  }
-
-  def printOpt(value: Char) {
-    if(humanReadable) {
-      print(value)
-    }
-  }
-
-  def printOpt(value: Array[Char]) {
-    if(humanReadable) {
-      print(value)
-    }
-  }
-
-  def printOpt(value: String) {
-    if(humanReadable) {
-      print(value.toCharArray)
-    }
-  }
-
-  private[this] def maybeIndent() {
-    if(wasNewline && humanReadable) {
-      writer.print(indents(indentLevel))
-      wasNewline = false
-    }
+  private[this] def _while()(implicit writer: JsWriter) {
+    writer.print(CharsWhile)
   }
 }

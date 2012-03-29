@@ -1,6 +1,6 @@
 package hector.js
 
-import scala.xml.Node
+import hector.js.emitter.JsEmitter
 
 /**
  */
@@ -56,14 +56,13 @@ sealed trait JsOperator {
   def symbol: Array[Char]
 }
 
-sealed trait JsPreOrPostfixOperator extends JsOperator
-
-object JsPreOrPostfixOperators {
-  case object `++` extends JsPreOrPostfixOperator { override val symbol = Array('+', '+') }
-  case object `--` extends JsPreOrPostfixOperator { override val symbol = Array('-', '-') }
-}
-
 sealed trait JsUnop extends JsOperator
+
+sealed trait JsBinop extends JsOperator {
+  def isLeftAssociative: Boolean = false //TODO(joa): implement in objects
+
+  def precedence: Int = 0 //TODO(joa): implement in objects
+}
 
 object JsUnops {
   case object `-` extends JsUnop { override val symbol = Array('-') }
@@ -73,12 +72,8 @@ object JsUnops {
   case object `typeof` extends JsUnop { override def isKeyword = true; override val symbol = "typeof".toCharArray }
   case object `void` extends JsUnop { override def isKeyword = true; override val symbol = "void".toCharArray }
   case object `delete` extends JsUnop { override def isKeyword = true; override val symbol = "delete".toCharArray }
-}
-
-sealed trait JsBinop extends JsOperator {
-  def isLeftAssociative: Boolean = false //TODO(joa): implement in objects
-
-  def precedence: Int = 0 //TODO(joa): implement in objects
+  case object `++` extends JsUnop { override val symbol = Array('+', '+') }
+  case object `--` extends JsUnop { override val symbol = Array('-', '-') }
 }
 
 object JsBinops {
@@ -105,23 +100,18 @@ object JsBinops {
   case object `instanceof` extends JsBinop { override def isKeyword = true; override val symbol = Array('=', '=') }
   case object `||` extends JsBinop { override val symbol = Array('|', '|') }
   case object `&&` extends JsBinop { override val symbol = Array('&', '&') }
-}
-
-sealed trait JsAssignmentOp extends JsOperator
-
-object JsAssignmentOps {
-  case object `=` extends JsAssignmentOp { override val symbol = Array('=') }
-  case object `+=` extends JsAssignmentOp { override val symbol = Array('+', '=') }
-  case object `-=` extends JsAssignmentOp { override val symbol = Array('-', '=') }
-  case object `*=` extends JsAssignmentOp { override val symbol = Array('*', '=') }
-  case object `/=` extends JsAssignmentOp { override val symbol = Array('/', '=') }
-  case object `%=` extends JsAssignmentOp { override val symbol = Array('%', '=') }
-  case object `<<=` extends JsAssignmentOp { override val symbol = Array('<', '<', '=') }
-  case object `>>=` extends JsAssignmentOp { override val symbol = Array('>', '>', '=') }
-  case object `>>>=` extends JsAssignmentOp { override val symbol = Array('>', '>', '>', '=') }
-  case object `|=` extends JsAssignmentOp { override val symbol = Array('|', '=') }
-  case object `^=` extends JsAssignmentOp { override val symbol = Array('^', '=') }
-  case object `&=` extends JsAssignmentOp { override val symbol = Array('&', '=') }
+  case object `=` extends JsBinop { override val symbol = Array('=') }
+  case object `+=` extends JsBinop { override val symbol = Array('+', '=') }
+  case object `-=` extends JsBinop { override val symbol = Array('-', '=') }
+  case object `*=` extends JsBinop { override val symbol = Array('*', '=') }
+  case object `/=` extends JsBinop { override val symbol = Array('/', '=') }
+  case object `%=` extends JsBinop { override val symbol = Array('%', '=') }
+  case object `<<=` extends JsBinop { override val symbol = Array('<', '<', '=') }
+  case object `>>=` extends JsBinop { override val symbol = Array('>', '>', '=') }
+  case object `>>>=` extends JsBinop { override val symbol = Array('>', '>', '>', '=') }
+  case object `|=` extends JsBinop { override val symbol = Array('|', '=') }
+  case object `^=` extends JsBinop { override val symbol = Array('^', '=') }
+  case object `&=` extends JsBinop { override val symbol = Array('&', '=') }
 }
 
 trait JsAssignments {
@@ -129,28 +119,32 @@ trait JsAssignments {
 
   def set(value: JsExpression) = :=(value)
 
-  def :=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`=`, value)
-  def :+=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`+=`, value)
-  def :-=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`-=`, value)
-  def :*=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`*=`, value)
-  def :/=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`/=`, value)
-  def :%=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`%=`, value)
-  def :<<=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`<<=`, value)
-  def :>>=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`>>=`, value)
-  def :>>>=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`>>>=`, value)
-  def :|=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`|=`, value)
-  def :^=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`^=`, value)
-  def :&=(value: JsExpression) = JsAssignment(this, JsAssignmentOps.`&=`, value)
+  def :=(value: JsExpression) = JsBinary(this, JsBinops.`=`, value)
+  def :+=(value: JsExpression) = JsBinary(this, JsBinops.`+=`, value)
+  def :-=(value: JsExpression) = JsBinary(this, JsBinops.`-=`, value)
+  def :*=(value: JsExpression) = JsBinary(this, JsBinops.`*=`, value)
+  def :/=(value: JsExpression) = JsBinary(this, JsBinops.`/=`, value)
+  def :%=(value: JsExpression) = JsBinary(this, JsBinops.`%=`, value)
+  def :<<=(value: JsExpression) = JsBinary(this, JsBinops.`<<=`, value)
+  def :>>=(value: JsExpression) = JsBinary(this, JsBinops.`>>=`, value)
+  def :>>>=(value: JsExpression) = JsBinary(this, JsBinops.`>>>=`, value)
+  def :|=(value: JsExpression) = JsBinary(this, JsBinops.`|=`, value)
+  def :^=(value: JsExpression) = JsBinary(this, JsBinops.`^=`, value)
+  def :&=(value: JsExpression) = JsBinary(this, JsBinops.`&=`, value)
 }
 
 sealed trait JsExpression extends JsAST/* with Dynamic*/ {
-  def unary_- = JsUnary(JsUnops.`-`, this)
-  def unary_+ = JsUnary(JsUnops.`+`, this)
-  def unary_! = JsUnary(JsUnops.`!`, this)
-  def unary_~ = JsUnary(JsUnops.`~`, this)
-  def unary_typeof = JsUnary(JsUnops.`typeof`, this)
-  def unary_void = JsUnary(JsUnops.`void`, this)
-  def unary_delete = JsUnary(JsUnops.`delete`, this)
+  def unary_- = JsPrefix(JsUnops.`-`, this)
+  def unary_+ = JsPrefix(JsUnops.`+`, this)
+  def unary_! = JsPrefix(JsUnops.`!`, this)
+  def unary_~ = JsPrefix(JsUnops.`~`, this)
+  def unary_typeof = JsPrefix(JsUnops.`typeof`, this)
+  def unary_void = JsPrefix(JsUnops.`void`, this)
+  def unary_delete = JsPrefix(JsUnops.`delete`, this)
+  def unary_++ = JsPrefix(JsUnops.`++`, this)
+  def unary_-- = JsPrefix(JsUnops.`--`, this)
+  def ++ = JsPostfix(JsUnops.`++`, this)
+  def -- = JsPostfix(JsUnops.`--`, this)
 
   def ==(that: JsExpression) = JsBinary(this, JsBinops.`==`, that)
   def !=(that: JsExpression) = JsBinary(this, JsBinops.`!=`, that)
@@ -175,14 +169,13 @@ sealed trait JsExpression extends JsAST/* with Dynamic*/ {
   def ||(that: JsExpression) = JsBinary(this, JsBinops.`||`, that)
   def &&(that: JsExpression) = JsBinary(this, JsBinops.`&&`, that)
 
-  def unary_++ = JsPrefix(JsPreOrPostfixOperators.`++`, this)
-  def unary_-- = JsPrefix(JsPreOrPostfixOperators.`--`, this)
-  def ++ = JsPostfix(JsPreOrPostfixOperators.`++`, this)
-  def -- = JsPostfix(JsPreOrPostfixOperators.`--`, this)
+
+  // note: since scala cannot differentiate between a(i) and a[i] we have no choice and make the
+  // tradeoff for a JsCall instead of JsArrayAccess
 
   def apply(arguments: JsExpression*) = JsCall(this, arguments)
 
-  def update(name: JsIdentifier, value: JsExpression) = JsAssignment(JsMember(this, name), JsAssignmentOps.`=`, value)
+  def update(name: JsIdentifier, value: JsExpression) = JsBinary(JsMember(this, name), JsBinops.`=`, value)
 
   /*
   def applyDynamic(name: String)(args: Any*) = {
@@ -201,23 +194,16 @@ case class JsArrayAccess(array: JsExpression, index: JsExpression) extends JsExp
 case class JsProp(key: JsIdentifier, value: JsExpression, kind: Option[JsPropertyKind] = None)
 case class JsObj(properties: Seq[JsProp]) extends JsExpression
 case class JsFunc(id: Option[JsIdentifier], parameters: Seq[JsIdentifier], body: JsBlock) extends JsExpression
-case class JsSeq(exp: Seq[JsExpression]) extends JsExpression
-case class JsUnary(op: JsUnop, value: JsExpression) extends JsExpression
 case class JsBinary(left: JsExpression, op: JsBinop, right: JsExpression) extends JsExpression
-case class JsAssignment(left: JsExpression, op: JsAssignmentOp, right: JsExpression) extends JsExpression
-case class JsPrefix(op: JsPreOrPostfixOperator, exp: JsExpression) extends JsExpression
-case class JsPostfix(op: JsPreOrPostfixOperator, exp: JsExpression) extends JsExpression
+case class JsPrefix(op: JsUnop, exp: JsExpression) extends JsExpression
+case class JsPostfix(op: JsUnop, exp: JsExpression) extends JsExpression
 case class JsCondition(test: JsExpression, trueCase: JsExpression, falseCase: JsExpression) extends JsExpression
 case class JsNew(constructor: JsExpression, arguments: Seq[JsExpression]) extends JsExpression
 case class JsCall(callee: JsExpression, arguments: Seq[JsExpression]) extends JsExpression
 case class JsMember(obj: JsExpression, property: JsIdentifier) extends JsExpression with JsAssignments
 sealed trait JsLiteral extends JsExpression
 case class JsString(value: String) extends JsLiteral
-case class JsArray(elements: Seq[JsExpression]) extends JsLiteral {
-  //TODO(joa): where to put this? can we add it at all?
-  // def apply(index: JsExpression) = JsArrayAccess(this, index)
-  // def update(index: JsExpression, value: JsExpression) = JsAssignment(JsArrayAccess(this, index), JsAssignmentOps.`=`, value)
-}
+case class JsArray(elements: Seq[JsExpression]) extends JsLiteral
 sealed trait JsBool extends JsLiteral
 case object JsTrue extends JsBool
 case object JsFalse extends JsBool
