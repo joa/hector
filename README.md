@@ -1,6 +1,4 @@
-<div align="center">
-![Hector Logo](http://www.joa-ebert.com/files/hector.github.png)
-</div>
+<div align="center"><img src="http://www.joa-ebert.com/files/hector.github.png" alt="Hector Logo"/></div>
 # Introdction
 Hector is a <a href="http://www.scala-lang.org/">Scala</a> based web-framework which makes heavy use of <a href="http://www.akka.io/">Akka</a>.
 
