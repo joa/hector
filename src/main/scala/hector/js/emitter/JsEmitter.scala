@@ -427,6 +427,8 @@ private final class JsEmitter {
         }
 
       case x @ JsCall(callee, arguments) ⇒
+        //FIXME(joa): apparently the callee has a higher precedence than the JsCall if its JsFunc so JsCall(JsFunc(..), ..) evaluates to function(){}() instead of (function(){})()
+
         _parenPush(x, callee, false)
         visit(callee)
         _parenPop(x, callee, false)
