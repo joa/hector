@@ -28,7 +28,6 @@ case class JsIf(test: JsExpression, trueCase: JsStatement, falseCase: Option[JsS
 case class JsLabeledStatement(label: JsIdentifier, body: JsStatement) extends JsStatement
 case class JsBreak(label: Option[JsIdentifier]) extends JsStatement
 case class JsContinue(label: Option[JsIdentifier]) extends JsStatement
-case class JsWith(obj: JsExpression, body: JsStatement) extends JsStatement
 //TODO(joa): case class JsSwitch(test: JsExpression, cases: Seq[JsSwitchCase])
 case class JsReturn(value: Option[JsExpression]) extends JsStatement
 case class JsThrow(value: JsExpression) extends JsStatement

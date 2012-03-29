@@ -100,7 +100,7 @@ private final class JsEmitter {
       case JsProgram(statements) ⇒
         val last = statements.last
 
-        for { statement <- statements } {
+        for { statement ← statements } {
           needSemi = true
 
           visit(statement)
@@ -115,7 +115,7 @@ private final class JsEmitter {
         _blockOpen()
         val last = statements.last
 
-        for {statement <- statements} {
+        for {statement ← statements} {
           needSemi = true
 
           visit(statement)
@@ -147,7 +147,7 @@ private final class JsEmitter {
         visit(trueCase)
         _nestedPop(trueCase)
         falseCase foreach {
-          value =>
+          value ⇒
             if(needSemi) {
               _semi()
               _newLineOpt()
@@ -159,10 +159,10 @@ private final class JsEmitter {
             _else()
 
             value match {
-              case _: JsIf =>
+              case _: JsIf ⇒
                 _space()
                 visit(value)
-              case _ =>
+              case _ ⇒
                 _nestedPush(value, true)
                 visit(value)
                 _nestedPop(value)
@@ -178,26 +178,22 @@ private final class JsEmitter {
       case JsBreak(label) ⇒
         _break()
         label foreach {
-          value =>
+          value ⇒
             _space()
             _ident(value)
         }
       case JsContinue(label) ⇒
         _continue()
         label foreach {
-          value =>
+          value ⇒
             _space()
             _ident(value)
         }
 
-      case JsWith(obj, body) ⇒
-        //TODO(joa): need to support stupid with-statement
-        sys.error("Who on earth would use with(obj) { ... } anyways?!")
-
       case JsReturn(value) ⇒
         _return()
         value foreach {
-          returnValue =>
+          returnValue ⇒
             _space()
             visit(returnValue)
         }
@@ -247,7 +243,7 @@ private final class JsEmitter {
         _semi()
 
         test foreach {
-          value =>
+          value ⇒
             _spaceOpt()
             visit(value)
         }
@@ -255,7 +251,7 @@ private final class JsEmitter {
         _semi()
 
         update foreach {
-          value =>
+          value ⇒
             _spaceOpt()
             visit(value)
         }
@@ -282,7 +278,7 @@ private final class JsEmitter {
       case JsVar(name, init) ⇒
         _ident(name)
         init foreach {
-          value =>
+          value ⇒
             _spaceOpt()
             _assignment()
             _spaceOpt()
@@ -295,7 +291,7 @@ private final class JsEmitter {
         _var()
         _space()
         var sep = false
-        for { variable <- vars } {
+        for { variable ← vars } {
           _sepCommaOptSpace(sep)
           sep = true
           visit(variable)
@@ -323,7 +319,7 @@ private final class JsEmitter {
 
         var sep = false
 
-        for { property <- properties } {
+        for { property ← properties } {
           _sepCommaOptSpace(sep)
           sep = true
 
@@ -342,7 +338,7 @@ private final class JsEmitter {
         _function()
 
         id foreach {
-          value =>
+          value ⇒
             _space()
             _ident(value)
         }
@@ -442,8 +438,8 @@ private final class JsEmitter {
         _parenPush(x, obj, false)
         visit(obj)
         obj match {
-          case JsNumber(_) => _space()
-          case _ =>
+          case JsNumber(_) ⇒ _space()
+          case _ ⇒
         }
         _parenPop(x, obj, false)
         _dot()
@@ -487,7 +483,7 @@ private final class JsEmitter {
   private[this] def _commaSeparated(elements: Seq[JsExpression])(implicit writer: JsWriter) {
     var sep = false
 
-    for { expression <- elements } {
+    for { expression ← elements } {
       _sepCommaOptSpace(sep)
       sep = true
       _parenPushIfCommaExpr(expression)
@@ -498,8 +494,8 @@ private final class JsEmitter {
 
   private[this] def _finish(currentStatement: JsStatement, lastStatement: JsStatement)(implicit writer: JsWriter) {
     val isFunctionStatement = currentStatement match {
-      case JsExpStatement(JsFunc(_, _, _)) => true
-      case _ => false
+      case JsExpStatement(JsFunc(_, _, _)) ⇒ true
+      case _ ⇒ false
     }
 
     val isLastStatement: Boolean = currentStatement.eq(lastStatement)
@@ -782,24 +778,37 @@ private final class JsEmitter {
       true
     } else {
       expression match {
-        case JsBinary(left, binOp, right) if binOp.precedence > op.precedence => _spaceCalc(op, left)
-        case JsBinary(_, _, _) => false
-        case JsPrefix(preOp, prefixExp) =>
+        case JsBinary(left, binOp, right) if binOp.precedence > op.precedence ⇒
+          _spaceCalc(op, left)
+
+        case JsBinary(_, _, _) ⇒
+          false
+
+        case JsPrefix(preOp, prefixExp) ⇒
           (op == JsBinops.`-` || op == JsUnops.`-`) &&
           (preOp == JsUnops.`--` || preOp == JsUnops.`-`) ||
           (op == JsBinops.`+` && preOp == JsUnops.`++`)
-        case x @ JsNumber(value) =>
+
+        case x @ JsNumber(value) ⇒
           (op == JsBinops.`-` || op == JsUnops.`-`) && x.numberOps.toDouble(value) < 0.0
+
         // now with JsNop:
-        case JsNop(JsBinary(left, binOp, right)) if binOp.precedence > op.precedence => _spaceCalc(op, left)
-        case JsNop(JsBinary(_, _, _)) => false
-        case JsNop(JsPrefix(preOp, prefixExp)) =>
+        case JsNop(JsBinary(left, binOp, right)) if binOp.precedence > op.precedence ⇒
+          _spaceCalc(op, left)
+
+        case JsNop(JsBinary(_, _, _)) ⇒
+          false
+
+        case JsNop(JsPrefix(preOp, prefixExp)) ⇒
           (op == JsBinops.`-` || op == JsUnops.`-`) &&
           (preOp == JsUnops.`--` || preOp == JsUnops.`-`) ||
           (op == JsBinops.`+` && preOp == JsUnops.`++`)
-        case JsNop(x @ JsNumber(value)) =>
+
+        case JsNop(x @ JsNumber(value)) ⇒
           (op == JsBinops.`-` || op == JsUnops.`-`) && x.numberOps.toDouble(value) < 0.0
-        case _ => false
+
+        case _ ⇒
+          false
       }
     }
 

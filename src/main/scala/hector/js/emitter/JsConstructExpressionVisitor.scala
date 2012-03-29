@@ -15,10 +15,10 @@ private[emitter] object JsConstructExpressionVisitor {
 
   private[this] def visit(ast: JsAST): Boolean =
     ast match {
-      case JsArrayAccess(array, _) => visit(array)
-      case JsCall(_, _) => true
-      case JsMember(obj, _) => visit(obj)
-      case JsNop(exp) => visit(exp)
-      case _ => false
+      case JsArrayAccess(array, _) ⇒ visit(array)
+      case JsCall(_, _) ⇒ true
+      case JsMember(obj, _) ⇒ visit(obj)
+      case JsNop(exp) ⇒ visit(exp)
+      case _ ⇒ false
     }
 }
