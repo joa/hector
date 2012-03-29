@@ -2,7 +2,7 @@ package hector.js
 
 /**
  */
-object JsImplicits {
+object implicits {
   implicit def jsExpToJsStmt(jsExp: JsExpression): JsStatement = JsExpStatement(jsExp)
 
   implicit def stringToJsString(string: String): JsString = JsString(string)

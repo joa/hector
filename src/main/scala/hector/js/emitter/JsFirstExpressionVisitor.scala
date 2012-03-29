@@ -2,10 +2,13 @@ package hector.js.emitter
 
 import hector.js._
 
+import javax.annotation.concurrent.ThreadSafe
+
 /**
  */
-object JsFirstExpressionVisitor {
-  def exec(statement: JsExpStatement): Boolean =
+@ThreadSafe
+private[emitter] object JsFirstExpressionVisitor {
+  def apply(statement: JsExpStatement): Boolean =
     statement match {
       case JsExpStatement(JsFunc(_, _, _)) => false
       case JsExpStatement(exp) => visit(exp)
@@ -20,6 +23,7 @@ object JsFirstExpressionVisitor {
       case JsMember(obj, _) => visit(obj)
       case JsPostfix(_, exp) => visit(exp)
       case JsFunc(_, _, _) | JsObj(_) => true
+      case JsNop(exp) => visit(exp)
       case _ => false
     }
 }

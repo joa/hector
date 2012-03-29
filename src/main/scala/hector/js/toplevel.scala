@@ -9,7 +9,7 @@ package hector.js
  * <p>The only member for all JavaScript objects which has been redefined is toString and is named
  * <code>jsToString</code> so it is clear whether or not you intend to generate an expression.</p>
  */
-object JsToplevel {
+object toplevel {
   // Top-Level Constants
 
   def jsInfinity = new JsIdentifier('Infinity) with JsNumberType

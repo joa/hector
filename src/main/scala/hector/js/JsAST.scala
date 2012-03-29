@@ -54,64 +54,64 @@ case class JsVars(vars: Seq[JsVar]) extends JsStatement
 sealed trait JsOperator {
   def isKeyword: Boolean = false
   def symbol: Array[Char]
+  def precedence: Int
 }
 
 sealed trait JsUnop extends JsOperator
 
 sealed trait JsBinop extends JsOperator {
-  def isLeftAssociative: Boolean = false //TODO(joa): implement in objects
-
-  def precedence: Int = 0 //TODO(joa): implement in objects
+  def isLeftAssociative: Boolean
 }
 
 object JsUnops {
-  case object `-` extends JsUnop { override val symbol = Array('-') }
-  case object `+` extends JsUnop { override val symbol = Array('+') }
-  case object `!` extends JsUnop { override val symbol = Array('!') }
-  case object `~` extends JsUnop { override val symbol = Array('~') }
-  case object `typeof` extends JsUnop { override def isKeyword = true; override val symbol = "typeof".toCharArray }
-  case object `void` extends JsUnop { override def isKeyword = true; override val symbol = "void".toCharArray }
-  case object `delete` extends JsUnop { override def isKeyword = true; override val symbol = "delete".toCharArray }
-  case object `++` extends JsUnop { override val symbol = Array('+', '+') }
-  case object `--` extends JsUnop { override val symbol = Array('-', '-') }
+  case object `-` extends JsUnop { override val symbol = Array('-'); override val precedence = 14 }
+  case object `+` extends JsUnop { override val symbol = Array('+'); override val precedence = 14 }
+  case object `!` extends JsUnop { override val symbol = Array('!'); override val precedence = 14 }
+  case object `~` extends JsUnop { override val symbol = Array('~'); override val precedence = 14 }
+  case object `typeof` extends JsUnop { override def isKeyword = true; override val symbol = "typeof".toCharArray; override val precedence = 14 }
+  case object `void` extends JsUnop { override def isKeyword = true; override val symbol = "void".toCharArray; override val precedence = 14 }
+  case object `delete` extends JsUnop { override def isKeyword = true; override val symbol = "delete".toCharArray; override val precedence = 14 }
+  case object `++` extends JsUnop { override val symbol = Array('+', '+'); override val precedence = 14 }
+  case object `--` extends JsUnop { override val symbol = Array('-', '-'); override val precedence = 14 }
 }
 
 object JsBinops {
-  case object `==` extends JsBinop { override val symbol = Array('=', '=') }
-  case object `!=` extends JsBinop { override val symbol = Array('!', '=') }
-  case object `===` extends JsBinop { override val symbol = Array('=', '=', '=') }
-  case object `!==` extends JsBinop { override val symbol = Array('!', '=', '=') }
-  case object `<` extends JsBinop { override val symbol = Array('<') }
-  case object `<=` extends JsBinop { override val symbol = Array('<', '=') }
-  case object `>` extends JsBinop { override val symbol = Array('>') }
-  case object `>=` extends JsBinop { override val symbol = Array('>', '=') }
-  case object `<<` extends JsBinop { override val symbol = Array('<', '<') }
-  case object `>>` extends JsBinop { override val symbol = Array('>', '>') }
-  case object `>>>` extends JsBinop { override val symbol = Array('>', '>', '>') }
-  case object `+` extends JsBinop { override val symbol = Array('+') }
-  case object `-` extends JsBinop { override val symbol = Array('-') }
-  case object `*` extends JsBinop { override val symbol = Array('*') }
-  case object `/` extends JsBinop { override val symbol = Array('/') }
-  case object `%` extends JsBinop { override val symbol = Array('%') }
-  case object `|` extends JsBinop { override val symbol = Array('|') }
-  case object `^` extends JsBinop { override val symbol = Array('^') }
-  case object `,` extends JsBinop { override val symbol = Array(',') }
-  case object `in` extends JsBinop { override def isKeyword = true; override val symbol = Array('i', 'n') }
-  case object `instanceof` extends JsBinop { override def isKeyword = true; override val symbol = Array('=', '=') }
-  case object `||` extends JsBinop { override val symbol = Array('|', '|') }
-  case object `&&` extends JsBinop { override val symbol = Array('&', '&') }
-  case object `=` extends JsBinop { override val symbol = Array('=') }
-  case object `+=` extends JsBinop { override val symbol = Array('+', '=') }
-  case object `-=` extends JsBinop { override val symbol = Array('-', '=') }
-  case object `*=` extends JsBinop { override val symbol = Array('*', '=') }
-  case object `/=` extends JsBinop { override val symbol = Array('/', '=') }
-  case object `%=` extends JsBinop { override val symbol = Array('%', '=') }
-  case object `<<=` extends JsBinop { override val symbol = Array('<', '<', '=') }
-  case object `>>=` extends JsBinop { override val symbol = Array('>', '>', '=') }
-  case object `>>>=` extends JsBinop { override val symbol = Array('>', '>', '>', '=') }
-  case object `|=` extends JsBinop { override val symbol = Array('|', '=') }
-  case object `^=` extends JsBinop { override val symbol = Array('^', '=') }
-  case object `&=` extends JsBinop { override val symbol = Array('&', '=') }
+  case object `==` extends JsBinop { override val symbol = Array('=', '='); override val isLeftAssociative = true; override val precedence = 9 }
+  case object `!=` extends JsBinop { override val symbol = Array('!', '='); override val isLeftAssociative = true; override val precedence = 9 }
+  case object `===` extends JsBinop { override val symbol = Array('=', '=', '='); override val isLeftAssociative = true; override val precedence = 9 }
+  case object `!==` extends JsBinop { override val symbol = Array('!', '=', '='); override val isLeftAssociative = true; override val precedence = 9 }
+  case object `<` extends JsBinop { override val symbol = Array('<'); override val isLeftAssociative = true; override val precedence = 10 }
+  case object `<=` extends JsBinop { override val symbol = Array('<', '='); override val isLeftAssociative = true; override val precedence = 10 }
+  case object `>` extends JsBinop { override val symbol = Array('>'); override val isLeftAssociative = true; override val precedence = 10 }
+  case object `>=` extends JsBinop { override val symbol = Array('>', '='); override val isLeftAssociative = true; override val precedence = 10 }
+  case object `in` extends JsBinop { override def isKeyword = true; override val symbol = Array('i', 'n'); override val isLeftAssociative = true; override val precedence = 10 }
+  case object `instanceof` extends JsBinop { override def isKeyword = true; override val symbol = "instanceof".toCharArray; override val isLeftAssociative = true; override val precedence = 10 }
+  case object `<<` extends JsBinop { override val symbol = Array('<', '<'); override val isLeftAssociative = true; override val precedence = 11 }
+  case object `>>` extends JsBinop { override val symbol = Array('>', '>'); override val isLeftAssociative = true; override val precedence = 11 }
+  case object `>>>` extends JsBinop { override val symbol = Array('>', '>', '>'); override val isLeftAssociative = true; override val precedence = 11 }
+  case object `+` extends JsBinop { override val symbol = Array('+'); override val isLeftAssociative = true; override val precedence = 12 }
+  case object `-` extends JsBinop { override val symbol = Array('-'); override val isLeftAssociative = true; override val precedence = 12 }
+  case object `*` extends JsBinop { override val symbol = Array('*'); override val isLeftAssociative = true; override val precedence = 13 }
+  case object `/` extends JsBinop { override val symbol = Array('/'); override val isLeftAssociative = true; override val precedence = 13 }
+  case object `%` extends JsBinop { override val symbol = Array('%'); override val isLeftAssociative = true; override val precedence = 13 }
+  case object `|` extends JsBinop { override val symbol = Array('|'); override val isLeftAssociative = true; override val precedence = 6 }
+  case object `^` extends JsBinop { override val symbol = Array('^'); override val isLeftAssociative = true; override val precedence = 7 }
+  case object `&` extends JsBinop { override val symbol = Array('&'); override val isLeftAssociative = true; override val precedence = 8 }
+  case object `,` extends JsBinop { override val symbol = Array(','); override val isLeftAssociative = true; override val precedence = 1 }
+  case object `||` extends JsBinop { override val symbol = Array('|', '|'); override val isLeftAssociative = true; override val precedence = 4 }
+  case object `&&` extends JsBinop { override val symbol = Array('&', '&'); override val isLeftAssociative = true; override val precedence = 5 }
+  case object `=` extends JsBinop { override val symbol = Array('='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `+=` extends JsBinop { override val symbol = Array('+', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `-=` extends JsBinop { override val symbol = Array('-', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `*=` extends JsBinop { override val symbol = Array('*', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `/=` extends JsBinop { override val symbol = Array('/', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `%=` extends JsBinop { override val symbol = Array('%', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `<<=` extends JsBinop { override val symbol = Array('<', '<', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `>>=` extends JsBinop { override val symbol = Array('>', '>', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `>>>=` extends JsBinop { override val symbol = Array('>', '>', '>', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `|=` extends JsBinop { override val symbol = Array('|', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `^=` extends JsBinop { override val symbol = Array('^', '='); override val isLeftAssociative = false; override val precedence = 2 }
+  case object `&=` extends JsBinop { override val symbol = Array('&', '='); override val isLeftAssociative = false; override val precedence = 2 }
 }
 
 trait JsAssignments {
@@ -146,7 +146,8 @@ sealed trait JsExpression extends JsAST/* with Dynamic*/ {
   def ++ = JsPostfix(JsUnops.`++`, this)
   def -- = JsPostfix(JsUnops.`--`, this)
 
-  def ==(that: JsExpression) = JsBinary(this, JsBinops.`==`, that)
+  //Hitting a compiler bug in 2.9.1 with "==" so "==" is named ":=="
+  def :==(that: JsExpression) = JsBinary(this, JsBinops.`==`, that)
   def !=(that: JsExpression) = JsBinary(this, JsBinops.`!=`, that)
   def ===(that: JsExpression) = JsBinary(this, JsBinops.`===`, that)
   def !==(that: JsExpression) = JsBinary(this, JsBinops.`!==`, that)

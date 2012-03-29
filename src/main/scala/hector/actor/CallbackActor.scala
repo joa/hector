@@ -3,12 +3,11 @@ package hector.actor
 import akka.pattern.pipe
 import akka.util.Timeout
 import akka.util.duration._
-import akka.actor.{ActorRef, Props, Actor}
+import akka.actor.{ActorRef, Actor}
 import akka.pattern.ask
 
 import hector.Hector
 import hector.session.SessionActor
-import hector.util.convertBytesToHexString
 
 import akka.dispatch.Promise
 import hector.js.JsAST
@@ -128,8 +127,8 @@ object CallbackActor {
  *
  *   override def receive = {
  *     case "Execute" ⇒
- *       import hector.js.JsImplicits._
- *       import hector.js.JsToplevel.{jsWindow ⇒ window}
+ *       import hector.js.implicits._
+ *       import hector.js.toplevel.{jsWindow ⇒ window}
  *
  *       sender ! window.alert("Hello World.")
  *   }
@@ -172,7 +171,7 @@ final class CallbackActor extends Actor {
    */
   private[this] def createJavaScriptCall(callbackName: String): JsAST = {
     import hector.js._
-    import JsImplicits._
+    import implicits._
 
     JsCall(
       callee = JsFunc(
@@ -313,8 +312,8 @@ final class CallbackActor extends Actor {
         // what he did wrong in order to resolve the conflict.
 
         //TODO(joa): log a warning in release, do something useful during debug
-        import hector.js.JsImplicits._
-        import hector.js.JsToplevel.{jsWindow ⇒ window}
+        import hector.js.implicits._
+        import hector.js.toplevel.{jsWindow ⇒ window}
         import hector.http.status.Accepted
 
         JsResponse(

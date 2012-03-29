@@ -16,8 +16,8 @@ final class SnippetActor extends Actor {
 
     case "Message" ⇒
       import hector.js._
-      import JsImplicits._
-      import JsToplevel.{jsWindow ⇒ window}
+      import implicits._
+      import toplevel.{jsWindow ⇒ window}
 
       sender ! ((window.status := "hello") & window.alert(2 * window.status.length))
 

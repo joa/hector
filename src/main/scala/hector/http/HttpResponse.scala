@@ -6,7 +6,7 @@ import akka.dispatch.{ExecutionContext, Future}
 
 import hector.http.header.{Connection, CacheControl}
 import hector.js.emitter.JsEmitter
-import hector.js.{JsEmitter, JsAST}
+import hector.js.JsAST
 import hector.util.MimeType
 
 import java.nio.charset.{Charset ⇒ JCharset}

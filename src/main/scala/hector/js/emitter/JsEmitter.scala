@@ -81,7 +81,6 @@ object JsEmitter {
  */
 @NotThreadSafe
 private final class JsEmitter {
-
   import JsEmitter._
 
   // this is the only variable keeping us from making this an object and threadsafe ...!
@@ -97,7 +96,6 @@ private final class JsEmitter {
 
   //TODO(joa): get rid of code duplicates ...
   def visit(ast: JsAST)(implicit writer: JsWriter) {
-
     ast match {
       case JsProgram(statements) ⇒
         val last = statements.last
@@ -127,7 +125,7 @@ private final class JsEmitter {
         _blockClose()
 
       case x @ JsExpStatement(exp) ⇒
-        val surroundWithParentheses = JsFirstExpressionVisitor.exec(x)
+        val surroundWithParentheses = JsFirstExpressionVisitor(x)
 
         if(surroundWithParentheses) {
           _lparen()
@@ -194,7 +192,7 @@ private final class JsEmitter {
 
       case JsWith(obj, body) ⇒
         //TODO(joa): need to support stupid with-statement
-        error("Who on earth would use with(obj) { ... } anyways?!")
+        sys.error("Who on earth would use with(obj) { ... } anyways?!")
 
       case JsReturn(value) ⇒
         _return()
@@ -414,7 +412,7 @@ private final class JsEmitter {
         _new()
         _space()
 
-        val needsParens = false //TODO(joa): JsConstructExpressionVisitor.exec(ctorExpr);
+        val needsParens = JsConstructExpressionVisitor(constructor)
 
         if(needsParens) {
           _lparen()
@@ -469,12 +467,12 @@ private final class JsEmitter {
         _null()
 
       case x @ JsNumber(value) ⇒
-        val doubleValue = x.numberOps.toDouble(value)
+        val doubleValue: Double = x.numberOps.toDouble(value)
 
         if(doubleValue == 0.0 && (1.0 / doubleValue) == Double.NegativeInfinity) {
           writer.print("-0.")
         } else {
-          val longValue = doubleValue.asInstanceOf[Long]
+          val longValue: Long = doubleValue.asInstanceOf[Long]
           if(doubleValue == longValue) {
             writer.print(longValue.toString)
           } else {
@@ -678,8 +676,8 @@ private final class JsEmitter {
   }
 
   private[this] def _parenCalc(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
-    val parentPrec = -1 //TODO(joa): JsPrecedenceVisitor.exec(parent)
-    val childPrec = -1 //TODO(joa): JsPrecedenceVisitor.exec(child)
+    val parentPrec = JsPrecedenceVisitor(parent)
+    val childPrec = JsPrecedenceVisitor(child)
 
     parentPrec > childPrec || (parentPrec == childPrec && wrongAssoc)
   }
@@ -696,6 +694,9 @@ private final class JsEmitter {
 
   private[this] def _parenPopIfCommaExpr(expression: JsExpression)(implicit writer: JsWriter) =
     expression match {
+      case JsNop(binOp: JsBinary) if binOp.op == JsBinops.`,` ⇒
+        _rparen()
+        true
       case binOp: JsBinary if binOp.op == JsBinops.`,` ⇒
         _rparen()
         true
@@ -727,6 +728,9 @@ private final class JsEmitter {
 
   private[this] def _parenPushIfCommaExpr(expression: JsExpression)(implicit writer: JsWriter) =
     expression match {
+      case JsNop(binOp: JsBinary) if binOp.op == JsBinops.`,` ⇒
+        _lparen()
+        true
       case binOp: JsBinary if binOp.op == JsBinops.`,` ⇒
         _lparen()
         true
@@ -735,7 +739,6 @@ private final class JsEmitter {
     }
 
   private[this] def _parenPushOrSpace(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
-
     val doPush = _parenCalc(parent, child, wrongAssoc)
 
     if(doPush) {
@@ -774,7 +777,31 @@ private final class JsEmitter {
     writer.print('/')
   }
 
-  private[this] def _spaceCalc(op: JsOperator, expression: JsExpression)(implicit writer: JsWriter) = false //TODO(joa): needs impl
+  private[this] def _spaceCalc(op: JsOperator, expression: JsExpression)(implicit writer: JsWriter): Boolean =
+    if(op.isKeyword) {
+      true
+    } else {
+      expression match {
+        case JsBinary(left, binOp, right) if binOp.precedence > op.precedence => _spaceCalc(op, left)
+        case JsBinary(_, _, _) => false
+        case JsPrefix(preOp, prefixExp) =>
+          (op == JsBinops.`-` || op == JsUnops.`-`) &&
+          (preOp == JsUnops.`--` || preOp == JsUnops.`-`) ||
+          (op == JsBinops.`+` && preOp == JsUnops.`++`)
+        case x @ JsNumber(value) =>
+          (op == JsBinops.`-` || op == JsUnops.`-`) && x.numberOps.toDouble(value) < 0.0
+        // now with JsNop:
+        case JsNop(JsBinary(left, binOp, right)) if binOp.precedence > op.precedence => _spaceCalc(op, left)
+        case JsNop(JsBinary(_, _, _)) => false
+        case JsNop(JsPrefix(preOp, prefixExp)) =>
+          (op == JsBinops.`-` || op == JsUnops.`-`) &&
+          (preOp == JsUnops.`--` || preOp == JsUnops.`-`) ||
+          (op == JsBinops.`+` && preOp == JsUnops.`++`)
+        case JsNop(x @ JsNumber(value)) =>
+          (op == JsBinops.`-` || op == JsUnops.`-`) && x.numberOps.toDouble(value) < 0.0
+        case _ => false
+      }
+    }
 
   private[this] def _switch()(implicit writer: JsWriter) {
     writer.print(CharsSwitch)
