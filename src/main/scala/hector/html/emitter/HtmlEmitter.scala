@@ -151,14 +151,14 @@ object HtmlEmitter {
       for { maybeAnAttribute ← attributes } {
         import scala.xml._
 
-        _space()
-
         maybeAnAttribute match {
           case Null ⇒
           case attribute: Attribute ⇒
             @Nullable val prefix = attribute.pre
             val label = attribute.key
             @Nullable val value = attribute.value
+
+            _space()
 
             if(null != prefix) {
               _prefix(prefix)
