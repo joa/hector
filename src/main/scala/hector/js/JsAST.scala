@@ -38,60 +38,90 @@ case class JsFor(init: Option[JsStatement], test: Option[JsStatement], update: O
 case class JsForIn(left: JsStatement, right: JsExpression,  body: JsStatement) extends JsStatement
 //TODO(joa): case class JsCatchStmt(body: JsStatement) extends JsStatement
 //TODO(joa): case class JsTry(body: JsBlock, handlers: Seq[JsCatchStmt], fin: Option[JsStatement]) extends JsStatement
+/**
+ * x = y
+ * @param name
+ * @param init
+ */
 case class JsVar(name: JsIdentifier, init: Option[JsExpression]) extends JsStatement
+
+/**
+ * var x = y
+ * @param vars
+ */
 case class JsVars(vars: Seq[JsVar]) extends JsStatement
 
-sealed trait JsUnop
+sealed trait JsOperator {
+  def isKeyword: Boolean = false
+  def symbol: Array[Char]
+}
+
+sealed trait JsPreOrPostfixOperator extends JsOperator
+
+object JsPreOrPostfixOperators {
+  case object `++` extends JsPreOrPostfixOperator { override val symbol = Array('+', '+') }
+  case object `--` extends JsPreOrPostfixOperator { override val symbol = Array('-', '-') }
+}
+
+sealed trait JsUnop extends JsOperator
+
 object JsUnops {
-  case object `-` extends JsUnop
-  case object `+` extends JsUnop
-  case object `!` extends JsUnop
-  case object `~` extends JsUnop
-  case object `typeof` extends JsUnop
-  case object `void` extends JsUnop
-  case object `delete` extends JsUnop
+  case object `-` extends JsUnop { override val symbol = Array('-') }
+  case object `+` extends JsUnop { override val symbol = Array('+') }
+  case object `!` extends JsUnop { override val symbol = Array('!') }
+  case object `~` extends JsUnop { override val symbol = Array('~') }
+  case object `typeof` extends JsUnop { override def isKeyword = true; override val symbol = "typeof".toCharArray }
+  case object `void` extends JsUnop { override def isKeyword = true; override val symbol = "void".toCharArray }
+  case object `delete` extends JsUnop { override def isKeyword = true; override val symbol = "delete".toCharArray }
 }
 
-sealed trait JsBinop
+sealed trait JsBinop extends JsOperator {
+  def isLeftAssociative: Boolean = false //TODO(joa): implement in objects
+
+  def precedence: Int = 0 //TODO(joa): implement in objects
+}
+
 object JsBinops {
-  case object `==` extends JsBinop
-  case object `!=` extends JsBinop
-  case object `===` extends JsBinop
-  case object `!==` extends JsBinop
-  case object `<` extends JsBinop
-  case object `<=` extends JsBinop
-  case object `>` extends JsBinop
-  case object `>=` extends JsBinop
-  case object `<<` extends JsBinop
-  case object `>>` extends JsBinop
-  case object `>>>` extends JsBinop
-  case object `+` extends JsBinop
-  case object `-` extends JsBinop
-  case object `*` extends JsBinop
-  case object `/` extends JsBinop
-  case object `%` extends JsBinop
-  case object `|` extends JsBinop
-  case object `^` extends JsBinop
-  case object `in` extends JsBinop
-  case object `instanceof` extends JsBinop
-  case object `||` extends JsBinop
-  case object `&&` extends JsBinop
+  case object `==` extends JsBinop { override val symbol = Array('=', '=') }
+  case object `!=` extends JsBinop { override val symbol = Array('!', '=') }
+  case object `===` extends JsBinop { override val symbol = Array('=', '=', '=') }
+  case object `!==` extends JsBinop { override val symbol = Array('!', '=', '=') }
+  case object `<` extends JsBinop { override val symbol = Array('<') }
+  case object `<=` extends JsBinop { override val symbol = Array('<', '=') }
+  case object `>` extends JsBinop { override val symbol = Array('>') }
+  case object `>=` extends JsBinop { override val symbol = Array('>', '=') }
+  case object `<<` extends JsBinop { override val symbol = Array('<', '<') }
+  case object `>>` extends JsBinop { override val symbol = Array('>', '>') }
+  case object `>>>` extends JsBinop { override val symbol = Array('>', '>', '>') }
+  case object `+` extends JsBinop { override val symbol = Array('+') }
+  case object `-` extends JsBinop { override val symbol = Array('-') }
+  case object `*` extends JsBinop { override val symbol = Array('*') }
+  case object `/` extends JsBinop { override val symbol = Array('/') }
+  case object `%` extends JsBinop { override val symbol = Array('%') }
+  case object `|` extends JsBinop { override val symbol = Array('|') }
+  case object `^` extends JsBinop { override val symbol = Array('^') }
+  case object `,` extends JsBinop { override val symbol = Array(',') }
+  case object `in` extends JsBinop { override def isKeyword = true; override val symbol = Array('i', 'n') }
+  case object `instanceof` extends JsBinop { override def isKeyword = true; override val symbol = Array('=', '=') }
+  case object `||` extends JsBinop { override val symbol = Array('|', '|') }
+  case object `&&` extends JsBinop { override val symbol = Array('&', '&') }
 }
 
-sealed trait JsAssignmentOp
+sealed trait JsAssignmentOp extends JsOperator
+
 object JsAssignmentOps {
-  case object `=` extends JsAssignmentOp
-  case object `+=` extends JsAssignmentOp
-  case object `-=` extends JsAssignmentOp
-  case object `*=` extends JsAssignmentOp
-  case object `/=` extends JsAssignmentOp
-  case object `%=` extends JsAssignmentOp
-  case object `<<=` extends JsAssignmentOp
-  case object `>>=` extends JsAssignmentOp
-  case object `>>>=` extends JsAssignmentOp
-  case object `|=` extends JsAssignmentOp
-  case object `^=` extends JsAssignmentOp
-  case object `&=` extends JsAssignmentOp
+  case object `=` extends JsAssignmentOp { override val symbol = Array('=') }
+  case object `+=` extends JsAssignmentOp { override val symbol = Array('+', '=') }
+  case object `-=` extends JsAssignmentOp { override val symbol = Array('-', '=') }
+  case object `*=` extends JsAssignmentOp { override val symbol = Array('*', '=') }
+  case object `/=` extends JsAssignmentOp { override val symbol = Array('/', '=') }
+  case object `%=` extends JsAssignmentOp { override val symbol = Array('%', '=') }
+  case object `<<=` extends JsAssignmentOp { override val symbol = Array('<', '<', '=') }
+  case object `>>=` extends JsAssignmentOp { override val symbol = Array('>', '>', '=') }
+  case object `>>>=` extends JsAssignmentOp { override val symbol = Array('>', '>', '>', '=') }
+  case object `|=` extends JsAssignmentOp { override val symbol = Array('|', '=') }
+  case object `^=` extends JsAssignmentOp { override val symbol = Array('^', '=') }
+  case object `&=` extends JsAssignmentOp { override val symbol = Array('&', '=') }
 }
 
 trait JsAssignments {
@@ -145,6 +175,11 @@ sealed trait JsExpression extends JsAST/* with Dynamic*/ {
   def ||(that: JsExpression) = JsBinary(this, JsBinops.`||`, that)
   def &&(that: JsExpression) = JsBinary(this, JsBinops.`&&`, that)
 
+  def unary_++ = JsPrefix(JsPreOrPostfixOperators.`++`, this)
+  def unary_-- = JsPrefix(JsPreOrPostfixOperators.`--`, this)
+  def ++ = JsPostfix(JsPreOrPostfixOperators.`++`, this)
+  def -- = JsPostfix(JsPreOrPostfixOperators.`--`, this)
+
   def apply(arguments: JsExpression*) = JsCall(this, arguments)
 
   def update(name: JsIdentifier, value: JsExpression) = JsAssignment(JsMember(this, name), JsAssignmentOps.`=`, value)
@@ -157,7 +192,7 @@ sealed trait JsExpression extends JsAST/* with Dynamic*/ {
   }
   */
 
-  def ~>(property: JsExpression): JsMember = JsMember(this, property)
+  def ~>(property: JsIdentifier): JsMember = JsMember(this, property)
 }
 case class JsIdentifier(name: Symbol) extends JsExpression with JsAssignments
 case class JsNop(expression: JsExpression) extends JsExpression // useful to upcast an expression with a trait!
@@ -170,14 +205,12 @@ case class JsSeq(exp: Seq[JsExpression]) extends JsExpression
 case class JsUnary(op: JsUnop, value: JsExpression) extends JsExpression
 case class JsBinary(left: JsExpression, op: JsBinop, right: JsExpression) extends JsExpression
 case class JsAssignment(left: JsExpression, op: JsAssignmentOp, right: JsExpression) extends JsExpression
-case class JsPreInc(exp: JsExpression) extends JsExpression
-case class JsPostInc(exp: JsExpression) extends JsExpression
-case class JsPreDec(exp: JsExpression) extends JsExpression
-case class JsPostDec(exp: JsExpression) extends JsExpression
+case class JsPrefix(op: JsPreOrPostfixOperator, exp: JsExpression) extends JsExpression
+case class JsPostfix(op: JsPreOrPostfixOperator, exp: JsExpression) extends JsExpression
 case class JsCondition(test: JsExpression, trueCase: JsExpression, falseCase: JsExpression) extends JsExpression
 case class JsNew(constructor: JsExpression, arguments: Seq[JsExpression]) extends JsExpression
 case class JsCall(callee: JsExpression, arguments: Seq[JsExpression]) extends JsExpression
-case class JsMember(obj: JsExpression, property: JsExpression) extends JsExpression with JsAssignments
+case class JsMember(obj: JsExpression, property: JsIdentifier) extends JsExpression with JsAssignments
 sealed trait JsLiteral extends JsExpression
 case class JsString(value: String) extends JsLiteral
 case class JsArray(elements: Seq[JsExpression]) extends JsLiteral {
@@ -189,8 +222,9 @@ sealed trait JsBool extends JsLiteral
 case object JsTrue extends JsBool
 case object JsFalse extends JsBool
 case object JsNull extends JsLiteral
-case class JsNumber[T](value: T)(implicit numeric: Numeric[T]) extends JsLiteral
+case class JsNumber[T](value: T)(implicit numeric: Numeric[T]) extends JsLiteral {
+  def numberOps = numeric
+}
 //TODO(joa): case class JsRegEx(value: String) extends JsLiteral
-case class JsXML(value: Node) extends JsLiteral
 
 // No E4X

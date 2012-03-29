@@ -145,11 +145,11 @@ package object util {
     i = 0
 
     while(i < n) {
-      val c = chars(i)
+      val char = chars(i)
 
-      if(' ' <= c && c <= '~' && c != quoteChar && c != '\\') {
+      if(' ' <= char && char <= '~' && char != quoteChar && char != '\\') {
         // An ordinary print character (like C isprint())
-        result.append(c)
+        result.append(char)
       } else {
         // Character needs to be escaped. It is either a standard escape character like \n or it
         // might be a unicode character. If it is not a standard escape character we will use
@@ -159,7 +159,7 @@ package object util {
         // when the subsequent character is not a number since it would be misinterpreted otherwise.
 
         val escape: Int =
-          c match {
+          char match {
             case '\b' ⇒ 'b'
             case '\f' ⇒ 'f'
             case '\n' ⇒ 'n'
@@ -177,15 +177,15 @@ package object util {
           // An \escape sort of character
           result.append(escape.asInstanceOf[Char])
         } else {
-          if(c < ' ' && (i == (n-1) || chars(i + 1) < '0' || chars(i + 1) > '9')) {
-            if(c > 0x7) {
-              result.append(('0' + (0x7 & (c >> 3))).asInstanceOf[Char])
+          if(char < ' ' && (i == (n-1) || chars(i + 1) < '0' || chars(i + 1) > '9')) {
+            if(char > 0x7) {
+              result.append(('0' + (0x7 & (char >> 3))).asInstanceOf[Char])
             }
 
-            result.append(('0' + (0x7 & c)).asInstanceOf[Char])
+            result.append(('0' + (0x7 & char)).asInstanceOf[Char])
           } else {
             val hexSize =
-              if(c < 0x100) {
+              if(char < 0x100) {
                 result.append('x')
                 2
               } else {
@@ -196,7 +196,7 @@ package object util {
             var shift = (hexSize - 1) << 2
 
             while(shift >= 0) {
-              val digit = 0xf & (c >> shift)
+              val digit = 0xf & (char >> shift)
               result.append(HexDigits(digit))
               shift -= 4
             }
