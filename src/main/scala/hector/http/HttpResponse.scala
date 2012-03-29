@@ -4,6 +4,8 @@ import akka.actor.ActorRef
 import akka.util.Timeout
 import akka.dispatch.{ExecutionContext, Future}
 
+import hector.html.{DocType, DocTypes}
+import hector.html.emitter.HtmlEmitter
 import hector.http.header.{Connection, CacheControl}
 import hector.js.emitter.JsEmitter
 import hector.js.JsAST
@@ -75,8 +77,8 @@ sealed trait HttpResponse extends Serializable {
   def writeContent(output: HttpResponseOutput)(implicit executor: ExecutionContext): Future[Unit]
 }
 
-final case class HtmlResponse(html: Node, docType: String, status: Int = 200, cookies: Seq[HttpCookie] = Seq.empty, headers: Seq[HttpHeader] = Seq.empty, characterEncoding: Option[JCharset] = None) extends HttpResponse {
-  @transient private[this] lazy val htmlAsString = docType+"\n"+html.toString()
+final case class HtmlResponse(html: Node, docType: DocType = DocTypes.`HTML 5`, status: Int = 200, cookies: Seq[HttpCookie] = Seq.empty, headers: Seq[HttpHeader] = Seq.empty, characterEncoding: Option[JCharset] = None) extends HttpResponse {
+  @transient private[this] lazy val htmlAsString = HtmlEmitter.toString(html, docType, stripComments = false, trim = true, humanReadable = false, omitDocType = false)
 
   override def contentType = MimeType.text.html
 

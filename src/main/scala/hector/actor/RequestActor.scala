@@ -216,7 +216,7 @@ final class RequestActor extends Actor {
   private def createTypeErrorResponse(actor: ActorRef,  value: Any) = {
     import hector.http.HtmlResponse
     import hector.http.status.InternalServerError
-    import hector.html.DocType
+    import hector.html.DocTypes
 
     HtmlResponse(
       <html>
@@ -229,7 +229,7 @@ final class RequestActor extends Actor {
           <p>Instead it responded with: {value}</p>
         </body>
       </html>,
-      DocType.`HTML 5`,
+      DocTypes.`HTML 5`,
       InternalServerError
     )
   }

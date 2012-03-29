@@ -1,4 +1,4 @@
-package hector.js.emitter
+package hector.html.emitter
 
 import javax.annotation.concurrent.NotThreadSafe
 import java.io.PrintWriter
@@ -7,7 +7,7 @@ import java.io.PrintWriter
  */
 //TODO(joa): HtmlWriter and JsWriter are basically the same, need to abstract this!
 @NotThreadSafe
-private[emitter] final class JsWriter(private[this] val writer: PrintWriter, private[this] val humanReadable: Boolean) {
+private[emitter] final class HtmlWriter(private[this] val writer: PrintWriter, private[this] val humanReadable: Boolean) {
   private[this] var indentLevel = 0
 
   private[this] var indents = Array(Array[Char](0))
