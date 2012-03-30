@@ -124,3 +124,15 @@ On a side-note: `JsAST` is not of type `HttpResponse`. Hector performs automatic
 ## Clustering
 
 {TODO}
+
+## Dependencies
+
+Hector requires at its heart only two dependencies to have a small foot-print. 
+
+* [Akka](http://www.akka.io/)
+  The foundation of Hector is Akka itself. Hector is location transparent because Akka is location transparent.
+  Developing for Hector requires the user to understand how to use Akka.
+
+* [Google Guava](http://code.google.com/p/guava-libraries/)
+  The dependency on Guava is debatable and not absolutely necessary. However using Guava, which itself is a
+  well written and tested library, makes many tasks like splitting text conciese and less error prone.
