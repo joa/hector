@@ -19,6 +19,6 @@ libraryDependencies ++= Seq(
   "org.eclipse.jetty" % "jetty-webapp" % "8.0.4.v20111024" % "container",
   "javax.servlet" % "javax.servlet-api" % "3.0.1" % "provided",
   "org.scalatest" %% "scalatest" % "1.7.1" % "test",
-  "com.google.guava" % "guava" % "11.0.1",
+  "com.google.guava" % "guava" % "11.0.2",
   "com.typesafe.akka" % "akka-actor" % "2.0"
 )

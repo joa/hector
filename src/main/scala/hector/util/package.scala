@@ -7,8 +7,7 @@ package object util {
   // of Scala features like for-comprehension in here.
   //
 
-  val HexDigits: Array[Char] =
-    Array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f')
+  val HexDigits: Array[Char] = "0123456789abcdef".toCharArray
 
   /**
    * Converts an array of bytes into a string.

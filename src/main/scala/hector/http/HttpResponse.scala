@@ -17,7 +17,7 @@ import scala.xml.Node
 
 /**
  */
-sealed trait HttpResponse extends Serializable {
+trait HttpResponse extends Serializable {
   /**
    * The status code of the response.
    *
