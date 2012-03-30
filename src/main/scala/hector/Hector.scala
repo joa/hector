@@ -55,12 +55,6 @@ object Hector {
       name = "eventStream"
     )
 
-  val utilities =
-    system.actorOf(
-      Props[UtilityActor].
-        withRouter(
-          RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))), name = "utilities")
-
   /**
    * Prefix for internal actions.
    */

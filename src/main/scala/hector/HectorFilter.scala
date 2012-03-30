@@ -17,7 +17,6 @@ final class HectorFilter extends Filter {
     Hector.session
     Hector.callback
     Hector.statistics
-    Hector.utilities
   }
 
   def destroy() {

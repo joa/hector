@@ -143,7 +143,7 @@ object HtmlEmitter {
       _colon()
     }
 
-    _label(label)
+    _name(label)
 
     if(null != attributes) {
       for { maybeAnAttribute ← attributes } {
@@ -163,7 +163,7 @@ object HtmlEmitter {
               _colon()
             }
 
-            _label(label)
+            _name(label)
 
             if(null != value) {
               writer.print('=')
@@ -232,7 +232,7 @@ object HtmlEmitter {
       _colon()
     }
 
-    _label(label)
+    _name(label)
     writer.print('>')
 
     writer.popIndent()
@@ -250,11 +250,19 @@ object HtmlEmitter {
   }
 
   private[this] def _prefix(prefix: String)(implicit writer: HtmlWriter) {
-    writer.print(prefix) //TODO(joa): check for valid prefix string
+    if(isName(prefix)) {
+      writer.print(prefix)
+    } else {
+      writer.print("invalidName")
+    }
   }
 
-  private[this] def _label(label: String)(implicit writer: HtmlWriter) {
-    writer.print(label) //TODO(joa): check for valid label
+  private[this] def _name(name: String)(implicit writer: HtmlWriter) {
+    if(isName(name)) {
+      writer.print(name)
+    } else {
+      writer.print("invalidName")
+    }
   }
 
   private[this] def _cdataOpen()(implicit writer: HtmlWriter) {
@@ -375,6 +383,64 @@ object HtmlEmitter {
     }  else {
       // Empty string.
       value
+    }
+  }
+
+  // The isName method is not used correct since prefix:label makes a name and Elem
+  // does not define it as such. For now we do it like isName(prefix):isName(label)
+  // so in fact the "label" part of Elem is also checked for isNameStart but in the end
+  // it is only making sure that a name is correct even tough label is null.
+
+  private[this] def isName(value: String): Boolean =
+    testStringForValidity(value, isNameStart, isNamePart)
+
+  /**
+   * http://www.w3.org/TR/2000/REC-xml-20001006#NT-Name
+   * @param char
+   * @return
+   */
+  private[this] def isNameStart(char: Char): Boolean =
+    char match {
+      case letter if Character.isLetter(letter) ⇒ true
+      case '_' | ':' ⇒ true
+      case _ ⇒ false
+    }
+
+  /**
+   * http://www.w3.org/TR/2000/REC-xml-20001006#NT-Name
+   *
+   * @param char
+   * @return
+   */
+  private[this] def isNamePart(char: Char): Boolean =
+    char match {
+      case letter if Character.isLetter(letter) ⇒ true
+      case digit if Character.isDigit(digit) ⇒ true
+      case '.' | '-' | '_' | ':' ⇒ true
+      //case Extender ⇒ true
+      //case Combiner ⇒ true
+    }
+
+  private[this] def testStringForValidity(value: String, startIsValid: Char => Boolean, partIsValid: Char => Boolean): Boolean = {
+    if(null == value || value.length < 1) {
+      false
+    } else {
+      val charArray = value.toCharArray
+
+      if(startIsValid(charArray(0))) {
+        val n = value.length
+        var i = 1
+        var valid = true
+
+        while(valid && i < n) {
+          valid = partIsValid(charArray(i))
+          i += 1
+        }
+
+        valid
+      } else {
+        false
+      }
     }
   }
 }

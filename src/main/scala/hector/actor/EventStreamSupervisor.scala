@@ -40,17 +40,15 @@ final class EventStreamSupervisor extends Actor {
 
   override protected def receive = {
     case Create(request, timeout, retry) ⇒
-      val randomHashFuture =
-        (Hector.utilities ? UtilityActor.NewUniqueHash).mapTo[String]
+      val hash = randomHash()
+      val actor = context.actorOf(Props(new EventStreamActor(timeout, retry)), name = hash)
 
-      randomHashFuture flatMap {
-        hash ⇒
-          val actor = context.actorOf(Props(new EventStreamActor(timeout, retry)), name = hash)
+      val eventStream =
+        (Hector.session ? SessionActor.Store(request, "hector:eventStream:"+hash, actor)).mapTo[Unit] map {
+          x ⇒ EventStream(urlOf(hash), actor)
+        }
 
-          (Hector.session ? SessionActor.Store(request, "hector:eventStream:"+hash, actor)).mapTo[Unit] map {
-            x ⇒ EventStream(urlOf(hash), actor)
-          }
-      } pipeTo sender
+      eventStream pipeTo sender
 
     case message @ CreateResponse(request, Some(ReRoute(name))) ⇒
       import hector.http.status.NoContent
