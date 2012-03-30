@@ -17,7 +17,7 @@ import javax.annotation.Nullable
 import hector.Hector
 
 /**
- * The ETagCalculatingResponse wrapper appends an ETag header to a given HttpResponse.
+ * The ETagCalculatingResponse class appends an ETag header to a given HttpResponse.
  *
  * Creating an ETag header automatically comes with a performance penalty.
  * Asking for the <code>headers</code> will cause the HttpResponse to be serialized
