@@ -1,17 +1,31 @@
-package hector.js.emitter
+package hector.util
 
-import javax.annotation.concurrent.NotThreadSafe
 import java.io.PrintWriter
 
+import javax.annotation.concurrent.NotThreadSafe
+
 /**
+ * The TextOutput class wraps a PrintWriter to generate human-readable textual output.
+ *
+ * <p>If <code>humanReadable</code> is <code>true</code> all methods suffixed with <code>Opt</code>
+ * will perform their corresponding action.</p>
+ *
+ * <p>Indentation is generated only when the output should be human-readable.</p>
  */
-//TODO(joa): HtmlWriter and JsWriter are basically the same, need to abstract this!
 @NotThreadSafe
-private[emitter] final class JsWriter(private[this] val writer: PrintWriter, private[this] val humanReadable: Boolean) {
+final class TextOutput(
+  /** The actual PrintWriter. */
+  private[this] val writer: PrintWriter,
+  /** Whether or not human readable text should be generated. */
+  private[this] val humanReadable: Boolean) {
+
+  /** The indentation level. */
   private[this] var indentLevel = 0
 
+  /** The cached identation levels. */
   private[this] var indents = Array(Array[Char](0))
 
+  /** Whether or not newLine() or newLineOpt() were called. */
   private[this] var wasNewline = false
 
   def pushIndent() {
@@ -84,3 +98,4 @@ private[emitter] final class JsWriter(private[this] val writer: PrintWriter, pri
     }
   }
 }
+

@@ -1,7 +1,6 @@
 package hector.html.emitter
 
 import hector.html._
-import hector.util.trimToOption
 
 import javax.annotation.Nullable
 import javax.annotation.concurrent.ThreadSafe
@@ -9,6 +8,7 @@ import java.io.{PrintWriter, StringWriter}
 
 import scala.xml.{NamespaceBinding, MetaData, Node}
 import scala.collection.immutable.Stack
+import hector.util.{TextOutput, trimToOption}
 
 /**
  */
@@ -31,7 +31,7 @@ object HtmlEmitter {
   def toString(html: Node, docType: DocType = DocTypes.`HTML 5`, stripComments: Boolean = false, trim: Boolean = false, humanReadable: Boolean = false, omitDocType: Boolean = false): String = {
     val stringWriter = new StringWriter()
     val printWriter = new PrintWriter(stringWriter)
-    val writer = new HtmlWriter(printWriter, humanReadable)
+    val writer = new TextOutput(printWriter, humanReadable)
 
     if(!omitDocType) {
       _dtd(docType)(writer)
@@ -45,7 +45,7 @@ object HtmlEmitter {
     stringWriter.toString
   }
 
-  private[this] def visit(node: Node, docType: DocType, scopeStack: Stack[NamespaceBinding], stripComments: Boolean, trim: Boolean, humanReadable: Boolean)(implicit writer: HtmlWriter) {
+  private[this] def visit(node: Node, docType: DocType, scopeStack: Stack[NamespaceBinding], stripComments: Boolean, trim: Boolean, humanReadable: Boolean)(implicit writer: TextOutput) {
     import scala.xml._
 
     // Subsequent whitespace could be removed. This should be something we have to consider since
@@ -132,12 +132,12 @@ object HtmlEmitter {
     }
   }
 
-  private[this] def _dtd(docType: DocType)(implicit writer: HtmlWriter) {
+  private[this] def _dtd(docType: DocType)(implicit writer: TextOutput) {
     writer.print(docType.charArray)
     _newLine()
   }
 
-  private[this] def _tag(@Nullable prefix: String, label: String, @Nullable attributes: MetaData, scope: NamespaceBinding, scopeStack: Stack[NamespaceBinding], docType: DocType, stripComments: Boolean, trim: Boolean, humanReadable: Boolean)(implicit writer: HtmlWriter) {
+  private[this] def _tag(@Nullable prefix: String, label: String, @Nullable attributes: MetaData, scope: NamespaceBinding, scopeStack: Stack[NamespaceBinding], docType: DocType, stripComments: Boolean, trim: Boolean, humanReadable: Boolean)(implicit writer: TextOutput) {
     if(null != prefix) {
       _prefix(prefix)
       _colon()
@@ -224,7 +224,7 @@ object HtmlEmitter {
     //scope
   }
 
-  private[this] def _tagCloseLong(@Nullable prefix: String, label: String)(implicit writer: HtmlWriter) {
+  private[this] def _tagCloseLong(@Nullable prefix: String, label: String)(implicit writer: TextOutput) {
     writer.print(CharsTagClose)
 
     if(null != prefix) {
@@ -238,12 +238,12 @@ object HtmlEmitter {
     writer.popIndent()
   }
 
-  private[this] def _tagCloseShort()(implicit writer: HtmlWriter) {
+  private[this] def _tagCloseShort()(implicit writer: TextOutput) {
     writer.print('/')
     _gt()
   }
 
-  private[this] def _entity(name: String)(implicit writer: HtmlWriter) {
+  private[this] def _entity(name: String)(implicit writer: TextOutput) {
     if(isEntity(name)) {
       _and()
       writer.print(name)
@@ -251,7 +251,7 @@ object HtmlEmitter {
     }
   }
 
-  private[this] def _prefix(prefix: String)(implicit writer: HtmlWriter) {
+  private[this] def _prefix(prefix: String)(implicit writer: TextOutput) {
     if(isName(prefix)) {
       writer.print(prefix)
     } else {
@@ -259,7 +259,7 @@ object HtmlEmitter {
     }
   }
 
-  private[this] def _name(name: String)(implicit writer: HtmlWriter) {
+  private[this] def _name(name: String)(implicit writer: TextOutput) {
     if(isName(name)) {
       writer.print(name)
     } else {
@@ -267,72 +267,72 @@ object HtmlEmitter {
     }
   }
 
-  private[this] def _cdataOpen()(implicit writer: HtmlWriter) {
+  private[this] def _cdataOpen()(implicit writer: TextOutput) {
     writer.print(CharsCDataOpen)
   }
 
-  private[this] def _cdataClose()(implicit writer: HtmlWriter) {
+  private[this] def _cdataClose()(implicit writer: TextOutput) {
     writer.print(CharsCDataClose)
     writer.newLineOpt()
   }
 
-  private[this] def _procInstrOpen()(implicit writer: HtmlWriter) {
+  private[this] def _procInstrOpen()(implicit writer: TextOutput) {
     writer.print(CharsProcInstrOpen)
   }
 
-  private[this] def _procInstrClose()(implicit writer: HtmlWriter) {
+  private[this] def _procInstrClose()(implicit writer: TextOutput) {
     writer.print(CharsProcInstrClose)
     writer.newLineOpt()
   }
 
-  private[this] def _colon()(implicit writer: HtmlWriter) {
+  private[this] def _colon()(implicit writer: TextOutput) {
     writer.print(':')
   }
 
-  private[this] def _lt()(implicit writer: HtmlWriter) {
+  private[this] def _lt()(implicit writer: TextOutput) {
     writer.print('<')
   }
 
-  private[this] def _gt()(implicit writer: HtmlWriter) {
+  private[this] def _gt()(implicit writer: TextOutput) {
     writer.print('>')
   }
 
-  private[this] def _commentOpen()(implicit writer: HtmlWriter) {
+  private[this] def _commentOpen()(implicit writer: TextOutput) {
     writer.print(CharsCommentOpen)
     _spaceOpt()
   }
 
-  private[this] def _commentClose()(implicit writer: HtmlWriter) {
+  private[this] def _commentClose()(implicit writer: TextOutput) {
     _spaceOpt()
     writer.print(CharsCommentClose)
   }
 
-  private[this] def _newLine()(implicit writer: HtmlWriter) {
+  private[this] def _newLine()(implicit writer: TextOutput) {
     writer.newLine()
   }
 
-  private[this] def _newLineOpt()(implicit writer: HtmlWriter) {
+  private[this] def _newLineOpt()(implicit writer: TextOutput) {
     writer.newLineOpt()
   }
 
-  private[this] def _space()(implicit writer: HtmlWriter) {
+  private[this] def _space()(implicit writer: TextOutput) {
     writer.print(' ')
   }
 
-  private[this] def _spaceOpt()(implicit writer: HtmlWriter) {
+  private[this] def _spaceOpt()(implicit writer: TextOutput) {
     writer.printOpt(' ')
   }
 
-  private[this] def _string(value: String, trim: Boolean)(implicit writer: HtmlWriter) {
+  private[this] def _string(value: String, trim: Boolean)(implicit writer: TextOutput) {
     //TODO(joa): use proper escape method ...
     writer.print(xml.Utility.escape(if(trim) trimHtmlText(value) else value))
   }
 
-  private[this] def _and()(implicit writer: HtmlWriter) {
+  private[this] def _and()(implicit writer: TextOutput) {
     writer.print('&')
   }
 
-  private[this] def _semi()(implicit writer: HtmlWriter) {
+  private[this] def _semi()(implicit writer: TextOutput) {
     writer.print(';')
   }
 

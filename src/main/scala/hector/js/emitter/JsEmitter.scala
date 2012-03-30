@@ -1,10 +1,10 @@
 package hector.js.emitter
 
 import hector.js._
-import hector.util.escapeJavaScriptString
 
 import java.io.{PrintWriter, StringWriter}
 import javax.annotation.concurrent.NotThreadSafe
+import hector.util.{TextOutput, escapeJavaScriptString}
 
 object JsEmitter {
   private[JsEmitter] val CharsBreak = "break".toCharArray
@@ -66,7 +66,7 @@ object JsEmitter {
   def toString(ast: JsAST, humanReadable: Boolean = false) = {
     val stringWriter = new StringWriter()
     val printWriter = new PrintWriter(stringWriter)
-    val writer = new JsWriter(printWriter, humanReadable)
+    val writer = new TextOutput(printWriter, humanReadable)
 
     val emitter = new JsEmitter()
     emitter.visit(ast)(writer)
@@ -95,7 +95,7 @@ private final class JsEmitter {
   //_nestedPop(body)
 
   //TODO(joa): get rid of code duplicates ...
-  def visit(ast: JsAST)(implicit writer: JsWriter) {
+  def visit(ast: JsAST)(implicit writer: TextOutput) {
     ast match {
       case JsProgram(statements) ⇒
         val last = statements.last
@@ -482,7 +482,7 @@ private final class JsEmitter {
     }
   }
 
-  private[this] def _commaSeparated(elements: Seq[JsExpression])(implicit writer: JsWriter) {
+  private[this] def _commaSeparated(elements: Seq[JsExpression])(implicit writer: TextOutput) {
     var sep = false
 
     for { expression ← elements } {
@@ -494,7 +494,7 @@ private final class JsEmitter {
     }
   }
 
-  private[this] def _finish(currentStatement: JsStatement, lastStatement: JsStatement)(implicit writer: JsWriter) {
+  private[this] def _finish(currentStatement: JsStatement, lastStatement: JsStatement)(implicit writer: TextOutput) {
     val isFunctionStatement = currentStatement match {
       case JsExpStatement(JsFunc(_, _, _)) ⇒ true
       case _ ⇒ false
@@ -518,131 +518,131 @@ private final class JsEmitter {
     }
   }
 
-  private[this] def _stringLiteral(value: String)(implicit writer: JsWriter) {
+  private[this] def _stringLiteral(value: String)(implicit writer: TextOutput) {
     writer.print(escapeJavaScriptString(value))
   }
 
-  private[this] def _newLine()(implicit writer: JsWriter) {
+  private[this] def _newLine()(implicit writer: TextOutput) {
     writer.newLine()
   }
 
-  private[this] def _newLineOpt()(implicit writer: JsWriter) {
+  private[this] def _newLineOpt()(implicit writer: TextOutput) {
     writer.newLineOpt()
   }
 
-  private[this] def _space()(implicit writer: JsWriter) {
+  private[this] def _space()(implicit writer: TextOutput) {
     writer.print(' ')
   }
 
-  private[this] def _spaceOpt()(implicit writer: JsWriter) {
+  private[this] def _spaceOpt()(implicit writer: TextOutput) {
     writer.printOpt(' ')
   }
 
-  private[this] def _assignment()(implicit writer: JsWriter) {
+  private[this] def _assignment()(implicit writer: TextOutput) {
     writer.print('=')
   }
 
-  private[this] def _blockClose()(implicit writer: JsWriter) {
+  private[this] def _blockClose()(implicit writer: TextOutput) {
     writer.popIndent(); writer.print('}'); _newLineOpt()
   }
 
-  private[this] def _blockOpen()(implicit writer: JsWriter) {
+  private[this] def _blockOpen()(implicit writer: TextOutput) {
     writer.print('{'); writer.pushIndent(); _newLineOpt()
   }
 
-  private[this] def _break()(implicit writer: JsWriter) {
+  private[this] def _break()(implicit writer: TextOutput) {
     writer.print(CharsBreak)
   }
 
-  private[this] def _case()(implicit writer: JsWriter) {
+  private[this] def _case()(implicit writer: TextOutput) {
     writer.print(CharsCase)
   }
 
-  private[this] def _catch()(implicit writer: JsWriter) {
+  private[this] def _catch()(implicit writer: TextOutput) {
     writer.print(CharsCatch)
   }
 
-  private[this] def _colon()(implicit writer: JsWriter) {
+  private[this] def _colon()(implicit writer: TextOutput) {
     writer.print(':')
   }
 
-  private[this] def _continue()(implicit writer: JsWriter) {
+  private[this] def _continue()(implicit writer: TextOutput) {
     writer.print(CharsContinue)
   }
 
-  private[this] def _debugger()(implicit writer: JsWriter) {
+  private[this] def _debugger()(implicit writer: TextOutput) {
     writer.print(CharsDebugger)
   }
 
-  private[this] def _default()(implicit writer: JsWriter) {
+  private[this] def _default()(implicit writer: TextOutput) {
     writer.print(CharsDefault)
   }
 
-  private[this] def _do()(implicit writer: JsWriter) {
+  private[this] def _do()(implicit writer: TextOutput) {
     writer.print(CharsDo)
   }
 
-  private[this] def _dot()(implicit writer: JsWriter) {
+  private[this] def _dot()(implicit writer: TextOutput) {
     writer.print('.')
   }
 
-  private[this] def _else()(implicit writer: JsWriter) {
+  private[this] def _else()(implicit writer: TextOutput) {
     writer.print(CharsElse)
   }
 
-  private[this] def _false()(implicit writer: JsWriter) {
+  private[this] def _false()(implicit writer: TextOutput) {
     writer.print(CharsFalse)
   }
 
-  private[this] def _finally()(implicit writer: JsWriter) {
+  private[this] def _finally()(implicit writer: TextOutput) {
     writer.print(CharsFinally)
   }
 
-  private[this] def _for()(implicit writer: JsWriter) {
+  private[this] def _for()(implicit writer: TextOutput) {
     writer.print(CharsFor)
   }
 
-  private[this] def _function()(implicit writer: JsWriter) {
+  private[this] def _function()(implicit writer: TextOutput) {
     writer.print(CharsFunction)
   }
 
-  private[this] def _if()(implicit writer: JsWriter) {
+  private[this] def _if()(implicit writer: TextOutput) {
     writer.print(CharsIf)
   }
 
-  private[this] def _in()(implicit writer: JsWriter) {
+  private[this] def _in()(implicit writer: TextOutput) {
     writer.print(CharsIn)
   }
 
-  private[this] def _lbrace()(implicit writer: JsWriter) {
+  private[this] def _lbrace()(implicit writer: TextOutput) {
     writer.print('{')
   }
 
-  private[this] def _lparen()(implicit writer: JsWriter) {
+  private[this] def _lparen()(implicit writer: TextOutput) {
     writer.print('(')
   }
 
-  private[this] def _lbrack()(implicit writer: JsWriter) {
+  private[this] def _lbrack()(implicit writer: TextOutput) {
     writer.print('[')
   }
 
-  private[this] def _rbrace()(implicit writer: JsWriter) {
+  private[this] def _rbrace()(implicit writer: TextOutput) {
     writer.print('}')
   }
 
-  private[this] def _rparen()(implicit writer: JsWriter) {
+  private[this] def _rparen()(implicit writer: TextOutput) {
     writer.print(')')
   }
 
-  private[this] def _rbrack()(implicit writer: JsWriter) {
+  private[this] def _rbrack()(implicit writer: TextOutput) {
     writer.print(']')
   }
 
-  private[this] def _ident(identifier: JsIdentifier)(implicit writer: JsWriter) {
+  private[this] def _ident(identifier: JsIdentifier)(implicit writer: TextOutput) {
     writer.print(identifier.name.name)
   }
 
-  private[this] def _nestedPop(statement: JsStatement)(implicit writer: JsWriter) =
+  private[this] def _nestedPop(statement: JsStatement)(implicit writer: TextOutput) =
     statement match {
       case _: JsBlock ⇒ false
       case _ ⇒
@@ -650,7 +650,7 @@ private final class JsEmitter {
         true
     }
 
-  private[this] def _nestedPush(statement: JsStatement, needSpace: Boolean)(implicit writer: JsWriter) =
+  private[this] def _nestedPush(statement: JsStatement, needSpace: Boolean)(implicit writer: TextOutput) =
     statement match {
       case _: JsBlock ⇒
         _spaceOpt()
@@ -665,15 +665,15 @@ private final class JsEmitter {
         true
     }
 
-  private[this] def _new()(implicit writer: JsWriter) {
+  private[this] def _new()(implicit writer: TextOutput) {
     writer.print(CharsNew)
   }
 
-  private[this] def _null()(implicit writer: JsWriter) {
+  private[this] def _null()(implicit writer: TextOutput) {
     writer.print(CharsNull)
   }
 
-  private[this] def _parenCalc(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter): Boolean =
+  private[this] def _parenCalc(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: TextOutput): Boolean =
     child match {
       case JsObj(_) | JsFunc(_, _, _) ⇒
         // Fix for GWT issue 7829
@@ -686,7 +686,7 @@ private final class JsEmitter {
         (parentPrec > childPrec) || (parentPrec == childPrec && wrongAssoc)
     }
 
-  private[this] def _parenPop(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
+  private[this] def _parenPop(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: TextOutput) = {
     val doPop = _parenCalc(parent, child, wrongAssoc)
 
     if(doPop) {
@@ -696,7 +696,7 @@ private final class JsEmitter {
     doPop
   }
 
-  private[this] def _parenPopIfCommaExpr(expression: JsExpression)(implicit writer: JsWriter) =
+  private[this] def _parenPopIfCommaExpr(expression: JsExpression)(implicit writer: TextOutput) =
     expression match {
       case JsNop(binOp: JsBinary) if binOp.op == JsBinops.`,` ⇒
         _rparen()
@@ -708,7 +708,7 @@ private final class JsEmitter {
         false
     }
 
-  private[this] def _parenPopOrSpace(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
+  private[this] def _parenPopOrSpace(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: TextOutput) = {
     val doPop = _parenCalc(parent, child, wrongAssoc)
 
     if(doPop) {
@@ -720,7 +720,7 @@ private final class JsEmitter {
     doPop
   }
 
-  private[this] def _parenPush(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
+  private[this] def _parenPush(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: TextOutput) = {
     val doPush = _parenCalc(parent, child, wrongAssoc)
 
     if(doPush) {
@@ -730,7 +730,7 @@ private final class JsEmitter {
     doPush
   }
 
-  private[this] def _parenPushIfCommaExpr(expression: JsExpression)(implicit writer: JsWriter) =
+  private[this] def _parenPushIfCommaExpr(expression: JsExpression)(implicit writer: TextOutput) =
     expression match {
       case JsNop(binOp: JsBinary) if binOp.op == JsBinops.`,` ⇒
         _lparen()
@@ -742,7 +742,7 @@ private final class JsEmitter {
         false
     }
 
-  private[this] def _parenPushOrSpace(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
+  private[this] def _parenPushOrSpace(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: TextOutput) = {
     val doPush = _parenCalc(parent, child, wrongAssoc)
 
     if(doPush) {
@@ -754,34 +754,34 @@ private final class JsEmitter {
     doPush
   }
 
-  private[this] def _questionMark()(implicit writer: JsWriter) {
+  private[this] def _questionMark()(implicit writer: TextOutput) {
     writer.print('?')
   }
 
-  private[this] def _return()(implicit writer: JsWriter) {
+  private[this] def _return()(implicit writer: TextOutput) {
     writer.print(CharsReturn)
   }
 
-  private[this] def _semi()(implicit writer: JsWriter) {
+  private[this] def _semi()(implicit writer: TextOutput) {
     writer.print(';')
   }
 
-  private[this] def _semiOpt()(implicit writer: JsWriter) {
+  private[this] def _semiOpt()(implicit writer: TextOutput) {
     writer.printOpt(';')
   }
 
-  private[this] def _sepCommaOptSpace(sep: Boolean)(implicit writer: JsWriter) {
+  private[this] def _sepCommaOptSpace(sep: Boolean)(implicit writer: TextOutput) {
     if(sep) {
       writer.print(',')
       _spaceOpt()
     }
   }
 
-  private[this] def _slash()(implicit writer: JsWriter) {
+  private[this] def _slash()(implicit writer: TextOutput) {
     writer.print('/')
   }
 
-  private[this] def _spaceCalc(op: JsOperator, expression: JsExpression)(implicit writer: JsWriter): Boolean =
+  private[this] def _spaceCalc(op: JsOperator, expression: JsExpression)(implicit writer: TextOutput): Boolean =
     if(op.isKeyword) {
       true
     } else {
@@ -820,31 +820,31 @@ private final class JsEmitter {
       }
     }
 
-  private[this] def _switch()(implicit writer: JsWriter) {
+  private[this] def _switch()(implicit writer: TextOutput) {
     writer.print(CharsSwitch)
   }
 
-  private[this] def _this()(implicit writer: JsWriter) {
+  private[this] def _this()(implicit writer: TextOutput) {
     writer.print(CharsThis)
   }
 
-  private[this] def _throw()(implicit writer: JsWriter) {
+  private[this] def _throw()(implicit writer: TextOutput) {
     writer.print(CharsThrow)
   }
 
-  private[this] def _true()(implicit writer: JsWriter) {
+  private[this] def _true()(implicit writer: TextOutput) {
     writer.print(CharsTrue)
   }
 
-  private[this] def _try()(implicit writer: JsWriter) {
+  private[this] def _try()(implicit writer: TextOutput) {
     writer.print(CharsTry)
   }
 
-  private[this] def _var()(implicit writer: JsWriter) {
+  private[this] def _var()(implicit writer: TextOutput) {
     writer.print(CharsVar)
   }
 
-  private[this] def _while()(implicit writer: JsWriter) {
+  private[this] def _while()(implicit writer: TextOutput) {
     writer.print(CharsWhile)
   }
 }
