@@ -1,5 +1,6 @@
 package hector.actor
 
+import akka.dispatch.Promise
 import akka.pattern.pipe
 import akka.util.Timeout
 import akka.util.duration._
@@ -8,10 +9,9 @@ import akka.pattern.ask
 
 import hector.Hector
 import hector.session.SessionActor
-
-import akka.dispatch.Promise
 import hector.js.JsAST
 import hector.http.{HttpRequest, HttpResponse}
+import hector.util.randomHash
 
 /**
  */
@@ -206,17 +206,11 @@ final class CallbackActor extends Actor {
    * @return The JavaScript code to execute the callback.
    */
   private[this] def newCallback(request: HttpRequest, target: ActorRef, message: Any) = {
-    val callbackFuture =
-      (Hector.utilities ? UtilityActor.NewUniqueHash).mapTo[String]
+    val callbackName = randomHash()
+    val storeFuture = Hector.session ? SessionActor.Store(request, createSessionHash(callbackName), (target, message))
 
     val jsFunctionFuture =
-      callbackFuture map {
-        callbackName ⇒
-          //TODO(joa): we should only create the callback once the session actor successfully stored the data
-          Hector.session ! SessionActor.Store(request, createSessionHash(callbackName), (target, message))
-
-          createJavaScriptCall(callbackName)
-      }
+      storeFuture map { unit ⇒ createJavaScriptCall(callbackName) }
 
     jsFunctionFuture pipeTo sender
   }

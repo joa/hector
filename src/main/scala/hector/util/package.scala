@@ -1,5 +1,7 @@
 package hector
 
+import java.util.UUID
+
 package object util {
   // Utility methods should perform as fast as possible. Therefore you will not find many use
   // of Scala features like for-comprehension in here.
@@ -235,6 +237,13 @@ package object util {
         stringBuilder.insert(index + 1, '\\')
       }
     }
+  }
+
+  def randomHash(): String = {
+    import java.util.{UUID ⇒ JUUID}
+
+    val uuid = JUUID.randomUUID().toString
+    uuid.replace("-", "")
   }
 
 }
