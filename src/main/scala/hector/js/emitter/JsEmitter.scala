@@ -673,12 +673,18 @@ private final class JsEmitter {
     writer.print(CharsNull)
   }
 
-  private[this] def _parenCalc(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
-    val parentPrec = JsPrecedenceVisitor(parent)
-    val childPrec = JsPrecedenceVisitor(child)
+  private[this] def _parenCalc(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter): Boolean =
+    child match {
+      case JsObj(_) | JsFunc(_, _, _) ⇒
+        // Fix for GWT issue 7829
+        // http://code.google.com/p/google-web-toolkit/issues/detail?id=7289
+        true
+      case _ ⇒
+        val parentPrec = JsPrecedenceCalculator(parent)
+        val childPrec = JsPrecedenceCalculator(child)
 
-    parentPrec > childPrec || (parentPrec == childPrec && wrongAssoc)
-  }
+        (parentPrec > childPrec) || (parentPrec == childPrec && wrongAssoc)
+    }
 
   private[this] def _parenPop(parent: JsExpression, child: JsExpression, wrongAssoc: Boolean)(implicit writer: JsWriter) = {
     val doPop = _parenCalc(parent, child, wrongAssoc)

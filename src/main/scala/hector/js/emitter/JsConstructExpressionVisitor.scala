@@ -7,7 +7,7 @@ import hector.js._
  */
 private[emitter] object JsConstructExpressionVisitor {
   def apply(expression: JsExpression): Boolean =
-    if(JsPrecedenceVisitor(expression) < JsPrecedenceVisitor.PrecedenceOfNew) {
+    if(JsPrecedenceCalculator(expression) < JsPrecedenceCalculator.PrecedenceOfNew) {
       true
     } else {
       visit(expression)

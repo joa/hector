@@ -38,6 +38,11 @@ object CallbackActor {
    * @param callback The callback to execute.
    */
   case class Execute(callback: String) extends CallbackActorMessage
+
+  /**
+   * The length of a callback name.
+   */
+  val CallbackNameLength = 32
 }
 
 /**
@@ -238,7 +243,7 @@ final class CallbackActor extends Actor {
     import hector.http.PlainTextResponse
     import hector.http.status.{BadRequest, NotFound}
 
-    if(callbackName.length != 64) {
+    if(callbackName.length != CallbackNameLength) {
       // The user provided an illegal callback name.
       sender ! PlainTextResponse("Invalid callback.\n", BadRequest)
     } else {
