@@ -12,7 +12,7 @@ import hector.html.DocTypes
 import hector.js.JsAST
 import scala.xml.Node
 import hector.actor.{CallbackActor, CreateResponse}
-import hector.http.util.WithETag
+import hector.http.util.ETagCalculatingResponse
 
 /**
  */
@@ -45,7 +45,7 @@ final class HelloWorldActor extends Actor {
           }, false)
                         """)}</script>
            */
-          WithETag(HtmlResponse(<html>
+          ETagCalculatingResponse(HtmlResponse(<html>
             <head>
               <title>Hector</title>
               {Hector.clientSupport}
