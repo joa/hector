@@ -1,11 +1,9 @@
 package hector.util
 
-import java.io.PrintWriter
-
 import javax.annotation.concurrent.NotThreadSafe
 
 /**
- * The TextOutput class wraps a PrintWriter to generate human-readable textual output.
+ * The TextOutput class wraps a StringBuilder to generate human-readable textual output.
  *
  * <p>If <code>humanReadable</code> is <code>true</code> all methods suffixed with <code>Opt</code>
  * will perform their corresponding action.</p>
@@ -14,8 +12,9 @@ import javax.annotation.concurrent.NotThreadSafe
  */
 @NotThreadSafe
 final class TextOutput(
-  /** The actual PrintWriter. */
-  private[this] val writer: PrintWriter,
+  /** The actual builder. */
+  private[this] val builder: StringBuilder,
+
   /** Whether or not human readable text should be generated. */
   private[this] val humanReadable: Boolean) {
 
@@ -47,7 +46,7 @@ final class TextOutput(
   }
 
   def newLine() {
-    writer.print('\n')
+    builder.append('\n')
     wasNewline = true
   }
 
@@ -59,13 +58,13 @@ final class TextOutput(
 
   def print(value: Char) {
     maybeIndent()
-    writer.print(value)
+    builder.append(value)
     wasNewline = false
   }
 
   def print(value: Array[Char]) {
     maybeIndent()
-    writer.print(value)
+    builder.append(value)
     wasNewline = false
   }
 
@@ -93,7 +92,7 @@ final class TextOutput(
 
   private[this] def maybeIndent() {
     if(wasNewline && humanReadable) {
-      writer.print(indents(indentLevel))
+      builder.append(indents(indentLevel))
       wasNewline = false
     }
   }

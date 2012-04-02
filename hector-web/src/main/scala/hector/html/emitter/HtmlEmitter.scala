@@ -1,14 +1,15 @@
 package hector.html.emitter
 
+import com.google.common.collect.ImmutableSortedSet
+
 import hector.html._
+import hector.util.{TextOutput, trimToOption}
 
 import javax.annotation.Nullable
 import javax.annotation.concurrent.ThreadSafe
 import java.io.{PrintWriter, StringWriter}
 
 import scala.xml.{NamespaceBinding, MetaData, Node}
-import scala.collection.immutable.Stack
-import hector.util.{TextOutput, trimToOption}
 
 /**
  */
@@ -29,34 +30,27 @@ object HtmlEmitter {
   private[this] val CharsProcInstrClose = "?>".toCharArray
 
   def toString(html: Node, docType: DocType = DocTypes.`HTML 5`, stripComments: Boolean = false, trim: Boolean = false, humanReadable: Boolean = false, omitDocType: Boolean = false): String = {
-    val stringWriter = new StringWriter()
-    val printWriter = new PrintWriter(stringWriter)
-    val writer = new TextOutput(printWriter, humanReadable)
+    val stringBuilder = new StringBuilder()
+    val writer = new TextOutput(stringBuilder, humanReadable)
 
     if(!omitDocType) {
       _dtd(docType)(writer)
     }
 
-    visit(html, docType, Stack.empty, stripComments, trim, humanReadable)(writer)
+    visit(html, docType, stripComments, trim, humanReadable)(writer)
 
-    printWriter.flush()
-    printWriter.close()
-
-    stringWriter.toString
+    stringBuilder.toString()
   }
 
-  private[this] def visit(node: Node, docType: DocType, scopeStack: Stack[NamespaceBinding], stripComments: Boolean, trim: Boolean, humanReadable: Boolean)(implicit writer: TextOutput) {
+  private[this] def visit(node: Node, docType: DocType, stripComments: Boolean, trim: Boolean, humanReadable: Boolean)(implicit writer: TextOutput) {
     import scala.xml._
 
     // Subsequent whitespace could be removed. This should be something we have to consider since
     // it will generate an Html output that is much easier on the eye when looking at the source.
 
     node match {
-      case Comment(text) ⇒
-        _commentOpen()
-        _string(text, trim)
-        _commentClose()
-        _newLineOpt()
+      case Text(value) ⇒
+        _string(value, trim)
 
       case elem: Elem ⇒
         // Note: Using a pattern match like one would expect, e.g. case Elem(prefix, label, attributes, scope, children)
@@ -70,7 +64,7 @@ object HtmlEmitter {
 
         if(children.isEmpty) {
           _lt()
-          _tag(prefix, label, attributes, scope, scopeStack, docType, stripComments, trim, humanReadable)
+          _tag(prefix, label, attributes, scope, docType, stripComments, trim, humanReadable)
           if(docType != DocTypes.`HTML 5` && docType != DocTypes.`XHTML 5`) {
             _tagCloseShort()
           } else {
@@ -78,29 +72,30 @@ object HtmlEmitter {
           }
         } else {
           _lt()
-          _tag(prefix, label, attributes, scope, scopeStack, docType, stripComments, trim, humanReadable)
+          _tag(prefix, label, attributes, scope, docType, stripComments, trim, humanReadable)
           _gt()
 
           _newLineOpt()
           writer.pushIndent()
 
-          val newScopeStack = if(scopeStack.contains(scope)) scopeStack else scopeStack.push(scope)
-
           children foreach {
             child ⇒
-              visit(child, docType, newScopeStack, stripComments, trim, humanReadable)
+              visit(child, docType, stripComments, trim, humanReadable)
           }
           _tagCloseLong(prefix, label)
         }
         _newLineOpt()
 
-      case EntityRef(name) ⇒
-        _entity(name)
-
       case Group(nodes) ⇒
         nodes foreach {
-          node ⇒ visit(node, docType, scopeStack, stripComments, trim, humanReadable)
+          node ⇒ visit(node, docType, stripComments, trim, humanReadable)
         }
+
+      case Unparsed(data) ⇒
+        writer.print(data)
+
+      case EntityRef(name) ⇒
+        _entity(name)
 
       case PCData(data) ⇒
         // So this is <![CDATA[data]]> but not PCData because PCData is Atom apparently?!
@@ -119,11 +114,11 @@ object HtmlEmitter {
         }
         _procInstrClose()
 
-      case Text(value) ⇒
-        _string(value, trim)
-
-      case Unparsed(data) ⇒
-        writer.print(data)
+      case Comment(text) ⇒
+        _commentOpen()
+        _string(text, trim)
+        _commentClose()
+        _newLineOpt()
 
       case atom: Atom[_] ⇒
         // Apparently someone decided to name PCDATA not PCDATA but Atom.
@@ -137,7 +132,7 @@ object HtmlEmitter {
     _newLine()
   }
 
-  private[this] def _tag(@Nullable prefix: String, label: String, @Nullable attributes: MetaData, scope: NamespaceBinding, scopeStack: Stack[NamespaceBinding], docType: DocType, stripComments: Boolean, trim: Boolean, humanReadable: Boolean)(implicit writer: TextOutput) {
+  private[this] def _tag(@Nullable prefix: String, label: String, @Nullable attributes: MetaData, scope: NamespaceBinding, docType: DocType, stripComments: Boolean, trim: Boolean, humanReadable: Boolean)(implicit writer: TextOutput) {
     if(null != prefix) {
       _prefix(prefix)
       _colon()
@@ -449,6 +444,263 @@ object HtmlEmitter {
   private[this] val ValidUnicodeEntityRegex = """^#\d{1,4}$""".r
   private[this] val ValidHashEntityRegex = """^#x[abcdefABCDEF0-9]{1,4}$""".r
 
+  private[this] val ValidEntities =
+    ImmutableSortedSet.of[String](
+      "quot",
+      "amp",
+      "apos",
+      "lt",
+      "gt",
+      "nbsp",
+
+      "iexcl",
+      "cent",
+      "pound",
+      "curren",
+      "yen",
+      "brvbar",
+      "sect",
+      "uml",
+      "copy",
+      "ordf",
+      "laquo",
+      "not",
+      "shy",
+      "reg",
+      "macr",
+      "deg",
+      "plusmn",
+      "sup2",
+      "sup3",
+      "acute",
+      "micro",
+      "para",
+      "middot",
+      "cedil",
+      "sup1",
+      "ordm",
+      "raquo",
+      "frac14",
+      "frac12",
+      "frac34",
+      "iquest",
+      "Agrave",
+      "Aacute",
+      "Acirc",
+      "Atilde",
+      "Auml",
+      "Aring",
+      "AElig",
+      "Ccedil",
+      "Egrave",
+      "Eacute",
+      "Ecirc",
+      "Euml",
+      "Igrave",
+      "Iacute",
+      "Icirc",
+      "Iuml",
+      "ETH",
+      "Ntilde",
+      "Ograve",
+      "Oacute",
+      "Ocirc",
+      "Otilde",
+      "Ouml",
+      "times",
+      "Oslash",
+      "Ugrave",
+      "Uacute",
+      "Ucirc",
+      "Uuml",
+      "Yacute",
+      "THORN",
+      "szlig",
+      "agrave",
+      "aacute",
+      "acirc",
+      "atilde",
+      "auml",
+      "aring",
+      "aelig",
+      "ccedil",
+      "egrave",
+      "eacute",
+      "ecirc",
+      "euml",
+      "igrave",
+      "iacute",
+      "icirc",
+      "iuml",
+      "eth",
+      "ntilde",
+      "ograve",
+      "oacute",
+      "ocirc",
+      "otilde",
+      "ouml",
+      "divide",
+      "oslash",
+      "ugrave",
+      "uacute",
+      "ucirc",
+      "uuml",
+      "yacute",
+      "thorn",
+      "yuml",
+      "OElig",
+      "oelig",
+      "Scaron",
+      "scaron",
+      "Yuml",
+      "fnof",
+      "circ",
+      "tilde",
+      "Alpha",
+      "Beta",
+      "Gamma",
+      "Delta",
+      "Epsilon",
+      "Zeta",
+      "Eta",
+      "Theta",
+      "Iota",
+      "Kappa",
+      "Lambda",
+      "Mu",
+      "Nu",
+      "Xi",
+      "Omicron",
+      "Pi",
+      "Rho",
+      "Sigma",
+      "Tau",
+      "Upsilon",
+      "Phi",
+      "Chi",
+      "Psi",
+      "Omega",
+      "alpha",
+      "beta",
+      "gamma",
+      "delta",
+      "epsilon",
+      "zeta",
+      "eta",
+      "theta",
+      "iota",
+      "kappa",
+      "lambda",
+      "mu",
+      "nu",
+      "xi",
+      "omicron",
+      "pi",
+      "rho",
+      "sigmaf",
+      "sigma",
+      "tau",
+      "upsilon",
+      "phi",
+      "chi",
+      "psi",
+      "omega",
+      "thetasym",
+      "upsih",
+      "piv",
+      "ensp",
+      "emsp",
+      "thinsp",
+      "zwnj",
+      "zwj",
+      "lrm",
+      "rlm",
+      "ndash",
+      "mdash",
+      "lsquo",
+      "rsquo",
+      "sbquo",
+      "ldquo",
+      "rdquo",
+      "bdquo",
+      "dagger",
+      "Dagger",
+      "bull",
+      "hellip",
+      "permil",
+      "prime",
+      "Prime",
+      "lsaquo",
+      "rsaquo",
+      "oline",
+      "frasl",
+      "euro",
+      "image",
+      "weierp",
+      "real",
+      "trade",
+      "alefsym",
+      "larr",
+      "uarr",
+      "rarr",
+      "darr",
+      "harr",
+      "crarr",
+      "lArr",
+      "uArr",
+      "rArr",
+      "dArr",
+      "hArr",
+      "forall",
+      "part",
+      "exist",
+      "empty",
+      "nabla",
+      "isin",
+      "notin",
+      "ni",
+      "prod",
+      "sum",
+      "minus",
+      "lowast",
+      "radic",
+      "prop",
+      "infin",
+      "ang",
+      "and",
+      "or",
+      "cap",
+      "cup",
+      "int",
+      "there4",
+      "sim",
+      "cong",
+      "asymp",
+      "ne",
+      "equiv",
+      "le",
+      "ge",
+      "sub",
+      "sup",
+      "nsub",
+      "sube",
+      "supe",
+      "oplus",
+      "otimes",
+      "perp",
+      "sdot",
+      "lceil",
+      "rceil",
+      "lfloor",
+      "rfloor",
+      "lang",
+      "rang",
+      "loz",
+      "spades",
+      "clubs",
+      "hearts",
+      "diams")
+
   private[this] def isEntity(name: String): Boolean = {
     val firstChar = name.charAt(0)
 
@@ -466,263 +718,7 @@ object HtmlEmitter {
 
       case other ⇒
         //TODO(joa): optimize me
-        name match {
-          case "quot" ⇒ true
-          case "amp" ⇒ true
-          case "apos" ⇒ true
-          case "lt" ⇒ true
-          case "gt" ⇒ true
-          case "nbsp" ⇒ true
-
-          case "iexcl" ⇒ true
-          case "cent" ⇒ true
-          case "pound" ⇒ true
-          case "curren" ⇒ true
-          case "yen" ⇒ true
-          case "brvbar" ⇒ true
-          case "sect" ⇒ true
-          case "uml" ⇒ true
-          case "copy" ⇒ true
-          case "ordf" ⇒ true
-          case "laquo" ⇒ true
-          case "not" ⇒ true
-          case "shy" ⇒ true
-          case "reg" ⇒ true
-          case "macr" ⇒ true
-          case "deg" ⇒ true
-          case "plusmn" ⇒ true
-          case "sup2" ⇒ true
-          case "sup3" ⇒ true
-          case "acute" ⇒ true
-          case "micro" ⇒ true
-          case "para" ⇒ true
-          case "middot" ⇒ true
-          case "cedil" ⇒ true
-          case "sup1" ⇒ true
-          case "ordm" ⇒ true
-          case "raquo" ⇒ true
-          case "frac14" ⇒ true
-          case "frac12" ⇒ true
-          case "frac34" ⇒ true
-          case "iquest" ⇒ true
-          case "Agrave" ⇒ true
-          case "Aacute" ⇒ true
-          case "Acirc" ⇒ true
-          case "Atilde" ⇒ true
-          case "Auml" ⇒ true
-          case "Aring" ⇒ true
-          case "AElig" ⇒ true
-          case "Ccedil" ⇒ true
-          case "Egrave" ⇒ true
-          case "Eacute" ⇒ true
-          case "Ecirc" ⇒ true
-          case "Euml" ⇒ true
-          case "Igrave" ⇒ true
-          case "Iacute" ⇒ true
-          case "Icirc" ⇒ true
-          case "Iuml" ⇒ true
-          case "ETH" ⇒ true
-          case "Ntilde" ⇒ true
-          case "Ograve" ⇒ true
-          case "Oacute" ⇒ true
-          case "Ocirc" ⇒ true
-          case "Otilde" ⇒ true
-          case "Ouml" ⇒ true
-          case "times" ⇒ true
-          case "Oslash" ⇒ true
-          case "Ugrave" ⇒ true
-          case "Uacute" ⇒ true
-          case "Ucirc" ⇒ true
-          case "Uuml" ⇒ true
-          case "Yacute" ⇒ true
-          case "THORN" ⇒ true
-          case "szlig" ⇒ true
-          case "agrave" ⇒ true
-          case "aacute" ⇒ true
-          case "acirc" ⇒ true
-          case "atilde" ⇒ true
-          case "auml" ⇒ true
-          case "aring" ⇒ true
-          case "aelig" ⇒ true
-          case "ccedil" ⇒ true
-          case "egrave" ⇒ true
-          case "eacute" ⇒ true
-          case "ecirc" ⇒ true
-          case "euml" ⇒ true
-          case "igrave" ⇒ true
-          case "iacute" ⇒ true
-          case "icirc" ⇒ true
-          case "iuml" ⇒ true
-          case "eth" ⇒ true
-          case "ntilde" ⇒ true
-          case "ograve" ⇒ true
-          case "oacute" ⇒ true
-          case "ocirc" ⇒ true
-          case "otilde" ⇒ true
-          case "ouml" ⇒ true
-          case "divide" ⇒ true
-          case "oslash" ⇒ true
-          case "ugrave" ⇒ true
-          case "uacute" ⇒ true
-          case "ucirc" ⇒ true
-          case "uuml" ⇒ true
-          case "yacute" ⇒ true
-          case "thorn" ⇒ true
-          case "yuml" ⇒ true
-          case "OElig" ⇒ true
-          case "oelig" ⇒ true
-          case "Scaron" ⇒ true
-          case "scaron" ⇒ true
-          case "Yuml" ⇒ true
-          case "fnof" ⇒ true
-          case "circ" ⇒ true
-          case "tilde" ⇒ true
-          case "Alpha" ⇒ true
-          case "Beta" ⇒ true
-          case "Gamma" ⇒ true
-          case "Delta" ⇒ true
-          case "Epsilon" ⇒ true
-          case "Zeta" ⇒ true
-          case "Eta" ⇒ true
-          case "Theta" ⇒ true
-          case "Iota" ⇒ true
-          case "Kappa" ⇒ true
-          case "Lambda" ⇒ true
-          case "Mu" ⇒ true
-          case "Nu" ⇒ true
-          case "Xi" ⇒ true
-          case "Omicron" ⇒ true
-          case "Pi" ⇒ true
-          case "Rho" ⇒ true
-          case "Sigma" ⇒ true
-          case "Tau" ⇒ true
-          case "Upsilon" ⇒ true
-          case "Phi" ⇒ true
-          case "Chi" ⇒ true
-          case "Psi" ⇒ true
-          case "Omega" ⇒ true
-          case "alpha" ⇒ true
-          case "beta" ⇒ true
-          case "gamma" ⇒ true
-          case "delta" ⇒ true
-          case "epsilon" ⇒ true
-          case "zeta" ⇒ true
-          case "eta" ⇒ true
-          case "theta" ⇒ true
-          case "iota" ⇒ true
-          case "kappa" ⇒ true
-          case "lambda" ⇒ true
-          case "mu" ⇒ true
-          case "nu" ⇒ true
-          case "xi" ⇒ true
-          case "omicron" ⇒ true
-          case "pi" ⇒ true
-          case "rho" ⇒ true
-          case "sigmaf" ⇒ true
-          case "sigma" ⇒ true
-          case "tau" ⇒ true
-          case "upsilon" ⇒ true
-          case "phi" ⇒ true
-          case "chi" ⇒ true
-          case "psi" ⇒ true
-          case "omega" ⇒ true
-          case "thetasym" ⇒ true
-          case "upsih" ⇒ true
-          case "piv" ⇒ true
-          case "ensp" ⇒ true
-          case "emsp" ⇒ true
-          case "thinsp" ⇒ true
-          case "zwnj" ⇒ true
-          case "zwj" ⇒ true
-          case "lrm" ⇒ true
-          case "rlm" ⇒ true
-          case "ndash" ⇒ true
-          case "mdash" ⇒ true
-          case "lsquo" ⇒ true
-          case "rsquo" ⇒ true
-          case "sbquo" ⇒ true
-          case "ldquo" ⇒ true
-          case "rdquo" ⇒ true
-          case "bdquo" ⇒ true
-          case "dagger" ⇒ true
-          case "Dagger" ⇒ true
-          case "bull" ⇒ true
-          case "hellip" ⇒ true
-          case "permil" ⇒ true
-          case "prime" ⇒ true
-          case "Prime" ⇒ true
-          case "lsaquo" ⇒ true
-          case "rsaquo" ⇒ true
-          case "oline" ⇒ true
-          case "frasl" ⇒ true
-          case "euro" ⇒ true
-          case "image" ⇒ true
-          case "weierp" ⇒ true
-          case "real" ⇒ true
-          case "trade" ⇒ true
-          case "alefsym" ⇒ true
-          case "larr" ⇒ true
-          case "uarr" ⇒ true
-          case "rarr" ⇒ true
-          case "darr" ⇒ true
-          case "harr" ⇒ true
-          case "crarr" ⇒ true
-          case "lArr" ⇒ true
-          case "uArr" ⇒ true
-          case "rArr" ⇒ true
-          case "dArr" ⇒ true
-          case "hArr" ⇒ true
-          case "forall" ⇒ true
-          case "part" ⇒ true
-          case "exist" ⇒ true
-          case "empty" ⇒ true
-          case "nabla" ⇒ true
-          case "isin" ⇒ true
-          case "notin" ⇒ true
-          case "ni" ⇒ true
-          case "prod" ⇒ true
-          case "sum" ⇒ true
-          case "minus" ⇒ true
-          case "lowast" ⇒ true
-          case "radic" ⇒ true
-          case "prop" ⇒ true
-          case "infin" ⇒ true
-          case "ang" ⇒ true
-          case "and" ⇒ true
-          case "or" ⇒ true
-          case "cap" ⇒ true
-          case "cup" ⇒ true
-          case "int" ⇒ true
-          case "there4" ⇒ true
-          case "sim" ⇒ true
-          case "cong" ⇒ true
-          case "asymp" ⇒ true
-          case "ne" ⇒ true
-          case "equiv" ⇒ true
-          case "le" ⇒ true
-          case "ge" ⇒ true
-          case "sub" ⇒ true
-          case "sup" ⇒ true
-          case "nsub" ⇒ true
-          case "sube" ⇒ true
-          case "supe" ⇒ true
-          case "oplus" ⇒ true
-          case "otimes" ⇒ true
-          case "perp" ⇒ true
-          case "sdot" ⇒ true
-          case "lceil" ⇒ true
-          case "rceil" ⇒ true
-          case "lfloor" ⇒ true
-          case "rfloor" ⇒ true
-          case "lang" ⇒ true
-          case "rang" ⇒ true
-          case "loz" ⇒ true
-          case "spades" ⇒ true
-          case "clubs" ⇒ true
-          case "hearts" ⇒ true
-          case "diams" ⇒ true
-          case _ ⇒ false
-        }
+        ValidEntities contains name
     }
   }
 }

@@ -64,16 +64,13 @@ object JsEmitter {
   }
 
   def toString(ast: JsAST, humanReadable: Boolean = false) = {
-    val stringWriter = new StringWriter()
-    val printWriter = new PrintWriter(stringWriter)
-    val writer = new TextOutput(printWriter, humanReadable)
+    val stringBuilder = new StringBuilder()
+    val writer = new TextOutput(stringBuilder, humanReadable)
 
     val emitter = new JsEmitter()
     emitter.visit(ast)(writer)
 
-    printWriter.flush()
-    printWriter.close()
-    stringWriter.toString
+    stringBuilder.toString
   }
 }
 
