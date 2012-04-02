@@ -1,22 +1,22 @@
 package hector.microbenchmark
 
-import com.google.caliper.{Runner, SimpleBenchmark}
-
-
-object EscapeJavaStringBenchmark {
-  def main(args: Array[String]) {
-    Runner.main(classOf[EscapeJavaStringBenchmark], args)
-  }
-}
+import hector.microbenchmark.util.HectorBenchmark
 
 /**
  */
-final class EscapeJavaStringBenchmark extends SimpleBenchmark {
-  def timeEscapeEmptyJavaString(reps: Int) {
-    var i = 0
-    while(i < reps) {
-      hector.util.escapeJavaScriptString("")
-      i += 1
+final class EscapeJavaStringBenchmark extends HectorBenchmark {
+  private[this] var chars: String  = _
+
+  override protected def setUp() {
+    chars =
+      (for {
+        i <- 0x00000 until 0x10000
+      } yield i.asInstanceOf[Char]) mkString ""
+  }
+
+  def timeEscapeJavaString(reps: Int) = {
+    benchmark(reps) {
+      hector.util.escapeJavaScriptString(chars)
     }
   }
 }

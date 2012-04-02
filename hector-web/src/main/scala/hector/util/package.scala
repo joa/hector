@@ -244,5 +244,4 @@ package object util {
     val uuid = JUUID.randomUUID().toString
     uuid.replace("-", "")
   }
-
 }
