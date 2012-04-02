@@ -64,7 +64,7 @@ final class TextOutput(
 
   def print(value: Array[Char]) {
     maybeIndent()
-    builder.append(value)
+    builder.appendAll(value)
     wasNewline = false
   }
 
@@ -92,7 +92,7 @@ final class TextOutput(
 
   private[this] def maybeIndent() {
     if(wasNewline && humanReadable) {
-      builder.append(indents(indentLevel))
+      builder.appendAll(indents(indentLevel))
       wasNewline = false
     }
   }

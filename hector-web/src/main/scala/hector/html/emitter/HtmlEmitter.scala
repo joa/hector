@@ -78,17 +78,21 @@ object HtmlEmitter {
           _newLineOpt()
           writer.pushIndent()
 
-          children foreach {
-            child ⇒
-              visit(child, docType, stripComments, trim, humanReadable)
+          val iterator = children.iterator
+
+          while(iterator.hasNext) {
+            visit(iterator.next(), docType, stripComments, trim, humanReadable)
           }
+
           _tagCloseLong(prefix, label)
         }
         _newLineOpt()
 
       case Group(nodes) ⇒
-        nodes foreach {
-          node ⇒ visit(node, docType, stripComments, trim, humanReadable)
+        val iterator = nodes.iterator
+
+        while(iterator.hasNext) {
+          visit(iterator.next(), docType, stripComments, trim, humanReadable)
         }
 
       case Unparsed(data) ⇒
@@ -127,6 +131,7 @@ object HtmlEmitter {
     }
   }
 
+  @inline
   private[this] def _dtd(docType: DocType)(implicit writer: TextOutput) {
     writer.print(docType.charArray)
     _newLine()
@@ -140,80 +145,90 @@ object HtmlEmitter {
 
     _name(label)
 
-    if(null != attributes) {
-      for { maybeAnAttribute ← attributes } {
-        import scala.xml._
+    import scala.xml._
 
-        maybeAnAttribute match {
-          case Null ⇒
-          case attribute: Attribute ⇒
-            @Nullable val prefix = attribute.pre
-            val label = attribute.key
-            @Nullable val value = attribute.value
+    //
+    // About the weirdness: MetaData is an iterator in itself. So MetaData.next returns the next
+    // element which can be null, Null or an Attribute.
+    //
 
-            _space()
+    var iterator = attributes
 
-            if(null != prefix) {
-              _prefix(prefix)
-              _colon()
-            }
+    while(null != iterator && Null != iterator) {
+      //
+      // Apparently calling hasNext would lead to an error and instead we must check
+      // for Null.
+      //
 
-            _name(label)
+      // We tested for Null in the header.
 
-            if(null != value) {
-              writer.print('=')
-              writer.print('"')
+      val attribute = iterator.asInstanceOf[Attribute]
+      iterator = iterator.next
 
-              if(value forall { _.isInstanceOf[Text] }) {
-                // The common case: All attribute elements are text nodes. Who would have
-                // thought about that?!
+      @Nullable val prefix = attribute.pre
+      val label = attribute.key
+      @Nullable val value = attribute.value
 
-                // This is an evil side-effect we are willing to introduce into our beautiful
-                // map operation so we do not have to call (stringSequence map { _.length }).sum
-                // which makes us traverse the sequence again.
-                var totalLength = 0
+      _space()
 
-                val stringSequence: Seq[String] = value map {
-                  textNode ⇒
-                    val result = textNode.asInstanceOf[Text].data
-                    totalLength += result.length
-                    result
-                }
+      if(null != prefix) {
+        _prefix(prefix)
+        _colon()
+      }
 
-                // Use "totalLength" instead of "(stringSequence map { _.length }).sum" here.
-                val stringBuilder = new StringBuilder(totalLength)
+      _name(label)
 
-                stringSequence foreach stringBuilder.append
+      if(null != value) {
+        writer.print('=')
+        writer.print('"')
 
-                // Never trim any attributes because this is absolutely the decision of the
-                // person generating an attribute in the first place.
+        // if(value forall { _.isInstanceOf[Text] }) {
+        //
+        // The common case: All attribute elements are text nodes. Who would have
+        // thought about that?!
+        //
+        // This is an evil side-effect we are willing to introduce into our beautiful
+        // map operation so we do not have to call (stringSequence map { _.length }).sum
+        // which makes us traverse the sequence again.
+        //
+        // Please note that we are going for an imperative style here since otherwise
+        // the totalLength will lead to an IntRef which is instantiated for each
+        // attribute with an anonymous function for the map operation.
+        //
+        // The old code which used to do this:
+        //
+        // var totalLength = 0
+        //
+        // val stringSequence: Seq[String] = value map {
+        //   textNode ⇒
+        //     val result = textNode.asInstanceOf[Text].data
+        //     totalLength += result.length
+        //     result
+        // }
+        //
+        // // Use "totalLength" instead of "(stringSequence map { _.length }).sum" here.
+        // val stringBuilder = new StringBuilder(totalLength)
+        // val iterator = stringSequence.iterator
+        //
+        // while(iterator.hasNext) {
+        //  stringBuilder.append(iterator.next())
+        // }
+        //
 
-                _string(stringBuilder.toString(), trim = false)
-              } else {
-                // Whatever this is ...
+        val iterator = value.iterator
 
-                value foreach {
-                  element ⇒
-                    //TODO(joa): remove before going into prod
-                    println("#####################################################################")
-                    println("# JACKPOT: "+element)
-                    println("#####################################################################")
+        while(iterator.hasNext) {
+          //FIXME(joa): I think it is possible to have Unparsed here too.
 
-                    // However we do not perform any additional escaping since toString(...) will
-                    // already contain an escaped sequence. But we might want to look for
-                    // any closing XML tag
+          // Never trim any attributes because this is absolutely the decision of the
+          // person generating an attribute in the first place.
 
-                    //TODO(joa): escape closing XML tags
-                    writer.print(toString(element, docType, stripComments, trim = false, humanReadable = humanReadable, omitDocType = true))
-                }
-              }
-
-              writer.print('"')
-            }
+          _string(iterator.next().asInstanceOf[Text].data, trim = false)
         }
+
+        writer.print('"')
       }
     }
-
 
     //TODO(joa): how did he implement namespaces?! its quite weird ...
     //scope
@@ -233,11 +248,13 @@ object HtmlEmitter {
     writer.popIndent()
   }
 
+  @inline
   private[this] def _tagCloseShort()(implicit writer: TextOutput) {
     writer.print('/')
     _gt()
   }
 
+  @inline
   private[this] def _entity(name: String)(implicit writer: TextOutput) {
     if(isEntity(name)) {
       _and()
@@ -246,6 +263,7 @@ object HtmlEmitter {
     }
   }
 
+  @inline
   private[this] def _prefix(prefix: String)(implicit writer: TextOutput) {
     if(isName(prefix)) {
       writer.print(prefix)
@@ -254,6 +272,7 @@ object HtmlEmitter {
     }
   }
 
+  @inline
   private[this] def _name(name: String)(implicit writer: TextOutput) {
     if(isName(name)) {
       writer.print(name)
@@ -262,71 +281,87 @@ object HtmlEmitter {
     }
   }
 
+  @inline
   private[this] def _cdataOpen()(implicit writer: TextOutput) {
     writer.print(CharsCDataOpen)
   }
 
+  @inline
   private[this] def _cdataClose()(implicit writer: TextOutput) {
     writer.print(CharsCDataClose)
     writer.newLineOpt()
   }
 
+  @inline
   private[this] def _procInstrOpen()(implicit writer: TextOutput) {
     writer.print(CharsProcInstrOpen)
   }
 
+  @inline
   private[this] def _procInstrClose()(implicit writer: TextOutput) {
     writer.print(CharsProcInstrClose)
     writer.newLineOpt()
   }
 
+  @inline
   private[this] def _colon()(implicit writer: TextOutput) {
     writer.print(':')
   }
 
+  @inline
   private[this] def _lt()(implicit writer: TextOutput) {
     writer.print('<')
   }
 
+  @inline
   private[this] def _gt()(implicit writer: TextOutput) {
     writer.print('>')
   }
 
+  @inline
   private[this] def _commentOpen()(implicit writer: TextOutput) {
     writer.print(CharsCommentOpen)
     _spaceOpt()
   }
 
+  @inline
   private[this] def _commentClose()(implicit writer: TextOutput) {
     _spaceOpt()
     writer.print(CharsCommentClose)
   }
 
+  @inline
   private[this] def _newLine()(implicit writer: TextOutput) {
     writer.newLine()
   }
 
+  @inline
   private[this] def _newLineOpt()(implicit writer: TextOutput) {
     writer.newLineOpt()
   }
 
+  @inline
   private[this] def _space()(implicit writer: TextOutput) {
     writer.print(' ')
   }
 
+  @inline
   private[this] def _spaceOpt()(implicit writer: TextOutput) {
     writer.printOpt(' ')
   }
 
+  @inline
   private[this] def _string(value: String, trim: Boolean)(implicit writer: TextOutput) {
     //TODO(joa): use proper escape method ...
     writer.print(xml.Utility.escape(if(trim) trimHtmlText(value) else value))
   }
 
+  @inline
   private[this] def _and()(implicit writer: TextOutput) {
     writer.print('&')
   }
 
+  @inline
   private[this] def _semi()(implicit writer: TextOutput) {
     writer.print(';')
   }
@@ -348,10 +383,10 @@ object HtmlEmitter {
    *
    * @return The trimmed value; may still start or end with a whitespace character.
    */
-  private[this] def trimHtmlText(value: String): String = {
-    val length = value.length
-
+  private[this] def trimHtmlText(value: String): String =
     if(null != value) {
+      val length = value.length
+
       if(length == 1) {
         // Make no attempt to trim a single character because it could be \n, \x32 or anything
         // else and we do want to preserve single whitespace.
@@ -381,13 +416,13 @@ object HtmlEmitter {
       // Empty string.
       value
     }
-  }
 
   // The isName method is not used correct since prefix:label makes a name and Elem
   // does not define it as such. For now we do it like isName(prefix):isName(label)
   // so in fact the "label" part of Elem is also checked for isNameStart but in the end
   // it is only making sure that a name is correct even tough label is null.
 
+  @inline
   private[this] def isName(value: String): Boolean =
     testStringForValidity(value, isNameStart, isNamePart)
 
@@ -396,6 +431,7 @@ object HtmlEmitter {
    * @param char
    * @return
    */
+  @inline
   private[this] def isNameStart(char: Char): Boolean =
     char match {
       case letter if Character.isLetter(letter) ⇒ true
@@ -409,6 +445,7 @@ object HtmlEmitter {
    * @param char
    * @return
    */
+  @inline
   private[this] def isNamePart(char: Char): Boolean =
     char match {
       case letter if Character.isLetter(letter) ⇒ true
@@ -443,264 +480,38 @@ object HtmlEmitter {
 
   private[this] val ValidUnicodeEntityRegex = """^#\d{1,4}$""".r
   private[this] val ValidHashEntityRegex = """^#x[abcdefABCDEF0-9]{1,4}$""".r
-
   private[this] val ValidEntities =
     ImmutableSortedSet.of[String](
-      "quot",
-      "amp",
-      "apos",
-      "lt",
-      "gt",
-      "nbsp",
+      "quot",  "amp", "apos", "lt", "gt", "nbsp",
+      "iexcl", "cent", "pound", "curren", "yen", "brvbar",
+      "sect", "uml", "copy", "ordf", "laquo", "not", "shy", "reg",
+      "macr", "deg", "plusmn", "sup2", "sup3", "acute", "micro", "para",
+      "middot", "cedil", "sup1", "ordm", "raquo", "frac14", "frac12", "frac34",
+      "iquest", "Agrave", "Aacute", "Acirc", "Atilde", "Auml", "Aring", "AElig",
+      "Ccedil", "Egrave", "Eacute", "Ecirc", "Euml", "Igrave", "Iacute", "Icirc",
+      "Iuml", "ETH", "Ntilde", "Ograve", "Oacute", "Ocirc", "Otilde", "Ouml",
+      "times", "Oslash", "Ugrave", "Uacute", "Ucirc", "Uuml", "Yacute", "THORN",
+      "szlig", "agrave", "aacute", "acirc", "atilde", "auml", "aring", "aelig",
+      "ccedil", "egrave", "eacute", "ecirc", "euml", "igrave", "iacute", "icirc",
+      "iuml", "eth", "ntilde", "ograve", "oacute", "ocirc", "otilde", "ouml", "divide",
+      "oslash", "ugrave", "uacute", "ucirc", "uuml", "yacute", "thorn", "yuml", "OElig",
+      "oelig", "Scaron", "scaron", "Yuml", "fnof", "circ", "tilde", "Alpha", "Beta", "Gamma",
+      "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda", "Mu", "Nu",
+      "Xi", "Omicron", "Pi", "Rho", "Sigma", "Tau", "Upsilon", "Phi", "Chi", "Psi", "Omega",
+      "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota",
+      "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho", "sigmaf", "sigma",
+      "tau", "upsilon", "phi", "chi", "psi", "omega", "thetasym", "upsih", "piv", "ensp",
+      "emsp", "thinsp", "zwnj", "zwj", "lrm", "rlm", "ndash", "mdash", "lsquo", "rsquo",
+      "sbquo", "ldquo", "rdquo", "bdquo", "dagger", "Dagger", "bull", "hellip", "permil", "prime",
+      "Prime", "lsaquo", "rsaquo", "oline", "frasl", "euro", "image", "weierp", "real", "trade",
+      "alefsym", "larr", "uarr", "rarr", "darr", "harr", "crarr", "lArr", "uArr", "rArr", "dArr",
+      "hArr", "forall", "part", "exist", "empty", "nabla", "isin", "notin", "ni", "prod", "sum",
+      "minus", "lowast", "radic", "prop", "infin", "ang", "and", "or", "cap", "cup", "int",
+      "there4", "sim", "cong", "asymp", "ne", "equiv", "le", "ge", "sub", "sup", "nsub", "sube",
+      "supe", "oplus", "otimes", "perp", "sdot", "lceil", "rceil", "lfloor", "rfloor", "lang",
+      "rang", "loz", "spades", "clubs", "hearts", "diams")
 
-      "iexcl",
-      "cent",
-      "pound",
-      "curren",
-      "yen",
-      "brvbar",
-      "sect",
-      "uml",
-      "copy",
-      "ordf",
-      "laquo",
-      "not",
-      "shy",
-      "reg",
-      "macr",
-      "deg",
-      "plusmn",
-      "sup2",
-      "sup3",
-      "acute",
-      "micro",
-      "para",
-      "middot",
-      "cedil",
-      "sup1",
-      "ordm",
-      "raquo",
-      "frac14",
-      "frac12",
-      "frac34",
-      "iquest",
-      "Agrave",
-      "Aacute",
-      "Acirc",
-      "Atilde",
-      "Auml",
-      "Aring",
-      "AElig",
-      "Ccedil",
-      "Egrave",
-      "Eacute",
-      "Ecirc",
-      "Euml",
-      "Igrave",
-      "Iacute",
-      "Icirc",
-      "Iuml",
-      "ETH",
-      "Ntilde",
-      "Ograve",
-      "Oacute",
-      "Ocirc",
-      "Otilde",
-      "Ouml",
-      "times",
-      "Oslash",
-      "Ugrave",
-      "Uacute",
-      "Ucirc",
-      "Uuml",
-      "Yacute",
-      "THORN",
-      "szlig",
-      "agrave",
-      "aacute",
-      "acirc",
-      "atilde",
-      "auml",
-      "aring",
-      "aelig",
-      "ccedil",
-      "egrave",
-      "eacute",
-      "ecirc",
-      "euml",
-      "igrave",
-      "iacute",
-      "icirc",
-      "iuml",
-      "eth",
-      "ntilde",
-      "ograve",
-      "oacute",
-      "ocirc",
-      "otilde",
-      "ouml",
-      "divide",
-      "oslash",
-      "ugrave",
-      "uacute",
-      "ucirc",
-      "uuml",
-      "yacute",
-      "thorn",
-      "yuml",
-      "OElig",
-      "oelig",
-      "Scaron",
-      "scaron",
-      "Yuml",
-      "fnof",
-      "circ",
-      "tilde",
-      "Alpha",
-      "Beta",
-      "Gamma",
-      "Delta",
-      "Epsilon",
-      "Zeta",
-      "Eta",
-      "Theta",
-      "Iota",
-      "Kappa",
-      "Lambda",
-      "Mu",
-      "Nu",
-      "Xi",
-      "Omicron",
-      "Pi",
-      "Rho",
-      "Sigma",
-      "Tau",
-      "Upsilon",
-      "Phi",
-      "Chi",
-      "Psi",
-      "Omega",
-      "alpha",
-      "beta",
-      "gamma",
-      "delta",
-      "epsilon",
-      "zeta",
-      "eta",
-      "theta",
-      "iota",
-      "kappa",
-      "lambda",
-      "mu",
-      "nu",
-      "xi",
-      "omicron",
-      "pi",
-      "rho",
-      "sigmaf",
-      "sigma",
-      "tau",
-      "upsilon",
-      "phi",
-      "chi",
-      "psi",
-      "omega",
-      "thetasym",
-      "upsih",
-      "piv",
-      "ensp",
-      "emsp",
-      "thinsp",
-      "zwnj",
-      "zwj",
-      "lrm",
-      "rlm",
-      "ndash",
-      "mdash",
-      "lsquo",
-      "rsquo",
-      "sbquo",
-      "ldquo",
-      "rdquo",
-      "bdquo",
-      "dagger",
-      "Dagger",
-      "bull",
-      "hellip",
-      "permil",
-      "prime",
-      "Prime",
-      "lsaquo",
-      "rsaquo",
-      "oline",
-      "frasl",
-      "euro",
-      "image",
-      "weierp",
-      "real",
-      "trade",
-      "alefsym",
-      "larr",
-      "uarr",
-      "rarr",
-      "darr",
-      "harr",
-      "crarr",
-      "lArr",
-      "uArr",
-      "rArr",
-      "dArr",
-      "hArr",
-      "forall",
-      "part",
-      "exist",
-      "empty",
-      "nabla",
-      "isin",
-      "notin",
-      "ni",
-      "prod",
-      "sum",
-      "minus",
-      "lowast",
-      "radic",
-      "prop",
-      "infin",
-      "ang",
-      "and",
-      "or",
-      "cap",
-      "cup",
-      "int",
-      "there4",
-      "sim",
-      "cong",
-      "asymp",
-      "ne",
-      "equiv",
-      "le",
-      "ge",
-      "sub",
-      "sup",
-      "nsub",
-      "sube",
-      "supe",
-      "oplus",
-      "otimes",
-      "perp",
-      "sdot",
-      "lceil",
-      "rceil",
-      "lfloor",
-      "rfloor",
-      "lang",
-      "rang",
-      "loz",
-      "spades",
-      "clubs",
-      "hearts",
-      "diams")
-
+  @inline
   private[this] def isEntity(name: String): Boolean = {
     val firstChar = name.charAt(0)
 
@@ -716,9 +527,7 @@ object HtmlEmitter {
           ValidHashEntityRegex.pattern.matcher(name).matches()
         }
 
-      case other ⇒
-        //TODO(joa): optimize me
-        ValidEntities contains name
+      case _ ⇒ ValidEntities contains name
     }
   }
 }

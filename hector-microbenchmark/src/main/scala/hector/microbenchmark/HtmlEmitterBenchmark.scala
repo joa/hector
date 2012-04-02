@@ -12,7 +12,7 @@ import scala.xml._
 /**
  */
 final class HtmlEmitterBenchmark extends HectorBenchmark {
-  @Param(Array("0", "1", "2"))
+  @Param(Array("0", "1", "2", "3"))
   private var index: Int = _
 
   private var data: Node = _
@@ -73,6 +73,7 @@ object Data {
       case 0 => Books
       case 1 => YQL_1
       case 2 => W3_frontpage
+      case 3 => Generatedata_com
     }
 
   private[this] val Books  = load("books")
@@ -80,6 +81,8 @@ object Data {
   private[this] val YQL_1 = load("yql_1")
 
   private[this] val W3_frontpage = load("w3_frontpage")
+
+  private[this] val Generatedata_com = load("generatedata_com")
 
   private[this] def load(file: String) =
     XML.load(Resources.getResource(file+".xml"))

@@ -87,7 +87,7 @@ package hector {
 
       resolvers += "Sonatype Repository" at "https://oss.sonatype.org/content/repositories/releases/",
 
-      scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked"),
+      scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-optimise"),
 
       javacOptions  ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
     )
