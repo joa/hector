@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Hector by joa</title>
+    
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Hector</h1>
+        <p>Location Transparent Web Framework</p>
+        <p class="view"><a href="https://github.com/joa/hector">View the Project on GitHub <small>joa/hector</small></a></p>
+        <ul>
+          <li><a href="https://github.com/joa/hector/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/joa/hector/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/joa/hector">Fork On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h3>Introduction</h3>
+
+<p>Hector is a location transparent web-framework written in <a href="http://www.scala-lang.org/">Scala</a> which makes heavy use of <a href="http://www.akka.io/">Akka</a>.</p>
+
+<h3>Routing</h3>
+
+<p>Requests are routed with a partial function. It could not be simpler than that.</p>
+
+<pre><code>val userProfileActor = context.actorOf(Props[UserProfileActor])
+
+def routes = {
+  case Get("user" /: publicKey /: _) ⇒  Route(userProfileActor, Some(publicKey → true))
+}
+</code></pre>
+
+<p>Hector is always specific. A requests ends with a <code>Required_/</code> or <code>No_/</code> but in this case we do not care so we use <code>_</code>.</p>
+
+<h3>HTML</h3>
+
+<p>Hector comes with an excellent HTML emitter that is more secure and faster than Scala's built-in XML <a href="http://www.scala-lang.org/api/current/scala/xml/Utility%24.html">Utility</a>.</p>
+
+<p>It can generate beautiful and human readable HTML code with proper indentation or omit all unnecessary whitespace. But it will never break your content like <code>Utility.trim</code> does.</p>
+
+<h3>JavaScript</h3>
+
+<p>If HTML is salt, JavaScript is pepper and both together create a spicy combination. Hector mixes pepper with steroids so that you get awesome JavaScript support.</p>
+
+<p>Hector comes with typed top-level definitions which evaluate to an <a href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">AST</a>. <code>window.alert(window.status.length * 2)</code> is actual Scala code which is compiled and minified on the server.</p>
+
+<p>You can either write JavaScript using the typed top-level and implicit conversions or write it completely manual. Here are two examples that both result in <code>(function(){hector.execCallback('...')})()</code> on the client.</p>
+
+<pre><code>// Generate the AST manually:
+
+JsCall(
+  callee = JsFunc(
+    id = None,
+    parameters = Seq.empty,
+    body = JsBlock(
+      JsCall(
+        JsMember(JsIdentifier('hector), JsIdentifier('execCallback)),
+        Seq(callbackName)
+      )
+    )
+  ),
+  arguments = Seq.empty
+)
+
+// Using implicits and the DSL (will result in same AST):
+
+(function { ('hector ~&gt; 'execCallback)(callbackName) })()
+</code></pre>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/joa">joa</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><!--<![endif]-->
+  </body>
+</html>
