@@ -82,6 +82,7 @@ object Data {
       case 1 ⇒ YQL_1
       case 2 ⇒ W3_frontpage
       case 3 ⇒ Generatedata_com
+      case 4 ⇒ W3_html5spec
     }
 
   private[this] val Books  = load("books")
@@ -91,6 +92,8 @@ object Data {
   private[this] val W3_frontpage = load("w3_frontpage")
 
   private[this] val Generatedata_com = load("generatedata_com")
+
+  private[this] val W3_html5spec = load("w3_html5spec")
 
   private[this] def load(file: String) =
     XML.load(Resources.getResource(file+".xml"))
