@@ -11,7 +11,7 @@ object AllBenchmarks {
   def main(args: Array[String]) {
     val benchmarks =
       for {
-        klass <- classesOf("hector.microbenchmark") if klass.getName.endsWith("Benchmark") && !Modifier.isAbstract(klass.getModifiers)
+        klass ← classesOf("hector.microbenchmark") if klass.getName.endsWith("Benchmark") && !Modifier.isAbstract(klass.getModifiers)
       } yield {
         klass.asInstanceOf[Class[SimpleBenchmark]]
       }
@@ -20,17 +20,18 @@ object AllBenchmarks {
     var current = 0
 
     println("Benchmarks:")
-    benchmarks foreach { klass => println("  "+klass.getName) }
+    benchmarks foreach { klass ⇒ println("  "+klass.getName) }
 
     for {
-      benchmark <- benchmarks
+      benchmark ← benchmarks
     } {
-      println("Running Benchmark "+benchmark.getName+":")
+      println("Running Benchmark "+benchmark.getName+" ...")
 
+      //TODO(joa): need to fork java procecss
       Runner.main(benchmark, args)
       current += 1
 
-      println("Complet ("+current+"/"+total+")")
+      println("Benchmark Complete ("+current+"/"+total+")")
     }
   }
 }

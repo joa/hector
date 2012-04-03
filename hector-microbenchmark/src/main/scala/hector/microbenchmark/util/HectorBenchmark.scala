@@ -5,7 +5,7 @@ import com.google.caliper.SimpleBenchmark
 /**
  */
 abstract class HectorBenchmark extends SimpleBenchmark {
-  protected def benchmark[@specialized U](reps: Int)(f: => U) = {
+  protected def benchmark[@specialized U](reps: Int)(f: ⇒ U) = {
     var result = 0
     var i = 0
 

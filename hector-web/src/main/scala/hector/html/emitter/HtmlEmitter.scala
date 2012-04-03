@@ -8,8 +8,8 @@ import hector.util.{TextOutput, trimToOption}
 import javax.annotation.Nullable
 import javax.annotation.concurrent.ThreadSafe
 import java.io.{PrintWriter, StringWriter}
+import scala.xml._
 
-import scala.xml.{NamespaceBinding, MetaData, Node}
 
 /**
  */
@@ -160,7 +160,7 @@ object HtmlEmitter {
       // for Null.
       //
 
-      // We tested for Null in the header.
+      // We tested for Null in the header so the cast is safe.
 
       val attribute = iterator.asInstanceOf[Attribute]
       iterator = iterator.next
@@ -182,48 +182,10 @@ object HtmlEmitter {
         writer.print('=')
         writer.print('"')
 
-        // if(value forall { _.isInstanceOf[Text] }) {
-        //
-        // The common case: All attribute elements are text nodes. Who would have
-        // thought about that?!
-        //
-        // This is an evil side-effect we are willing to introduce into our beautiful
-        // map operation so we do not have to call (stringSequence map { _.length }).sum
-        // which makes us traverse the sequence again.
-        //
-        // Please note that we are going for an imperative style here since otherwise
-        // the totalLength will lead to an IntRef which is instantiated for each
-        // attribute with an anonymous function for the map operation.
-        //
-        // The old code which used to do this:
-        //
-        // var totalLength = 0
-        //
-        // val stringSequence: Seq[String] = value map {
-        //   textNode ⇒
-        //     val result = textNode.asInstanceOf[Text].data
-        //     totalLength += result.length
-        //     result
-        // }
-        //
-        // // Use "totalLength" instead of "(stringSequence map { _.length }).sum" here.
-        // val stringBuilder = new StringBuilder(totalLength)
-        // val iterator = stringSequence.iterator
-        //
-        // while(iterator.hasNext) {
-        //  stringBuilder.append(iterator.next())
-        // }
-        //
-
         val iterator = value.iterator
 
         while(iterator.hasNext) {
-          //FIXME(joa): I think it is possible to have Unparsed here too.
-
-          // Never trim any attributes because this is absolutely the decision of the
-          // person generating an attribute in the first place.
-
-          _string(iterator.next().asInstanceOf[Text].data, trim = false)
+          _attributeValue(iterator.next())
         }
 
         writer.print('"')
@@ -232,6 +194,26 @@ object HtmlEmitter {
 
     //TODO(joa): how did he implement namespaces?! its quite weird ...
     //scope
+  }
+
+  private[this] def _attributeValue(node: Node)(implicit writer: TextOutput) {
+    node match {
+      case text: Text ⇒
+        // Never trim any attributes because this is absolutely the decision of the
+        // person generating an attribute in the first place.
+        _string(text.data, trim = false)
+
+      case Unparsed(data) ⇒
+        writer.print(data)
+
+      case Group(group) ⇒
+        val iterator = group.iterator
+        while(iterator.hasNext) {
+          _attributeValue(iterator.next())
+        }
+
+      case invalid ⇒ sys.error("Invalid node "+invalid+" in attribute value.")
+    }
   }
 
   private[this] def _tagCloseLong(@Nullable prefix: String, label: String)(implicit writer: TextOutput) {
@@ -248,13 +230,11 @@ object HtmlEmitter {
     writer.popIndent()
   }
 
-  @inline
   private[this] def _tagCloseShort()(implicit writer: TextOutput) {
     writer.print('/')
     _gt()
   }
 
-  @inline
   private[this] def _entity(name: String)(implicit writer: TextOutput) {
     if(isEntity(name)) {
       _and()
@@ -263,7 +243,6 @@ object HtmlEmitter {
     }
   }
 
-  @inline
   private[this] def _prefix(prefix: String)(implicit writer: TextOutput) {
     if(isName(prefix)) {
       writer.print(prefix)
@@ -272,7 +251,6 @@ object HtmlEmitter {
     }
   }
 
-  @inline
   private[this] def _name(name: String)(implicit writer: TextOutput) {
     if(isName(name)) {
       writer.print(name)
@@ -281,87 +259,71 @@ object HtmlEmitter {
     }
   }
 
-  @inline
   private[this] def _cdataOpen()(implicit writer: TextOutput) {
     writer.print(CharsCDataOpen)
   }
 
-  @inline
   private[this] def _cdataClose()(implicit writer: TextOutput) {
     writer.print(CharsCDataClose)
     writer.newLineOpt()
   }
 
-  @inline
   private[this] def _procInstrOpen()(implicit writer: TextOutput) {
     writer.print(CharsProcInstrOpen)
   }
 
-  @inline
   private[this] def _procInstrClose()(implicit writer: TextOutput) {
     writer.print(CharsProcInstrClose)
     writer.newLineOpt()
   }
 
-  @inline
   private[this] def _colon()(implicit writer: TextOutput) {
     writer.print(':')
   }
 
-  @inline
   private[this] def _lt()(implicit writer: TextOutput) {
     writer.print('<')
   }
 
-  @inline
   private[this] def _gt()(implicit writer: TextOutput) {
     writer.print('>')
   }
 
-  @inline
   private[this] def _commentOpen()(implicit writer: TextOutput) {
     writer.print(CharsCommentOpen)
     _spaceOpt()
   }
 
-  @inline
   private[this] def _commentClose()(implicit writer: TextOutput) {
     _spaceOpt()
     writer.print(CharsCommentClose)
   }
 
-  @inline
   private[this] def _newLine()(implicit writer: TextOutput) {
     writer.newLine()
   }
 
-  @inline
   private[this] def _newLineOpt()(implicit writer: TextOutput) {
     writer.newLineOpt()
   }
 
-  @inline
   private[this] def _space()(implicit writer: TextOutput) {
     writer.print(' ')
   }
 
-  @inline
   private[this] def _spaceOpt()(implicit writer: TextOutput) {
     writer.printOpt(' ')
   }
 
-  @inline
   private[this] def _string(value: String, trim: Boolean)(implicit writer: TextOutput) {
     //TODO(joa): use proper escape method ...
     writer.print(xml.Utility.escape(if(trim) trimHtmlText(value) else value))
   }
 
-  @inline
   private[this] def _and()(implicit writer: TextOutput) {
     writer.print('&')
   }
 
-  @inline
   private[this] def _semi()(implicit writer: TextOutput) {
     writer.print(';')
   }
@@ -422,16 +384,14 @@ object HtmlEmitter {
   // so in fact the "label" part of Elem is also checked for isNameStart but in the end
   // it is only making sure that a name is correct even tough label is null.
 
-  @inline
   private[this] def isName(value: String): Boolean =
-    testStringForValidity(value, isNameStart, isNamePart)
+    testStringForValidity(value, isNameStart, isNamePart) //TODO scalac cannot inline isNameStart and isNamePart for whatever reason ...
 
   /**
    * http://www.w3.org/TR/2000/REC-xml-20001006#NT-Name
    * @param char
    * @return
    */
-  @inline
   private[this] def isNameStart(char: Char): Boolean =
     char match {
       case letter if Character.isLetter(letter) ⇒ true
@@ -445,7 +405,6 @@ object HtmlEmitter {
    * @param char
    * @return
    */
-  @inline
   private[this] def isNamePart(char: Char): Boolean =
     char match {
       case letter if Character.isLetter(letter) ⇒ true
@@ -479,7 +438,9 @@ object HtmlEmitter {
   }
 
   private[this] val ValidUnicodeEntityRegex = """^#\d{1,4}$""".r
+
   private[this] val ValidHashEntityRegex = """^#x[abcdefABCDEF0-9]{1,4}$""".r
+
   private[this] val ValidEntities =
     ImmutableSortedSet.of[String](
       "quot",  "amp", "apos", "lt", "gt", "nbsp",
@@ -511,7 +472,6 @@ object HtmlEmitter {
       "supe", "oplus", "otimes", "perp", "sdot", "lceil", "rceil", "lfloor", "rfloor", "lang",
       "rang", "loz", "spades", "clubs", "hearts", "diams")
 
-  @inline
   private[this] def isEntity(name: String): Boolean = {
     val firstChar = name.charAt(0)
 

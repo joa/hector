@@ -1,6 +1,6 @@
 package hector.microbenchmark
 
-import com.google.caliper.Param
+import com.google.caliper.{Runner, Param}
 import com.google.common.io.Resources
 
 import hector.html.emitter.HtmlEmitter
@@ -8,6 +8,14 @@ import hector.html._
 import hector.microbenchmark.util.HectorBenchmark
 
 import scala.xml._
+
+/**
+ */
+object HtmlEmitterBenchmark {
+  def main(args: Array[String]) {
+    Runner.main(classOf[HtmlEmitterBenchmark], args)
+  }
+}
 
 /**
  */
@@ -70,10 +78,10 @@ final class HtmlEmitterBenchmark extends HectorBenchmark {
 object Data {
   def apply(index: Int) =
     index match {
-      case 0 => Books
-      case 1 => YQL_1
-      case 2 => W3_frontpage
-      case 3 => Generatedata_com
+      case 0 ⇒ Books
+      case 1 ⇒ YQL_1
+      case 2 ⇒ W3_frontpage
+      case 3 ⇒ Generatedata_com
     }
 
   private[this] val Books  = load("books")

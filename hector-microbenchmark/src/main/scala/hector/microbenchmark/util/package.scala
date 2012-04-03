@@ -17,7 +17,7 @@ package object util {
     }
 
     (for {
-      dir <- dirs
+      dir ← dirs
     } yield {
       findClasses(dir, packageName)
     }).flatten

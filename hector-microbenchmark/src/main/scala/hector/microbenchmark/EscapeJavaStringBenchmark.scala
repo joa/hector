@@ -1,6 +1,16 @@
 package hector.microbenchmark
 
+import com.google.caliper.Runner
+
 import hector.microbenchmark.util.HectorBenchmark
+
+/**
+ */
+object EscapeJavaStringBenchmark {
+  def main(args: Array[String]) {
+    Runner.main(classOf[EscapeJavaStringBenchmark], args)
+  }
+}
 
 /**
  */
@@ -10,7 +20,7 @@ final class EscapeJavaStringBenchmark extends HectorBenchmark {
   override protected def setUp() {
     chars =
       (for {
-        i <- 0x00000 until 0x10000
+        i ← 0x00000 until 0x10000
       } yield i.asInstanceOf[Char]) mkString ""
   }
 
