@@ -7,7 +7,7 @@ import hector.util.{TextOutput, trimToOption}
 
 import javax.annotation.Nullable
 import javax.annotation.concurrent.ThreadSafe
-import java.io.{PrintWriter, StringWriter}
+
 import scala.xml._
 
 
@@ -28,6 +28,14 @@ object HtmlEmitter {
   private[this] val CharsProcInstrOpen = "<?".toCharArray
 
   private[this] val CharsProcInstrClose = "?>".toCharArray
+
+  private[this] val CharsEscapedLt = "&lt;".toCharArray
+
+  private[this] val CharsEscapedGt = "&gt;".toCharArray
+
+  private[this] val CharsEscapedAmp = "&amp;".toCharArray
+
+  private[this] val CharsEscapedQuot = "&quot;".toCharArray
 
   def toString(html: Node, docType: DocType = DocTypes.`HTML 5`, stripComments: Boolean = false, trim: Boolean = false, humanReadable: Boolean = false, omitDocType: Boolean = false): String = {
     val stringBuilder = new StringBuilder()
@@ -316,8 +324,48 @@ object HtmlEmitter {
   }
 
   private[this] def _string(value: String, trim: Boolean)(implicit writer: TextOutput) {
-    //TODO(joa): use proper escape method ...
-    writer.print(xml.Utility.escape(if(trim) trimHtmlText(value) else value))
+    import writer.print
+
+    val chars = (if(trim) trimHtmlText(value) else value).toCharArray
+    val n = chars.length
+    var i = 0
+
+    //TODO(joa): to avoid a whole bunch of method calls we should evaluate valid indices and print a batch
+
+    while(i < n) {
+      val char = chars(i)
+
+      char match {
+        case '<' ⇒
+          print(CharsEscapedLt)
+
+        case '>' ⇒
+          print(CharsEscapedGt)
+
+        case '&' ⇒
+          print(CharsEscapedAmp)
+
+        case '"' ⇒
+          print(CharsEscapedQuot)
+
+        case '\n' ⇒
+          print('\n')
+
+        case '\r' ⇒
+          print('\r')
+
+        case '\t' ⇒
+          print('\t')
+
+        case printChar if ' ' <= printChar && printChar <= '~' ⇒
+          print(printChar)
+
+        case _ ⇒
+          //TODO(joa): notify developer?
+      }
+
+      i += 1
+    }
   }
 
   private[this] def _and()(implicit writer: TextOutput) {
@@ -385,7 +433,26 @@ object HtmlEmitter {
   // it is only making sure that a name is correct even tough label is null.
 
   private[this] def isName(value: String): Boolean =
-    testStringForValidity(value, isNameStart, isNamePart) //TODO scalac cannot inline isNameStart and isNamePart for whatever reason ...
+    if(null == value || value.length < 1) {
+       false
+     } else {
+       val charArray = value.toCharArray
+
+       if(isNameStart(charArray(0))) {
+         val n = value.length
+         var i = 1
+         var valid = true
+
+         while(valid && i < n) {
+           valid = isNamePart(charArray(i))
+           i += 1
+         }
+
+         valid
+       } else {
+         false
+       }
+     }
 
   /**
    * http://www.w3.org/TR/2000/REC-xml-20001006#NT-Name
@@ -413,29 +480,6 @@ object HtmlEmitter {
       //case Extender ⇒ true
       //case Combiner ⇒ true
     }
-
-  private[this] def testStringForValidity(value: String, startIsValid: Char ⇒ Boolean, partIsValid: Char ⇒ Boolean): Boolean = {
-    if(null == value || value.length < 1) {
-      false
-    } else {
-      val charArray = value.toCharArray
-
-      if(startIsValid(charArray(0))) {
-        val n = value.length
-        var i = 1
-        var valid = true
-
-        while(valid && i < n) {
-          valid = partIsValid(charArray(i))
-          i += 1
-        }
-
-        valid
-      } else {
-        false
-      }
-    }
-  }
 
   private[this] val ValidUnicodeEntityRegex = """^#\d{1,4}$""".r
 
