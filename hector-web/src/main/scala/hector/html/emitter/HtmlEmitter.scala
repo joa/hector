@@ -94,11 +94,104 @@ object HtmlEmitter {
     val stringBuilder = new StringBuilder(20000) //TODO(joa): make me configurable.
     val writer = new TextOutput(stringBuilder, humanReadable)
 
+    //val typeBuffer = new scala.collection.mutable.ArrayBuffer[Int](0x200)
+    //calculateWhitespace(html, typeBuffer)
+
+    // Whitespace is collapsed to the left.
+    //
+    // In the following conditions the whitespace is not collapsed:
+    //    <pre>-context
+    //    "white-space: pre" via CSS
+    //
+    // There are also other tags which clear the collapse behaviour.
+    // Specifically <br/>, <p> and other elements leading to a page break.
+    // However this can depend entirely on CSS too.
+    //
+    // <b>foo</b> <i>bar</i><br/>      {foo}{ }{bar}
+    // <b>foo </b> <i>bar</i><br/>     {foo }{bar}
+    // <b>foo</b> <i> bar</i><br/>     {foo}{ }{bar}
+    // <b>foo </b> <i> bar</i><br/>    {foo }{bar}
+    //
+    // Note that any whitespace immediately following an opening tag is ignored.
+    // Note that any whitespace immediately preceeding a closing tag is ignored.
+    //
+
     _dtd(docType)(writer)
 
     visit(html, docType, stripComments, trim)(writer)
 
     stringBuilder.toString()
+  }
+
+  private[this] def calculateWhitespace(node: Node, types: scala.collection.mutable.ArrayBuffer[Int]) {
+    node match {
+      case Text(value) ⇒
+        val chars = value.toCharArray
+        val n = chars.length
+        var i = 0
+        var isOnlyWhitespace = true
+
+        while(i < n && isOnlyWhitespace) {
+          isOnlyWhitespace = chars(i) match {
+            case ' ' | '\r' | '\n' | '\t' ⇒ true
+            case _ ⇒ false
+          }
+
+          i += 1
+        }
+
+        // 0 = whitespace only
+        // 1 = text only
+        // 2 = text, begins with whitespace
+        // 3 = text, ends with whitespace
+        // 4 = text, begins and ends with whitespace
+
+        if(isOnlyWhitespace) {
+          // " "
+          types += 0
+        } else {
+          // It is safe to assume chars is not empty since otherwise isOnlyWhitespace would
+          // be set to true.
+
+          types +=
+            chars(0) match {
+              case ' ' | '\r' | '\n' | '\t' ⇒
+                chars(n - 1) match {
+                  case ' ' | '\r' | '\n' | '\t' ⇒
+                    //" foo "
+                    4
+                  case _ ⇒
+                    // " foo"
+                    2
+                }
+              case _ ⇒
+                chars(n - 1) match {
+                  case ' ' | '\r' | '\n' | '\t' ⇒
+                    //"foo "
+                    3
+                  case _ ⇒
+                    //"foo"
+                    1
+                }
+            }
+        }
+
+      case elem: Elem ⇒
+        val iterator = elem.child.iterator
+
+        while(iterator.hasNext) {
+          calculateWhitespace(iterator.next(), types)
+        }
+
+      case Group(nodes) ⇒
+        val iterator = nodes.iterator
+
+        while(iterator.hasNext) {
+          calculateWhitespace(iterator.next(), types)
+        }
+
+      case _ ⇒
+    }
   }
 
   private[this] def visit(node: Node, docType: DocType, stripComments: Boolean, trim: Boolean)(implicit writer: TextOutput) {
@@ -180,10 +273,12 @@ object HtmlEmitter {
         _procInstrClose()
 
       case Comment(text) ⇒
-        _commentOpen()
-        _string(text, trim)
-        _commentClose()
-        _newLineOpt()
+        if(!stripComments) {
+          _commentOpen()
+          _string(text, trim)
+          _commentClose()
+          _newLineOpt()
+        }
 
       case atom: Atom[_] ⇒
         //
