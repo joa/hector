@@ -89,7 +89,7 @@
   .category-list li { display: inline; }
   .category-list li:not(:last-child)::after { content: ', '; }
   .category-list li > span, .category-list li > a { text-transform: lowercase; }
-  .category-list li * { text-transform: none; } /* don't affect <code> nested in <a> */
+  .category-list li * { text-transform: none; }
 
   .XXX { color: #E50000; background: white; border: solid red; padding: 0.5em; margin: 1em 0; }
   .XXX > :first-child { margin-top: 0; }
@@ -225,8 +225,8 @@
   color: white;
   }
 
-</style><link href="data:text/css,.impl%20%7B%20display:%20none;%20%7D%0Ahtml%20%7B%20border:%20solid%20yellow;%20%7D%20.domintro:before%20%7B%20display:%20none;%20%7D" id="author" rel="alternate stylesheet" title="Author documentation only"><link href="data:text/css,.impl%20%7B%20background:%20%23FFEEEE;%20%7D%20.domintro:before%20%7B%20background:%20%23FFEEEE;%20%7D" id="highlight" rel="alternate stylesheet" title="Highlight implementation
-requirements"><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="stylesheet" type="text/css"><style type="text/css">
+</style><link href="data:text/css,.impl%20%7B%20display:%20none;%20%7D%0Ahtml%20%7B%20border:%20solid%20yellow;%20%7D%20.domintro:before%20%7B%20display:%20none;%20%7D" id="author" rel="alternate stylesheet" title="Author documentation only"/><link href="data:text/css,.impl%20%7B%20background:%20%23FFEEEE;%20%7D%20.domintro:before%20%7B%20background:%20%23FFEEEE;%20%7D" id="highlight" rel="alternate stylesheet" title="Highlight implementation
+requirements"/><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="stylesheet" type="text/css"/><style type="text/css">
 
   .applies thead th > * { display: block; }
   .applies thead code { display: block; }
@@ -333,7 +333,7 @@ requirements"><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="styleshe
 
 </style><style type="text/css">
   .domintro:before { display: table; margin: -1em -0.5em -0.5em auto; width: auto; content: 'This box is non-normative. Implementation requirements are given below this box.'; color: black; font-style: italic; border: solid 2px; background: white; padding: 0 0.25em; }
-</style><script type="text/javascript">
+</style><script type="text/javascript"><!--
   function getCookie(name) {
   var params = location.search.substr(1).split("&");
   for (var index = 0; index < params.length; index++) {
@@ -351,6 +351,7 @@ requirements"><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="styleshe
   }
   return null;
   }
+  -->
 </script>
   <script src="link-fixup.js" type="text/javascript"></script>
   <script src="toc.js" type="text/javascript"></script>
@@ -358,7 +359,7 @@ requirements"><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="styleshe
   <body onload="initToc()">
     <div class="head" id="head">
 
-      <p><a href="http://www.w3.org/"><img alt="W3C" height="48" src="http://www.w3.org/Icons/w3c_home" width="72"></a></p>
+      <p><a href="http://www.w3.org/"><img alt="W3C" height="48" src="http://www.w3.org/Icons/w3c_home" width="72"/></a></p>
 
       <h1>HTML5</h1>
       <h2 class="no-num no-toc" id="a-vocabulary-and-associated-apis-for-html-and-xhtml">A vocabulary and associated APIs for HTML and XHTML</h2>
@@ -408,7 +409,7 @@ requirements"><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="styleshe
       <!-- UNDER NO CIRCUMSTANCES IS THE PRECEDING PARAGRAPH TO BE REMOVED OR EDITED WITHOUT TALKING TO IAN FIRST -->
 
 
-    </div><hr class="top"><h2 class="no-num no-toc" id="abstract">Abstract</h2><p>This specification defines the 5th major revision of the core
+    </div><hr class="top"/><h2 class="no-num no-toc" id="abstract">Abstract</h2><p>This specification defines the 5th major revision of the core
     language of the World Wide Web: the Hypertext Markup Language
     (HTML). In this version, new features are introduced to help Web
     application authors, new elements are introduced based on research
@@ -424,7 +425,7 @@ requirements"><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="styleshe
       public bug database</a>. If you do not have an account then you can
     enter feedback using this form:</p><form action="http://www.whatwg.org/specs/web-apps/current-work/file-spam.cgi" method="post">
     <fieldset><legend>Feedback Comments</legend>
-      <input name="id" type="hidden" value="top"><input name="component" type="hidden" value="HTML5 spec (editor: Ian Hickson)"><input name="response" type="hidden" value="html"><p><label for="feedbackBox">Please enter your feedback, carefully
+      <input name="id" type="hidden" value="top"/><input name="component" type="hidden" value="HTML5 spec (editor: Ian Hickson)"/><input name="response" type="hidden" value="html"/><p><label for="feedbackBox">Please enter your feedback, carefully
         indicating the title of the section for which you are submitting
         feedback, quoting the text that's wrong today if appropriate. If
         you're suggesting a new feature, it's really important to say
@@ -433,7 +434,7 @@ requirements"><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="styleshe
         <p><textarea cols="79" id="feedbackBox" name="text" rows="10"></textarea></p>
         <p class="note">Please don't use section numbers as these tend to
           change rapidly and make your feedback harder to understand.</p>
-        <script type="text/javascript">
+        <script type="text/javascript"><!--
           function checkFeedbackForm(form) {
           if (form.elements.text.value.match(/^ *</)) {
             alert('Please don\'t start your feedback with an angle bracket, instead explain what topic your feedback is about first.');
@@ -451,8 +452,8 @@ requirements"><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="styleshe
             }
             }
             }
-      </script><p>
-        <input onclick="return checkFeedbackForm(form)" type="submit" value="Submit feedback"><small>(Note: Your IP address and user agent will be publicly recorded for spam prevention purposes.)</small>
+     --></script><p>
+        <input onclick="return checkFeedbackForm(form)" type="submit" value="Submit feedback"/><small>(Note: Your IP address and user agent will be publicly recorded for spam prevention purposes.)</small>
       </p>
     </fieldset></form><p>If you cannot do this then you can also e-mail feedback to <a href="mailto:public-html-comments@w3.org">public-html-comments@w3.org</a>
     (<a href="mailto:public-html-comments-request@w3.org?subject=subscribe">subscribe</a>,
@@ -490,7 +491,7 @@ requirements"><link href="http://www.w3.org/StyleSheets/TR/W3C-WD" rel="styleshe
       There may also be a more
       <a href="http://www.w3.org/TR/html5">up-to-date Working Draft</a>
       with changes based on resolution of Last Call issues.
-      <input onclick="closeWarning(this.parentNode)" type="button" value="&#9587;&#8413;"></p>
+      <input onclick="closeWarning(this.parentNode)" type="button" value="&#9587;&#8413;"/></p>
     <script type="text/javascript">
       function closeWarning(element) {
       element.parentNode.removeChild(element);
