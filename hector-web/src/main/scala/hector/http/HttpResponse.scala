@@ -78,7 +78,7 @@ trait HttpResponse extends Serializable {
 }
 
 final case class HtmlResponse(html: Node, docType: DocType = DocTypes.`HTML 5`, status: Int = 200, cookies: Seq[HttpCookie] = Seq.empty, headers: Seq[HttpHeader] = Seq.empty, characterEncoding: Option[JCharset] = None) extends HttpResponse {
-  @transient private[this] lazy val htmlAsString = HtmlEmitter.toString(html, docType, stripComments = false, trim = true, humanReadable = false, omitDocType = false)
+  @transient private[this] lazy val htmlAsString = HtmlEmitter.toString(html, docType, stripComments = false, trim = true, humanReadable = false)
 
   override def contentType = MimeType.text.html
 

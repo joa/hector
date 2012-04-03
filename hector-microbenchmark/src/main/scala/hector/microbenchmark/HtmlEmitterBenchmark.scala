@@ -31,22 +31,22 @@ final class HtmlEmitterBenchmark extends HectorBenchmark {
 
   def timeHtmlEmitterWithTrimAndStripComments(reps: Int) =
     benchmark(reps) {
-      HtmlEmitter.toString(data, DocTypes.`HTML 5`, stripComments = true, trim = true, humanReadable = false, omitDocType = false)
+      HtmlEmitter.toString(data, DocTypes.`HTML 5`, stripComments = true, trim = true, humanReadable = false)
     }
 
   def timeHtmlEmitterWithTrim(reps: Int) =
     benchmark(reps) {
-      HtmlEmitter.toString(data, DocTypes.`HTML 5`, stripComments = false, trim = true, humanReadable = false, omitDocType = false)
+      HtmlEmitter.toString(data, DocTypes.`HTML 5`, stripComments = false, trim = true, humanReadable = false)
     }
 
   def timeHtmlEmitterWithStripComments(reps: Int) =
     benchmark(reps) {
-      HtmlEmitter.toString(data, DocTypes.`HTML 5`, stripComments = true, trim = false, humanReadable = false, omitDocType = false)
+      HtmlEmitter.toString(data, DocTypes.`HTML 5`, stripComments = true, trim = false, humanReadable = false)
     }
 
   def timeHtmlEmitter(reps: Int) =
     benchmark(reps) {
-      HtmlEmitter.toString(data, DocTypes.`HTML 5`, stripComments = false, trim = false, humanReadable = false, omitDocType = false)
+      HtmlEmitter.toString(data, DocTypes.`HTML 5`, stripComments = false, trim = false, humanReadable = false)
     }
 
   def timeToString(reps: Int) =

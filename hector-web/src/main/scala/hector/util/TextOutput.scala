@@ -68,6 +68,12 @@ final class TextOutput(
     wasNewline = false
   }
 
+  def print(value: Array[Char], offset: Int, length: Int) {
+    maybeIndent()
+    builder.appendAll(value, offset, length)
+    wasNewline = false
+  }
+
   def print(value: String) {
     print(value.toCharArray)
   }
