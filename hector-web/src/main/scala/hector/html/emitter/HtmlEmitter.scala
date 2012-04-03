@@ -81,6 +81,36 @@ object HtmlEmitter {
 
   private[this] val CharsEscapedQuot = "&quot;".toCharArray
 
+  /**
+   * Creates and returns a String for the given node.
+   *
+   * <p>If <code>trim</code> is set to <code>true</code> there are some very
+   * important things to consider. It is not possible to trim white-space
+   * correct ahead of time. It is impossible to know whether or
+   * not whitespace needs to be preserved since user-code might contain
+   * JavaScript which would set "white-space: pre" for some element.</p>
+   *
+   * <p>Hector tries to be correct when collapsing whitespace. That means
+   * only consecutive whitespace is collapsed to the left-most tag. If you do
+   * not use any white-space related CSS property (like "white-space") you
+   * will not get any problems. Hector will not trim text inside &lt;pre&gt;
+   * elements.</p>
+   *
+   * <p>The actual white-space collapse algorithm depends on the <code>humanReadable</code>
+   * flag. If <code>humanReadable</code> is set to <code>false</code> a cheap
+   * trimming algorithm is used which will collapse only consecutive whitespace in a
+   * single tag preserving the first and/or last whitespace character. This is a
+   * very cheap way of trimming text while preserving correct output.</p>
+   * 
+   * <p>Hector will treat <code>Unparsed</code> data like a normal Html node when
+   * consecutive whitespace needs to be detected.</p>
+   *
+   * @param html The root of the document.
+   * @param docType The DTD to use. 
+   * @param stripComments Whether or not to strip &lt;!-- comments --&gt;
+   * @param trim Whether or not to trim strings.
+   * @param humanReadable Whether or not to create well formatted source code.
+   */
   def toString(html: Node, docType: DocType = DocTypes.`HTML 5`, stripComments: Boolean = false, trim: Boolean = false, humanReadable: Boolean = false): String = {
     //
     // See https://developers.google.com/speed/articles/web-metrics
@@ -115,6 +145,19 @@ object HtmlEmitter {
     // Note that any whitespace immediately following an opening tag is ignored.
     // Note that any whitespace immediately preceeding a closing tag is ignored.
     //
+
+    val trimType = 
+      if(trim) {
+        if(humanReadable) {
+          // Using the pretty/expensive trim method
+          2
+        } else {
+          // Using "ghetto"-trimming™ since no beautiful output is intended.
+          1
+        }
+      } else {
+        0
+      }
 
     _dtd(docType)(writer)
 
