@@ -20,7 +20,7 @@ object HtmlEmitterBenchmark {
 /**
  */
 final class HtmlEmitterBenchmark extends HectorBenchmark {
-  @Param(Array("0", "1", "2", "3"))
+  @Param(Array("0", "1", "2", "3", "4"))
   private var index: Int = _
 
   private var data: Node = _
