@@ -172,10 +172,10 @@ object HtmlEmitter {
         val chars = value.toCharArray
         val n = chars.length
         var i = 0
-        var isOnlyWhitespace = true
+        var isWhitespaceOnly = true
 
-        while(i < n && isOnlyWhitespace) {
-          isOnlyWhitespace = chars(i) match {
+        while(i < n && isWhitespaceOnly) {
+          isWhitespaceOnly = chars(i) match {
             case ' ' | '\r' | '\n' | '\t' ⇒ true
             case _ ⇒ false
           }
@@ -189,7 +189,7 @@ object HtmlEmitter {
         // 3 = text, ends with whitespace
         // 4 = text, begins and ends with whitespace
 
-        if(isOnlyWhitespace) {
+        if(isWhitespaceOnly) {
           // " "
           types += 0
         } else {
@@ -197,7 +197,7 @@ object HtmlEmitter {
           // be set to true.
 
           types +=
-            chars(0) match {
+            (chars(0) match {
               case ' ' | '\r' | '\n' | '\t' ⇒
                 chars(n - 1) match {
                   case ' ' | '\r' | '\n' | '\t' ⇒
@@ -216,7 +216,7 @@ object HtmlEmitter {
                     //"foo"
                     1
                 }
-            }
+            })
         }
 
       case elem: Elem ⇒
