@@ -161,7 +161,7 @@ object HtmlEmitter {
 
     _dtd(docType)(writer)
 
-    visit(html, docType, stripComments, trim)(writer)
+    visit(html, docType, stripComments, trim, 0)(writer)
 
     stringBuilder.toString()
   }
@@ -237,7 +237,16 @@ object HtmlEmitter {
     }
   }
 
-  private[this] def visit(node: Node, docType: DocType, stripComments: Boolean, trim: Boolean)(implicit writer: TextOutput) {
+  /**
+   *
+   * @param node The node to visit.
+   * @param docType The current document type.
+   * @param stripComments Whether or not to ignore comments.
+   * @param trim Whether or not to trim text.
+   * @param preDepth The depth of &lt;pre&gt;-tags
+   * @param writer The implicit writer.
+   */
+  private[this] def visit(node: Node, docType: DocType, stripComments: Boolean, trim: Boolean, preDepth: Int)(implicit writer: TextOutput) {
     import scala.xml._
 
     // Subsequent whitespace could be removed. This should be something we have to consider since
@@ -245,7 +254,7 @@ object HtmlEmitter {
 
     node match {
       case Text(value) ⇒
-        _string(value, trim)
+        _string(value, trim && preDepth == 0)
 
       case elem: Elem ⇒
         // Note: Using a pattern match like one would expect, e.g. case Elem(prefix, label, attributes, scope, children)
@@ -256,6 +265,7 @@ object HtmlEmitter {
         @Nullable val attributes = elem.attributes
         val scope = elem.scope
         val children = elem.child
+        val isPre = label == "pre" && (null == prefix || prefix == "")
 
         if(children.isEmpty) {
           _lt()
@@ -270,24 +280,45 @@ object HtmlEmitter {
           _tag(prefix, label, attributes, scope)
           _gt()
 
-          _newLineOpt()
-          writer.pushIndent()
+          //
+          // Record whether or not we are in a <pre>-environment.
+          // This is important because we may not trim strings if that is the case.
+          //
+          // If we are not interested in trimming strings, we do not record the preDepth.
+          //
+
+          val newPreDepth =
+            if(trim && isPre) {
+              preDepth + 1
+            } else {
+              preDepth
+            }
+
+          if(!isPre) {
+            _newLineOpt()
+            writer.pushIndent()
+          }
+
+          //TODO(joa): special treatment for first & last since line feed can be ignored
 
           val iterator = children.iterator
 
           while(iterator.hasNext) {
-            visit(iterator.next(), docType, stripComments, trim)
+            visit(iterator.next(), docType, stripComments, trim, newPreDepth)
           }
 
           _tagCloseLong(prefix, label)
         }
-        _newLineOpt()
+
+        if(!isPre) {
+          _newLineOpt()
+        }
 
       case Group(nodes) ⇒
         val iterator = nodes.iterator
 
         while(iterator.hasNext) {
-          visit(iterator.next(), docType, stripComments, trim)
+          visit(iterator.next(), docType, stripComments, trim, preDepth)
         }
 
       case Unparsed(data) ⇒
@@ -328,7 +359,7 @@ object HtmlEmitter {
         // Apparently someone decided to name PCDATA not PCDATA but Atom.
         // So we will have to treat it like parsed character data.
         //
-        _string(atom.data.toString, trim)
+        _string(atom.data.toString, trim && preDepth == 0)
     }
   }
 
@@ -402,6 +433,9 @@ object HtmlEmitter {
         // Never trim any attributes because this is absolutely the decision of the
         // person generating an attribute in the first place.
         _string(text.data, trim = false)
+
+      case EntityRef(name) ⇒
+        _entity(name)
 
       case Unparsed(data) ⇒
         writer.print(data)
@@ -610,7 +644,13 @@ object HtmlEmitter {
           }
 
         case _ ⇒
-          //TODO(joa): notify developer?
+          // We may not do nothing. The buffer needs to be flushed
+          // so that we do not output the evil character.
+
+          if(-1 != indexStart) {
+            print(chars, indexStart, i - indexStart)
+            indexStart = -1
+          }
       }
 
       i += 1
@@ -730,6 +770,7 @@ object HtmlEmitter {
       case letter if Character.isLetter(letter) ⇒ true
       case digit if Character.isDigit(digit) ⇒ true
       case '.' | '-' | '_' | ':' ⇒ true
+      case _ ⇒ false
       //case Extender ⇒ true
       //case Combiner ⇒ true
     }
