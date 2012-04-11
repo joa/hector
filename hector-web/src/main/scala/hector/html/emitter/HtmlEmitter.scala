@@ -170,7 +170,7 @@ object HtmlEmitter {
     node match {
       case Text(value) ⇒
         val chars = value.toCharArray
-        val n = chars.length
+        val n = value.length
         var i = 0
         var isWhitespaceOnly = true
 
@@ -684,7 +684,7 @@ object HtmlEmitter {
    *
    * @return The index of the first character not being <code>\r</code> or <code>\n</code>; <code>-1</code> if no such character exists.
    */
-  private[this] def findFirstNonIgnoredCharacter(value: Array[Char]): Int = {
+  private[this] def firstCharNotCRLF(value: Array[Char]): Int = {
     val n = value.length
     var i = 0
 
@@ -708,7 +708,7 @@ object HtmlEmitter {
    *
    * @return The index of the last character not being <code>\r</code> or <code>\n</code>; <code>-1</code> if no such character exists.
    */
-  private[this] def findLastNonIgnoredCharacter(value: Array[Char]): Int = {
+  private[this] def lastCharNotCRLF(value: Array[Char]): Int = {
     var i = value.length - 1
 
     while(i > -1) {
@@ -757,38 +757,36 @@ object HtmlEmitter {
         }
       } else {
         val chars = value.toCharArray
-        val fromIndex = if(afterOpen) findFirstNonIgnoredCharacter(chars) else 0
+        val fromIndex = if(afterOpen) firstCharNotCRLF(chars) else 0
+        val toIndex = if(beforeClose && fromIndex >= 0) lastCharNotCRLF(chars) else (length - 1)
 
-        if(fromIndex >= 0) {
-          val toIndex = if(beforeClose) findLastNonIgnoredCharacter(chars) else (chars.length - 1)
-
-          if(toIndex >= 0) {
-            val newLength = toIndex - fromIndex + 1
-            val newValue = new String(chars, fromIndex, newLength)
-
-            val firstChar = chars(fromIndex)
-            val lastChar = chars(toIndex)
-
-            newValue match {
-              case startsAndEndsWithWhitespace if firstChar <= ' ' && lastChar <= ' ' ⇒
-                firstChar+startsAndEndsWithWhitespace.trim+lastChar
-
-              case startsWithWhitespace if firstChar <= ' ' ⇒
-                firstChar+startsWithWhitespace.trim
-
-              case endsWithWhitespace if lastChar <= ' ' ⇒
-                endsWithWhitespace.trim+lastChar
-
-              case ordinaryString ⇒
-                ordinaryString
+        if(fromIndex >= 0 && toIndex >= 0) {
+          val newLength = toIndex - fromIndex + 1
+          val newValue =
+            if(newLength == length) {
+              value
+            } else {
+              new String(chars, fromIndex, newLength)
             }
-          } else {
-            // String consists only of \r or \n characters and it was before a closing tag
-            // so we are allowed to return an empty string.
-            ""
+
+          val firstChar = chars(fromIndex)
+          val lastChar = chars(toIndex)
+
+          newValue match {
+            case startsAndEndsWithWhitespace if firstChar <= ' ' && lastChar <= ' ' ⇒
+              firstChar+startsAndEndsWithWhitespace.trim+lastChar
+
+            case startsWithWhitespace if firstChar <= ' ' ⇒
+              firstChar+startsWithWhitespace.trim
+
+            case endsWithWhitespace if lastChar <= ' ' ⇒
+              endsWithWhitespace.trim+lastChar
+
+            case ordinaryString ⇒
+              ordinaryString
           }
         } else {
-          // String consists only of \r or \n characters and it was after an opening tag
+          // String consists only of \r or \n characters and it was before an opening or closing tag
           // so we are allowed to return an empty string.
           ""
         }
