@@ -161,7 +161,7 @@ object HtmlEmitter {
 
     _dtd(docType)(writer)
 
-    visit(html, docType, stripComments, trim, 0)(writer)
+    visit(html, docType, stripComments, trim, preDepth = 0, afterOpen = true, beforeClose = true)(writer)
 
     stringBuilder.toString()
   }
@@ -246,7 +246,7 @@ object HtmlEmitter {
    * @param preDepth The depth of &lt;pre&gt;-tags
    * @param writer The implicit writer.
    */
-  private[this] def visit(node: Node, docType: DocType, stripComments: Boolean, trim: Boolean, preDepth: Int)(implicit writer: TextOutput) {
+  private[this] def visit(node: Node, docType: DocType, stripComments: Boolean, trim: Boolean, preDepth: Int, afterOpen: Boolean, beforeClose: Boolean)(implicit writer: TextOutput) {
     import scala.xml._
 
     // Subsequent whitespace could be removed. This should be something we have to consider since
@@ -254,7 +254,7 @@ object HtmlEmitter {
 
     node match {
       case Text(value) ⇒
-        _string(value, trim && preDepth == 0)
+        _string(value, trim && preDepth == 0, afterOpen, beforeClose)
 
       case elem: Elem ⇒
         // Note: Using a pattern match like one would expect, e.g. case Elem(prefix, label, attributes, scope, children)
@@ -303,8 +303,12 @@ object HtmlEmitter {
 
           val iterator = children.iterator
 
-          while(iterator.hasNext) {
-            visit(iterator.next(), docType, stripComments, trim, newPreDepth)
+          if(iterator.hasNext) {
+            visit(iterator.next(), docType, stripComments, trim, newPreDepth, afterOpen = true, beforeClose = !iterator.hasNext)
+
+            while(iterator.hasNext) {
+              visit(iterator.next(), docType, stripComments, trim, newPreDepth, afterOpen = false, beforeClose = !iterator.hasNext)
+            }
           }
 
           _tagCloseLong(prefix, label)
@@ -317,8 +321,12 @@ object HtmlEmitter {
       case Group(nodes) ⇒
         val iterator = nodes.iterator
 
-        while(iterator.hasNext) {
-          visit(iterator.next(), docType, stripComments, trim, preDepth)
+        if(iterator.hasNext) {
+          visit(iterator.next(), docType, stripComments, trim, preDepth, afterOpen = afterOpen, beforeClose = beforeClose && !iterator.hasNext)
+
+          while(iterator.hasNext) {
+            visit(iterator.next(), docType, stripComments, trim, preDepth, afterOpen = false, beforeClose = beforeClose && !iterator.hasNext)
+          }
         }
 
       case Unparsed(data) ⇒
@@ -349,7 +357,7 @@ object HtmlEmitter {
       case Comment(text) ⇒
         if(!stripComments) {
           _commentOpen()
-          _string(text, trim)
+          _string(text, trim, afterOpen = true, beforeClose = true)
           _commentClose()
           _newLineOpt()
         }
@@ -359,7 +367,7 @@ object HtmlEmitter {
         // Apparently someone decided to name PCDATA not PCDATA but Atom.
         // So we will have to treat it like parsed character data.
         //
-        _string(atom.data.toString, trim && preDepth == 0)
+        _string(atom.data.toString, trim && preDepth == 0, afterOpen, beforeClose)
     }
   }
 
@@ -432,7 +440,7 @@ object HtmlEmitter {
       case text: Text ⇒
         // Never trim any attributes because this is absolutely the decision of the
         // person generating an attribute in the first place.
-        _string(text.data, trim = false)
+        _string(text.data, trim = false, afterOpen = false, beforeClose = false)
 
       case EntityRef(name) ⇒
         _entity(name)
@@ -549,10 +557,10 @@ object HtmlEmitter {
     writer.printOpt(' ')
   }
 
-  private[this] def _string(value: String, trim: Boolean)(implicit writer: TextOutput) {
+  private[this] def _string(value: String, trim: Boolean, afterOpen: Boolean, beforeClose: Boolean)(implicit writer: TextOutput) {
     import writer.print
 
-    val chars = (if(trim) trimHtmlText(value) else value).toCharArray
+    val chars = (if(trim) trimHtmlText(value, afterOpen, beforeClose) else value).toCharArray
     val n = chars.length
     var i = 0
 
@@ -670,46 +678,112 @@ object HtmlEmitter {
   }
 
   /**
-   * trimHtmlText tries to trim an arbitrary Html text node.
+   * Finds and returns the index for the first character that is not <code>\r</code> or <code>\n</code>.
    *
-   * <p>Note that it is not possible to simply trim any content because "&lt;span&gt;foo &lt;/span&gt;bar"
-   * would look like "foobar" if we simply trim any text node. Therefore we have two options:</p>
-   * <ul>
-   *   <li>Trim the text keeping the first and/or last whitespace character</li>
-   *   <li>Trim the text, keep only the necessary first and/or last whitespace character</li>
-   * </ul>
+   * @param value The array of characters to check.
    *
-   * <p>Since it is not trivial to determine whether or not a whitespace character is required we
-   * will go with the first option for now.</p>
+   * @return The index of the first character not being <code>\r</code> or <code>\n</code>; <code>-1</code> if no such character exists.
+   */
+  private[this] def findFirstNonIgnoredCharacter(value: Array[Char]): Int = {
+    val n = value.length
+    var i = 0
+
+    while(i < n) {
+      val char = value(i)
+
+      if(char != '\n' && char != '\r') {
+        return i
+      }
+
+      i += 1
+    }
+
+    -1
+  }
+
+  /**
+   * Finds and returns the index for the last character that is not <code>\r</code> or <code>\n</code>.
+   *
+   * @param value The array of characters to check.
+   *
+   * @return The index of the last character not being <code>\r</code> or <code>\n</code>; <code>-1</code> if no such character exists.
+   */
+  private[this] def findLastNonIgnoredCharacter(value: Array[Char]): Int = {
+    var i = value.length - 1
+
+    while(i > -1) {
+      val char = value(i)
+
+      if(char != '\n' && char != '\r') {
+        return i
+      }
+
+      i -= 1
+    }
+
+    -1
+  }
+
+
+
+  /**
+   * trimHtmlText collapses consecutive white-space characters into a single white-space
+   * character. This is a fast and easy approach to trim text without altering its behaviour.
    *
    * @param value The text to trim.
+   * @param afterOpen Whether or not the text occurs immediately after an opening tag.
+   * @param beforeClose Whether or not the text occurs immediately before a closing tag.
    *
    * @return The trimmed value; may still start or end with a whitespace character.
    */
-  private[this] def trimHtmlText(value: String): String =
+  private[this] def trimHtmlText(value: String, afterOpen: Boolean, beforeClose: Boolean): String =
     if(null != value) {
       val length = value.length
 
       if(length == 1) {
-        // Make no attempt to trim a single character because it could be \n, \x32 or anything
+        //
+        // Make no attempt to trim a single character because it could be \n, \32 or anything
         // else and we do want to preserve single whitespace.
-        value
+        // Unless it is \r or \n and we are right after open or before close.
+        //
+
+        if(afterOpen || beforeClose) {
+          value.charAt(0) match {
+            case '\r' | '\n' ⇒ ""
+            case _ ⇒ value
+          }
+        } else {
+          value
+        }
       } else {
-        val firstChar = value.charAt(0)
-        val lastChar = value.charAt(length - 1)
+        val chars = value.toCharArray
+        val fromIndex = if(afterOpen) findFirstNonIgnoredCharacter(chars) else 0
 
-        value match {
-          case startsAndEndsWithWhitespace if Character.isWhitespace(firstChar) && Character.isWhitespace(lastChar) ⇒
-            firstChar+startsAndEndsWithWhitespace.trim+lastChar
+        if(fromIndex >= 0) {
+          val toIndex = if(beforeClose) findLastNonIgnoredCharacter(chars) else (chars.length - 1)
+          val newLength = toIndex - fromIndex + 1
+          val newValue = new String(chars, fromIndex, newLength)
 
-          case startsWithWhitespace if Character.isWhitespace(firstChar) ⇒
-            firstChar+startsWithWhitespace.trim
+          val firstChar = chars(fromIndex)
+          val lastChar = chars(toIndex)
 
-          case endsWithWhitespace if Character.isWhitespace(lastChar) ⇒
-            endsWithWhitespace.trim+lastChar
+          newValue match {
+            case startsAndEndsWithWhitespace if firstChar <= ' ' && lastChar <= ' ' ⇒
+              firstChar+startsAndEndsWithWhitespace.trim+lastChar
 
-          case ordinaryString ⇒
-            ordinaryString
+            case startsWithWhitespace if firstChar <= ' ' ⇒
+              firstChar+startsWithWhitespace.trim
+
+            case endsWithWhitespace if lastChar <= ' ' ⇒
+              endsWithWhitespace.trim+lastChar
+
+            case ordinaryString ⇒
+              ordinaryString
+          }
+        } else {
+          // String consists only of \r or \n characters and it was after an opening tag.
+          // So we are allowed to return an empty string.
+          ""
         }
       }
     } else if(null == value) {

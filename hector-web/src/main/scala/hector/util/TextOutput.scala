@@ -98,7 +98,16 @@ final class TextOutput(
 
   private[this] def maybeIndent() {
     if(wasNewline && humanReadable) {
-      builder.appendAll(indents(indentLevel))
+      if(indentLevel > 0) {
+        //
+        // We perform the check for indentLevel > 0 because Java does something
+        // weird when emitting an empty array of characters and it makes testing
+        // much harder because "a b" is no longer equal to "a b". Go figure.
+        //
+
+        builder.appendAll(indents(indentLevel))
+      }
+
       wasNewline = false
     }
   }

@@ -9,15 +9,36 @@ final class HtmlEmitterSpec extends HectorSpec {
   private[this] val DocType = "<!DOCTYPE html>\n"
 
   describe("HtmlEmitter.toString") {
-    it("should not trim text inside a <pre>-context") {
-      // Check that "ghetto"-trimming™ works.
+    it("should collapse whitespace into a single whitespace character when trim = true and humanReadable = false") {
+      val text0 = "   foo bar   "
+      val output0 = HtmlEmitter.toString(<a>{text0}{text0}</a>, trim = true, humanReadable = false)
 
+      output0 must be (DocType+"<a> foo bar  foo bar </a>")
+
+      val text1 = "\n   foo bar   \n"
+      val output1 = HtmlEmitter.toString(<a>{text1}{text1}</a>, trim = true, humanReadable = false)
+
+      output1 must be (DocType+"<a> foo bar\n\nfoo bar </a>")
+
+      val text2 = "\nfoo bar\n"
+      val output2 = HtmlEmitter.toString(<a>{text2}</a>, trim = true, humanReadable = false)
+
+      output2 must be (DocType+"<a>foo bar</a>")
+    }
+
+    it("should not trim text inside a <pre>-context when humanReadable = false") {
       val text = "   foo bar   "
       val output = HtmlEmitter.toString(<pre>{text}</pre>, trim = true)
 
       output must be (DocType+"<pre>"+text+"</pre>")
     }
 
+    it("should not trim text inside a <pre>-context when humanReadable = true") {
+      val text = "   foo bar   "
+      val output = HtmlEmitter.toString(<pre>{text}</pre>, trim = true, humanReadable = true)
+
+      output must be (DocType+"<pre>"+text+"</pre>")
+    }
 
     it("should not trim text inside attribute values") {
       val text = "   foo   bar   "
