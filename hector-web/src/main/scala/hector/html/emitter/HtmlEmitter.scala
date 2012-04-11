@@ -170,7 +170,7 @@ object HtmlEmitter {
     node match {
       case Text(value) ⇒
         val chars = value.toCharArray
-        val n = value.length
+        val n = chars.length
         var i = 0
         var isWhitespaceOnly = true
 
@@ -758,35 +758,42 @@ object HtmlEmitter {
       } else {
         val chars = value.toCharArray
         val fromIndex = if(afterOpen) firstCharNotCRLF(chars) else 0
-        val toIndex = if(beforeClose && fromIndex >= 0) lastCharNotCRLF(chars) else (length - 1)
 
-        if(fromIndex >= 0 && toIndex >= 0) {
-          val newLength = toIndex - fromIndex + 1
-          val newValue =
-            if(newLength == length) {
-              value
-            } else {
-              new String(chars, fromIndex, newLength)
+        if(fromIndex >= 0) {
+          val toIndex = if(beforeClose) lastCharNotCRLF(chars) else (length - 1)
+
+          if(toIndex >= 0) {
+            val newLength = toIndex - fromIndex + 1
+            val newValue =
+              if(newLength == length) {
+                value
+              } else {
+                new String(chars, fromIndex, newLength)
+              }
+
+            val firstChar = chars(fromIndex)
+            val lastChar = chars(toIndex)
+
+            newValue match {
+              case startsAndEndsWithWhitespace if firstChar <= ' ' && lastChar <= ' ' ⇒
+                firstChar+startsAndEndsWithWhitespace.trim+lastChar
+
+              case startsWithWhitespace if firstChar <= ' ' ⇒
+                firstChar+startsWithWhitespace.trim
+
+              case endsWithWhitespace if lastChar <= ' ' ⇒
+                endsWithWhitespace.trim+lastChar
+
+              case ordinaryString ⇒
+                ordinaryString
             }
-
-          val firstChar = chars(fromIndex)
-          val lastChar = chars(toIndex)
-
-          newValue match {
-            case startsAndEndsWithWhitespace if firstChar <= ' ' && lastChar <= ' ' ⇒
-              firstChar+startsAndEndsWithWhitespace.trim+lastChar
-
-            case startsWithWhitespace if firstChar <= ' ' ⇒
-              firstChar+startsWithWhitespace.trim
-
-            case endsWithWhitespace if lastChar <= ' ' ⇒
-              endsWithWhitespace.trim+lastChar
-
-            case ordinaryString ⇒
-              ordinaryString
+          } else {
+            // String consists only of \r or \n characters and it was before a closing tag
+            // so we are allowed to return an empty string.
+            ""
           }
         } else {
-          // String consists only of \r or \n characters and it was before an opening or closing tag
+          // String consists only of \r or \n characters and it was after an opening tag
           // so we are allowed to return an empty string.
           ""
         }
