@@ -761,28 +761,35 @@ object HtmlEmitter {
 
         if(fromIndex >= 0) {
           val toIndex = if(beforeClose) findLastNonIgnoredCharacter(chars) else (chars.length - 1)
-          val newLength = toIndex - fromIndex + 1
-          val newValue = new String(chars, fromIndex, newLength)
 
-          val firstChar = chars(fromIndex)
-          val lastChar = chars(toIndex)
+          if(toIndex >= 0) {
+            val newLength = toIndex - fromIndex + 1
+            val newValue = new String(chars, fromIndex, newLength)
 
-          newValue match {
-            case startsAndEndsWithWhitespace if firstChar <= ' ' && lastChar <= ' ' ⇒
-              firstChar+startsAndEndsWithWhitespace.trim+lastChar
+            val firstChar = chars(fromIndex)
+            val lastChar = chars(toIndex)
 
-            case startsWithWhitespace if firstChar <= ' ' ⇒
-              firstChar+startsWithWhitespace.trim
+            newValue match {
+              case startsAndEndsWithWhitespace if firstChar <= ' ' && lastChar <= ' ' ⇒
+                firstChar+startsAndEndsWithWhitespace.trim+lastChar
 
-            case endsWithWhitespace if lastChar <= ' ' ⇒
-              endsWithWhitespace.trim+lastChar
+              case startsWithWhitespace if firstChar <= ' ' ⇒
+                firstChar+startsWithWhitespace.trim
 
-            case ordinaryString ⇒
-              ordinaryString
+              case endsWithWhitespace if lastChar <= ' ' ⇒
+                endsWithWhitespace.trim+lastChar
+
+              case ordinaryString ⇒
+                ordinaryString
+            }
+          } else {
+            // String consists only of \r or \n characters and it was before a closing tag
+            // so we are allowed to return an empty string.
+            ""
           }
         } else {
-          // String consists only of \r or \n characters and it was after an opening tag.
-          // So we are allowed to return an empty string.
+          // String consists only of \r or \n characters and it was after an opening tag
+          // so we are allowed to return an empty string.
           ""
         }
       }
