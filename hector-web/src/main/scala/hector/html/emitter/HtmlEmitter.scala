@@ -169,13 +169,12 @@ object HtmlEmitter {
   private[this] def calculateWhitespace(node: Node, types: scala.collection.mutable.ArrayBuffer[Int]) {
     node match {
       case Text(value) ⇒
-        val chars = value.toCharArray
-        val n = chars.length
+        val n = value.length
         var i = 0
         var isWhitespaceOnly = true
 
         while(i < n && isWhitespaceOnly) {
-          isWhitespaceOnly = chars(i) match {
+          isWhitespaceOnly = value.charAt(i) match {
             case ' ' | '\r' | '\n' | '\t' ⇒ true
             case _ ⇒ false
           }
@@ -197,9 +196,9 @@ object HtmlEmitter {
           // be set to true.
 
           types +=
-            (chars(0) match {
+            (value.charAt(0) match {
               case ' ' | '\r' | '\n' | '\t' ⇒
-                chars(n - 1) match {
+                value.charAt(n - 1) match {
                   case ' ' | '\r' | '\n' | '\t' ⇒
                     //" foo "
                     4
@@ -208,7 +207,7 @@ object HtmlEmitter {
                     2
                 }
               case _ ⇒
-                chars(n - 1) match {
+                value.charAt(n - 1) match {
                   case ' ' | '\r' | '\n' | '\t' ⇒
                     //"foo "
                     3
@@ -684,12 +683,12 @@ object HtmlEmitter {
    *
    * @return The index of the first character not being <code>\r</code> or <code>\n</code>; <code>-1</code> if no such character exists.
    */
-  private[this] def firstCharNotCRLF(value: Array[Char]): Int = {
+  private[this] def firstCharNotCRLF(value: String): Int = {
     val n = value.length
     var i = 0
 
     while(i < n) {
-      val char = value(i)
+      val char = value.charAt(i)
 
       if(char != '\n' && char != '\r') {
         return i
@@ -708,11 +707,11 @@ object HtmlEmitter {
    *
    * @return The index of the last character not being <code>\r</code> or <code>\n</code>; <code>-1</code> if no such character exists.
    */
-  private[this] def lastCharNotCRLF(value: Array[Char]): Int = {
+  private[this] def lastCharNotCRLF(value: String): Int = {
     var i = value.length - 1
 
     while(i > -1) {
-      val char = value(i)
+      val char = value.charAt(i)
 
       if(char != '\n' && char != '\r') {
         return i
@@ -756,11 +755,10 @@ object HtmlEmitter {
           value
         }
       } else {
-        val chars = value.toCharArray
-        val fromIndex = if(afterOpen) firstCharNotCRLF(chars) else 0
+        val fromIndex = if(afterOpen) firstCharNotCRLF(value) else 0
 
         if(fromIndex >= 0) {
-          val toIndex = if(beforeClose) lastCharNotCRLF(chars) else (length - 1)
+          val toIndex = if(beforeClose) lastCharNotCRLF(value) else (length - 1)
 
           if(toIndex >= 0) {
             val newLength = toIndex - fromIndex + 1
@@ -768,11 +766,11 @@ object HtmlEmitter {
               if(newLength == length) {
                 value
               } else {
-                new String(chars, fromIndex, newLength)
+                value.substring(fromIndex, toIndex)
               }
 
-            val firstChar = chars(fromIndex)
-            val lastChar = chars(toIndex)
+            val firstChar = value.charAt(fromIndex) // Cannot use newValue since index relates to original value.
+            val lastChar = value.charAt(toIndex)
 
             newValue match {
               case startsAndEndsWithWhitespace if firstChar <= ' ' && lastChar <= ' ' ⇒
@@ -815,15 +813,13 @@ object HtmlEmitter {
     if(null == value || value.length < 1) {
        false
      } else {
-       val charArray = value.toCharArray
-
-       if(isNameStart(charArray(0))) {
+       if(isNameStart(value.charAt(0))) {
          val n = value.length
          var i = 1
          var valid = true
 
          while(valid && i < n) {
-           valid = isNamePart(charArray(i))
+           valid = isNamePart(value.charAt(i))
            i += 1
          }
 

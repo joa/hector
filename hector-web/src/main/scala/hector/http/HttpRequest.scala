@@ -60,20 +60,20 @@ final class HttpRequestInfo(request: HttpRequest) {
   /** Whether or not the client would not like to be tracked. */
   def doNotTrack: Boolean =
     request.headers exists { 
-      case XDoNotTrack(_) | DNT(_) => true
-      case _ => false
+      case XDoNotTrack(_) | DNT(_) ⇒ true
+      case _ ⇒ false
     }
 
   private[this] def agentContains(value: String): Boolean =
     request.headers exists { 
-      case UserAgent(agentString) if agentString contains value => true
-      case _ => false
+      case UserAgent(agentString) if agentString contains value ⇒ true
+      case _ ⇒ false
     }
 
   private[this] def agentContains(value: Array[String]): Boolean =
     request.headers exists {
-      case UserAgent(agentString) if arrayContains(agentString, value) => true
-      case _ => false
+      case UserAgent(agentString) if arrayContains(agentString, value) ⇒ true
+      case _ ⇒ false
     }
 
   private[this] def arrayContains(agentString: String, array: Array[String]): Boolean = {
@@ -122,8 +122,8 @@ final class HttpRequestInfo(request: HttpRequest) {
   /** Whether or not the request was made using a mobile device like a phone or tablet. */
   def isMobile: Boolean =
     request.headers exists {
-      case UserAgent(agentString) if MobileAgents contains agentString => true
-      case _ => false
+      case UserAgent(agentString) if MobileAgents contains agentString ⇒ true
+      case _ ⇒ false
     }
 
   /*
