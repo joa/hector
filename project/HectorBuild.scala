@@ -6,13 +6,13 @@ package hector {
 
   import sbt._
   import sbt.Keys._
-  import com.github.siasia.WebPlugin.webSettings
+  //import com.github.siasia.WebPlugin.webSettings
 
   object HectorBuild extends Build {
     lazy val buildSettings = Seq(
       organization := "hector",
       version      := "1.0-SNAPSHOT",
-      scalaVersion := "2.9.1-1"
+      scalaVersion := "2.10.0-M2"// "2.9.1-1"
     )
 
     // Projects
@@ -27,8 +27,8 @@ package hector {
     lazy val web = Project(
       id = "hector-web",
       base = file("hector-web"),
-      settings = defaultSettings ++ webSettings ++ Seq( // For now we use the webSettings here too.
-        libraryDependencies ++= Dependencies.web ++ Seq(Dependency.Container.jettyWebapp) // And jettyWebapp as well ...
+      settings = defaultSettings ++ Seq( // For now we use the webSettings here too.
+        libraryDependencies ++= Dependencies.web // ++ Seq(Dependency.Container.jettyWebapp) // And jettyWebapp as well ...
       )
     )
 
@@ -56,9 +56,9 @@ package hector {
     //
     val AfterWastingThreeHoursWithSBTThisIsTheBestICouldComeUpWith = 
       Seq(
-        "/home/joa/Development/hector/hector-microbenchmark/target/scala-2.9.1-1/classes",
-        "/home/joa/Development/hector/hector-web/target/scala-2.9.1-1/classes",
-        "/home/joa/.sbt/boot/scala-2.9.1-1/lib/scala-library.jar",
+        "/home/joa/Development/hector/hector-microbenchmark/target/scala-2.10/classes",
+        "/home/joa/Development/hector/hector-web/target/scala-2.10/classes",
+        "/home/joa/.sbt/boot/scala-2.10.0-M2/lib/scala-library.jar",
         "/home/joa/.ivy2/cache/com.google.guava/guava/jars/guava-11.0.2.jar",
         "/home/joa/.ivy2/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar",
         "/home/joa/.ivy2/cache/com.typesafe.akka/akka-actor/jars/akka-actor-2.0.jar",
@@ -118,7 +118,7 @@ package hector {
     val akkaActor      = "com.typesafe.akka"    %     "akka-actor"         %  "2.0"                              // Apache 2.0
     
     object Container {
-      val jettyWebapp  = "org.eclipse.jetty"    %     "jetty-webapp"       %  "8.0.4.v20111024"  % "container"   // Eclipse License
+      //val jettyWebapp  = "org.eclipse.jetty"    %     "jetty-webapp"       %  "8.0.4.v20111024"  % "container"   // Eclipse License
     }
 
     object Provided {
@@ -126,7 +126,7 @@ package hector {
     }
 
     object Test {
-      val scalaTest    = "org.scalatest"        %%    "scalatest"          %  "1.7.1"            % "test"        // Apache 2.0
+      val scalaTest    = "org.scalatest"        %    "scalatest_2.9.1-1"          %  "1.7.1"            % "test"        // Apache 2.0
     }
 
     object Benchmark {

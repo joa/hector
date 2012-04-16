@@ -1,8 +1,7 @@
 package hector.actor
 
 import akka.actor.Actor
-
-import hector.util.letItCrash
+import hector.util.{RMS, letItCrash}
 
 
 object StatisticsActor {
@@ -18,15 +17,15 @@ final class StatisticsActor extends Actor {
 
   private[this] var minMs: Float = Float.MaxValue
   private[this] var maxMs: Float = Float.MinValue
-  private[this] var sumOfSquares: Float = 0.0f
   private[this] var numSamples: Int = 0
+  private[this] val rms: RMS = new RMS(0x400)
 
   override protected def receive = {
     case RequestCompleted(ms) ⇒
       if(ms < minMs) { minMs = ms }
       if(ms > maxMs) { maxMs = ms }
 
-      sumOfSquares += ms * ms
+      rms += ms.toDouble
       numSamples += 1
 
       println("Completed request in "+ms+"ms. (min: "+minMs+"ms, max: "+maxMs+"ms, rms: "+rmsMs+"ms)")
@@ -44,5 +43,5 @@ final class StatisticsActor extends Actor {
       )
   }
 
-  private def rmsMs = math.sqrt((1.0f / numSamples.toFloat) * sumOfSquares).toFloat
+  private def rmsMs: Double = rms.toDouble
 }

@@ -58,7 +58,7 @@ final class HttpRequestInfo(request: HttpRequest) {
   import KnownAgentValues._
 
   /** Whether or not the client would not like to be tracked. */
-  def doNotTrack: Boolean =
+  def isDoNotTrack: Boolean =
     request.headers exists { 
       case XDoNotTrack(_) | DNT(_) ⇒ true
       case _ ⇒ false
