@@ -6,13 +6,13 @@ package hector {
 
   import sbt._
   import sbt.Keys._
-  //import com.github.siasia.WebPlugin.webSettings
+  import com.github.siasia.WebPlugin.webSettings
 
   object HectorBuild extends Build {
     lazy val buildSettings = Seq(
       organization := "hector",
       version      := "1.0-SNAPSHOT",
-      scalaVersion := "2.10.0-M2"// "2.9.1-1"
+      scalaVersion := "2.9.1-1"//"2.10.0-M2"//
     )
 
     // Projects
@@ -27,8 +27,8 @@ package hector {
     lazy val web = Project(
       id = "hector-web",
       base = file("hector-web"),
-      settings = defaultSettings ++ Seq( // For now we use the webSettings here too.
-        libraryDependencies ++= Dependencies.web // ++ Seq(Dependency.Container.jettyWebapp) // And jettyWebapp as well ...
+      settings = defaultSettings ++ webSettings ++ Seq( // For now we use the webSettings here too.
+        libraryDependencies ++= Dependencies.web ++ Seq(Dependency.Container.jettyWebapp) // And jettyWebapp as well ...
       )
     )
 
@@ -118,7 +118,7 @@ package hector {
     val akkaActor      = "com.typesafe.akka"    %     "akka-actor"         %  "2.0"                              // Apache 2.0
     
     object Container {
-      //val jettyWebapp  = "org.eclipse.jetty"    %     "jetty-webapp"       %  "8.0.4.v20111024"  % "container"   // Eclipse License
+      val jettyWebapp  = "org.eclipse.jetty"    %     "jetty-webapp"       %  "8.0.4.v20111024"  % "container"   // Eclipse License
     }
 
     object Provided {
