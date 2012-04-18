@@ -1,4 +1,4 @@
-<div align="center"><img src="http://www.joa-ebert.com/files/hector.github.png" alt="Hector Logo"/></div>
+<img src="http://www.joa-ebert.com/files/hector.github.png" alt="Hector Logo"/>
 # Introdction
 Hector is a location transparent web-framework written in <a href="http://www.scala-lang.org/">Scala</a> which makes heavy use of <a href="http://www.akka.io/">Akka</a>.
 
