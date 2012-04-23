@@ -102,14 +102,11 @@ final class HectorFilter extends Filter {
     import akka.dispatch.Await
     import java.util.concurrent.{TimeoutException ⇒ JTimeoutException}
 
-    //TODO(joa): See Hector class. Timeout needs to be configurable
-    implicit val timeout = Timeout(10.seconds)
-
     val t0 = System.currentTimeMillis()
 
     try {
       val future =
-        Hector.requests ? RequestActor.HandleRequest(httpRequest, httpResponse)
+        ask(Hector.requests, RequestActor.HandleRequest(httpRequest, httpResponse))(Hector.config.responseTimeout)
 
       Await.result(
         awaitable = future.mapTo[Option[Unit]],

@@ -5,6 +5,11 @@ import hector.session.SessionActor
 import akka.routing.{DefaultResizer, RoundRobinRouter}
 import akka.actor.{Props, ActorSystem}
 import hector.actor._
+import hector.config.HectorConfig
+import akka.pattern.ask
+import hector.http.HttpRequest
+import scala.Serializable
+import akka.dispatch.Future
 
 /**
  */
@@ -36,6 +41,15 @@ object Hector {
       Props[SessionActor].
         withRouter(
           RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))), name = "session")
+
+  //TODO(joa): those two methods should reside somewhere else
+  def sessionStore[V <: Serializable](request: HttpRequest, key: String, value: V): Future[Unit] = {
+    ask(session, SessionActor.Store(request, key, value))(Hector.config.defaultSessionTimeout).mapTo[Unit]
+  }
+
+  def sessionLoad[V <: Serializable](request: HttpRequest, key: String)(implicit manifest: Manifest[V]): Future[V] = {
+    ask(session, SessionActor.Load(request, key))(Hector.config.defaultSessionTimeout).mapTo[V]
+  }
 
   val callback =
     system.actorOf(
@@ -101,4 +115,6 @@ object Hector {
 })();
 """)}</script>
   }
+
+  val config: HectorConfig = null
 }

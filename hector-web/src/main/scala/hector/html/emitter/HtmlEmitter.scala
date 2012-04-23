@@ -9,6 +9,7 @@ import javax.annotation.Nullable
 import javax.annotation.concurrent.ThreadSafe
 
 import scala.xml._
+import hector.Hector
 
 /**
  * The HtmlEmitter is used to emit a string for a given Node.
@@ -121,7 +122,7 @@ object HtmlEmitter {
     //
     // This size should be part of a configuration with the default being 20k.
     //
-    val stringBuilder = new StringBuilder(20000) //TODO(joa): make me configurable.
+    val stringBuilder = new StringBuilder(Hector.config.averageHtmlSize)
     val writer = new TextOutput(stringBuilder, humanReadable)
 
     //val typeBuffer = new scala.collection.mutable.ArrayBuffer[Int](0x200)

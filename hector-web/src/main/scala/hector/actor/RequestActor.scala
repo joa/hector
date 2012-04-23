@@ -32,9 +32,6 @@ final class RequestActor extends Actor {
           withRouter(
             RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))))
 
-  //TODO(joa): Default request timeout (needs to be configurable)
-  private[this] implicit val askTimeout = Timeout(60.seconds)
-
   override protected def receive = {
     case HandleAsync(asyncContext) ⇒
       import akka.pattern.pipe
@@ -46,10 +43,10 @@ final class RequestActor extends Actor {
       val t0 = System.nanoTime()
 
       val request =
-        self ? HandleRequest(
+        ask(self, HandleRequest(
           asyncContext.getRequest.asInstanceOf[HttpServletRequest],
           asyncContext.getResponse.asInstanceOf[HttpServletResponse]
-        )
+        ))(Hector.config.responseTimeout)
 
       request onComplete {
         case Right(Some(_)) ⇒
@@ -87,7 +84,7 @@ final class RequestActor extends Actor {
       // the appropriate actor and message we have to
       // dispatch.
 
-      val route: Future[Option[Route[Any]]] = (router ? request).mapTo[Option[Route[Any]]]
+      val route: Future[Option[Route[Any]]] = ask(router, request)(Hector.config.defaultRouteTimeout).mapTo[Option[Route[Any]]]
 
       // The optional response we generate. Note that there is nothing written yet and this
       // is only a container for the actual response.

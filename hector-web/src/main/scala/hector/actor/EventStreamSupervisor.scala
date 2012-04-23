@@ -23,11 +23,8 @@ object EventStreamSupervisor {
 final class EventStreamSupervisor extends Actor {
   import EventStreamSupervisor._
   import akka.pattern.pipe
-  import hector.session.SessionActor
   import context.dispatcher
   import akka.dispatch.Promise
-
-  private[this] implicit val askTimeout = Timeout(5.seconds)
 
   override val supervisorStrategy = OneForOneStrategy() {
     case _: Throwable ⇒
@@ -44,7 +41,7 @@ final class EventStreamSupervisor extends Actor {
       val actor = context.actorOf(Props(new EventStreamActor(timeout, retry)), name = hash)
 
       val eventStream =
-        (Hector.session ? SessionActor.Store(request, "hector:eventStream:"+hash, actor)).mapTo[Unit] map {
+        Hector.sessionStore(request, "hector:eventStream:"+hash, actor) map {
           x ⇒ EventStream(urlOf(hash), actor)
         }
 
@@ -54,11 +51,11 @@ final class EventStreamSupervisor extends Actor {
       import hector.http.status.NoContent
 
       val actorRefFuture =
-        (Hector.session ? SessionActor.Load(request, "hector:eventStream:"+name)).mapTo[Option[ActorRef]]
+        Hector.sessionLoad[Option[ActorRef]](request, "hector:eventStream:"+name)
 
       val response =
         actorRefFuture flatMap {
-          case Some(actor) ⇒ actor ? message
+          case Some(actor) ⇒ ask(actor, message)(Timeout(5.seconds)) //TODO(joa): make configurable
           case None ⇒ Promise.successful(EmptyResponse(status = NoContent))
         }
 

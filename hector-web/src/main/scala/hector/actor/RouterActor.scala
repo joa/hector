@@ -22,9 +22,11 @@ object RouterActor {
    *
    * @param target The target actor.
    * @param arguments The arguments for the actor.
+   * @param timeout The timeout for this route.
+   * @param recover The recovery strategy.
    * @tparam A Type of arguments.
    */
-  final case class Route[A](target: ActorRef, arguments: Option[A] = None, timeout: Timeout = Timeout(3.seconds), recover: Option[PartialFunction[Throwable, HttpResponse]] = None)
+  final case class Route[A](target: ActorRef, arguments: Option[A] = None, timeout: Timeout = Hector.config.defaultRequestTimeout, recover: Option[PartialFunction[Throwable, HttpResponse]] = None)
 }
 
 /**

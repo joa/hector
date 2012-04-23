@@ -10,8 +10,9 @@ import akka.pattern.ask
 import hector.Hector
 import hector.session.SessionActor
 import hector.js.JsAST
-import hector.http.{HttpRequest, HttpResponse}
 import hector.util.randomHash
+import hector.config.RunModes
+import hector.http.{EmptyResponse, HttpRequest, HttpResponse}
 
 /**
  */
@@ -142,9 +143,6 @@ object CallbackActor {
 final class CallbackActor extends Actor {
   import CallbackActor._
 
-  //TODO(joa): Default request timeout (needs to be configurable)
-  private[this] implicit val askTimeout = Timeout(1.second)
-
   private[this] implicit val implicitDispatcher = context.dispatcher
 
   override protected def receive = {
@@ -207,7 +205,7 @@ final class CallbackActor extends Actor {
    */
   private[this] def newCallback(request: HttpRequest, target: ActorRef, message: Any) = {
     val callbackName = randomHash()
-    val storeFuture = Hector.session ? SessionActor.Store(request, createSessionHash(callbackName), (target, message))
+    val storeFuture = Hector.sessionStore(request, createSessionHash(callbackName), (target, message))
 
     val jsFunctionFuture =
       storeFuture map { unit ⇒ createJavaScriptCall(callbackName) }
@@ -244,12 +242,13 @@ final class CallbackActor extends Actor {
       //TODO(joa) check if callback contains only valid characters
 
       val sessionFuture =
-        (Hector.session ? SessionActor.Load(request, createSessionHash(callbackName))).mapTo[Option[(ActorRef, Any)]]
+        Hector.sessionLoad[Option[(ActorRef, Any)]](request, createSessionHash(callbackName))
 
       sessionFuture flatMap {
         sessionValue ⇒
           sessionValue match {
-            case Some((actor, message)) ⇒ actor ? message map toResponse(actor)
+            case Some((actor, message)) ⇒
+              (ask(actor, message)(Timeout(10.seconds))) map toResponse(actor) //TODO(joa): timeout should be configurable
 
             case None ⇒
               Promise.successful(
@@ -310,15 +309,20 @@ final class CallbackActor extends Actor {
         // this could be dangerous we will only tell the developer during development
         // what he did wrong in order to resolve the conflict.
 
-        //TODO(joa): log a warning in release, do something useful during debug
-        import hector.js.implicits._
-        import hector.js.toplevel.{jsWindow ⇒ window}
         import hector.http.status.Accepted
 
-        JsResponse(
-          js = window.alert("Error: Cannot convert "+other+" to a response.\nThe actor "+actor+" is responsible.\nVisit TODO for more help."),
-          status = Accepted
-        )
+        if(Hector.config.runMode < RunModes.Production) {
+          import hector.js.implicits._
+          import hector.js.toplevel.{jsWindow ⇒ window}
+
+          JsResponse(
+            js = window.alert("Error: Cannot convert "+other+" to a response.\nThe actor "+actor+" is responsible.\nVisit TODO for more help."),
+            status = Accepted
+          )
+        } else {
+          //TODO(joa): log a warning here
+          EmptyResponse(status = Accepted)
+        }
     }
   }
 }
