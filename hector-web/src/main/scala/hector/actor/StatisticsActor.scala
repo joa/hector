@@ -20,7 +20,7 @@ final class StatisticsActor extends Actor with ActorLogging {
   private[this] val rms: RMS = new RMS(0x400)
 
   // Variables for error tracking
-  private[this] val errorMap = HashMultimap.create[Class[_], Throwable]()
+  private[this] val errorMap = HashMultimap.create[String, Throwable]()
 
   override protected def receive = {
     case RequestCompleted(ms) ⇒
@@ -37,7 +37,7 @@ final class StatisticsActor extends Actor with ActorLogging {
       }
 
     case ExceptionOccurred(exception) ⇒
-      errorMap.put(exception.getClass, exception)
+      errorMap.put(exception.getClass.getName, exception)
 
     case CreateResponse(request, _) ⇒
       import hector.http.PlainTextResponse
