@@ -1,6 +1,6 @@
 package hector.actor
 
-import akka.util.{Timeout, Duration}
+import akka.util.Duration
 import akka.pattern.ask
 import akka.actor.SupervisorStrategy._
 import akka.util.duration._

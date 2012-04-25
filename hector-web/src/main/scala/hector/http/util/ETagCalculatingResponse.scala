@@ -48,8 +48,8 @@ final case class ETagCalculatingResponse(response: HttpResponse) extends HttpRes
     if(null == data) {
       // No-one asked for the headers. In that case we skip the temporary serialization.
       //
-      // Note: Of course this is not thread-safe and a race condition. Data could in be
-      //       computed while we start writing it but  if that is the case we do not care
+      // Note: Of course this is not thread-safe and a race condition. Data could be
+      //       computed while we start writing it but if that is the case we do not care
       //       and it is written twice. It is written once to the byte array in order to
       //       be hashed, and it is written once to the actual response.
 

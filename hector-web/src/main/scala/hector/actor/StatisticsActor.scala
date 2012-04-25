@@ -1,12 +1,13 @@
 package hector.actor
 
-
-import hector.util.{RMS, letItCrash}
 import akka.actor.{ActorLogging, Actor}
+
 import com.google.common.collect.HashMultimap
-import hector.actor.stats.{ExceptionOccurred, RequestCompleted}
+
 import hector.Hector
+import hector.actor.stats.{ExceptionOccurred, RequestCompleted}
 import hector.config.RunModes
+import hector.util.{RMS, letItCrash}
 
 /**
  */

@@ -1,8 +1,9 @@
 package hector.actor
 
-import hector.http.{HttpResponseOutput, EventStreamResponse}
-import akka.actor.{ActorRef, Actor}
+import akka.actor.Actor
 import akka.util.{Timeout, Duration}
+
+import hector.http.{HttpResponseOutput, EventStreamResponse}
 
 object EventStreamActor {
   case class Event(data: String, id: Option[Int] = None, name: Option[String] = None)

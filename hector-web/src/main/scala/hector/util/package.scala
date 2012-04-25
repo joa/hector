@@ -1,6 +1,7 @@
 package hector
 
 import java.util.UUID
+import hector.util._
 
 package object util {
   // Utility methods should perform as fast as possible. Therefore you will not find many use
@@ -98,6 +99,35 @@ package object util {
         Some(trimmedString)
       }
     }
+
+  /**
+   * Whether or not a given string contains only alpha-numeric characters.
+   *
+   * @param value The string to test.
+   * @return <code>true</code> if the string contains only alphanumeric characters; <code>false</code> otherwise.
+   */
+  def isAlphaNumeric(value: String): Boolean = {
+    val n = value.length
+    var i = 0
+
+    while(i < n) {
+      val char = value.charAt(i)
+
+      if (
+        ('a' <= char && char <= 'z') ||
+        ('A' <= char && char <= 'Z') ||
+        ('0' <= char && char <= '9')
+      ) {
+        // We are good.
+      } else {
+        return false
+      }
+
+      i += 1
+    }
+
+    true
+  }
 
   /**
    * Generates and returns JavaScript code which will evaluate to the given value.

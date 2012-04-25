@@ -5,12 +5,8 @@ import hector.http._
 import hector.http.extractors._
 import hector.util.letItCrash
 
-import akka.actor.{Props, ActorRef, Actor}
+import akka.actor.{ActorRef, Actor}
 import akka.util.Timeout
-import akka.util.duration._
-import akka.routing.{RoundRobinRouter, DefaultResizer}
-
-import user.HelloWorldActor
 
 object RouterActor {
   private[RouterActor] val InternalPrefix = Hector.internalPrefix

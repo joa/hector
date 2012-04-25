@@ -1,5 +1,6 @@
 package hector.actor
 
+import akka.actor.{ActorLogging, ActorRef, Actor}
 import akka.dispatch.Promise
 import akka.pattern.pipe
 import akka.util.Timeout
@@ -7,12 +8,10 @@ import akka.util.duration._
 import akka.pattern.ask
 
 import hector.Hector
-import hector.session.SessionActor
 import hector.js.JsAST
-import hector.util.randomHash
+import hector.util.{randomHash, isAlphaNumeric}
 import hector.config.RunModes
 import hector.http.{EmptyResponse, HttpRequest, HttpResponse}
-import akka.actor.{ActorLogging, ActorRef, Actor}
 
 /**
  */
@@ -213,6 +212,9 @@ final class CallbackActor extends Actor with ActorLogging {
     jsFunctionFuture pipeTo sender
   }
 
+  private[this] def isInvalidCallbackName(name: String): Boolean =
+    name.length != CallbackNameLength || !isAlphaNumeric(name)
+
   /**
    * Executes a callback returns the result.
    *
@@ -235,12 +237,10 @@ final class CallbackActor extends Actor with ActorLogging {
     import hector.http.PlainTextResponse
     import hector.http.status.{BadRequest, NotFound}
 
-    if(callbackName.length != CallbackNameLength) {
+    if(isInvalidCallbackName(callbackName)) {
       // The user provided an illegal callback name.
       sender ! PlainTextResponse("Invalid callback.\n", BadRequest)
     } else {
-      //TODO(joa) check if callback contains only valid characters
-
       val sessionFuture =
         Hector.sessionLoad[Option[(ActorRef, Any)]](request, createSessionHash(callbackName))
 
