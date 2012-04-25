@@ -1,18 +1,19 @@
 package hector.actor
 
-import akka.actor.{ActorRef, Props, Actor}
+import akka.actor.{ActorLogging, ActorRef, Props, Actor}
 import akka.dispatch._
+import akka.pattern.{AskTimeoutException, ask}
 import akka.routing.RoundRobinRouter
 import akka.routing.DefaultResizer
 import akka.util.Timeout
-import akka.util.duration._
 
 import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
 import hector.Hector
 import hector.util.letItCrash
-import akka.pattern.{AskTimeoutException, ask}
+import hector.actor.stats.ExceptionOccurred
+import hector.config.RunModes
 import hector.http.HttpResponse
 
 object RequestActor {
@@ -23,7 +24,7 @@ object RequestActor {
 
 /**
  */
-final class RequestActor extends Actor {
+final class RequestActor extends Actor with ActorLogging {
   import RequestActor._
 
   private[this] val router =
@@ -36,7 +37,7 @@ final class RequestActor extends Actor {
     case HandleAsync(asyncContext) ⇒
       import akka.pattern.pipe
       import akka.pattern.AskTimeoutException
-      import StatisticsActor.RequestCompleted
+      import stats.RequestCompleted
 
       letItCrash()
 
@@ -55,22 +56,22 @@ final class RequestActor extends Actor {
         case Right(None) ⇒
           // Nothing to do. We did not participate.
 
-        case Left(askTimeout: AskTimeoutException) ⇒
-          Hector.statistics ! RequestCompleted((System.nanoTime() - t0).toFloat * 0.000001f)
-          println("[ERROR]: Timeout. Did you forget to reply in your actor?") //TODO(joa): can we get the actor info somehow?
-
         case Left(error) ⇒
-          //TODO(joa): do something useful.
+          Hector.statistics ! ExceptionOccurred(error)
           Hector.statistics ! RequestCompleted((System.nanoTime() - t0).toFloat * 0.000001f)
-          println("Error: "+error.getMessage)
-          error.printStackTrace()
+
+          log.error(
+            error match {
+              case askTimeout: AskTimeoutException ⇒ "Timeout. Did you forget to reply in your actor?"
+              case other ⇒ "Could not fulfill request due to an unexpected error."
+            }
+          )
       }
 
       request pipeTo sender
 
     case HandleRequest(httpRequest, httpResponse) ⇒
       import akka.pattern.pipe
-      import com.google.common.base.Charsets
       import context.dispatcher
       import hector.actor.RouterActor.Route
       import hector.http.{OutputStreamHttpResponseOutput, HttpResponse}
@@ -117,6 +118,10 @@ final class RequestActor extends Actor {
 
       val output: Future[Option[Unit]] =
         response flatMap {
+          case Some(nullThing) if nullThing == null ⇒
+            log.error("The request {} lead to a null-response.", request)
+            throw new RuntimeException("Null-response for "+request+".")
+
           case Some(value) ⇒
             import hector.http.status.NoContent
 
@@ -135,7 +140,7 @@ final class RequestActor extends Actor {
               val outputStream = httpResponse.getOutputStream
               val responseOutput =
                 new OutputStreamHttpResponseOutput(
-                  encoding = value.characterEncoding getOrElse Charsets.UTF_8,  //TODO(joa): UTF-8 must be configurable
+                  encoding = value.characterEncoding getOrElse Hector.config.defaultCharset,
                   output = outputStream
                 )
 
@@ -161,10 +166,9 @@ final class RequestActor extends Actor {
             Promise.successful(None)
         } recover {
           case throwable: Throwable ⇒
-            //TODO(joa): proper html, stats
+            Hector.statistics ! ExceptionOccurred(throwable)
 
-            println("[ERROR]: "+throwable.getMessage)
-            throwable.printStackTrace()
+            log.error(throwable, "Exception occurred while serving {}.", request)
 
             if(httpResponse.isCommitted) {
               println("HttpResponse is already comitted. Cannot do anything about this.")
@@ -178,7 +182,12 @@ final class RequestActor extends Actor {
               val output = httpResponse.getOutputStream
               val printStream = new JPrintStream(output)
 
-              throwable.printStackTrace(printStream)
+              if(Hector.config.runMode < RunModes.Production) {
+                //TODO(joa): proper html
+                throwable.printStackTrace(printStream)
+              } else {
+                printStream.print("ERROR")
+              }
 
               printStream.flush()
               output.flush()
@@ -234,14 +243,27 @@ final class RequestActor extends Actor {
   private def defaultRecoverStrategy(actor: ActorRef, timeout: Timeout): PartialFunction[Throwable, HttpResponse] = {
     case askTimeoutException: AskTimeoutException ⇒
       import hector.http.PlainTextResponse
-      //TODO(joa): proper html, stats
-      println("[ERROR]: Actor "+actor+" did not respond within "+timeout.duration+".")
-      PlainTextResponse("Actor "+actor+" did not respond within "+timeout.duration+".", status = 500)
+      Hector.statistics ! ExceptionOccurred(askTimeoutException)
+      log.error("Actor "+actor+" did not respond within "+timeout.duration+".")
+
+      //TODO(joa): proper html
+      PlainTextResponse(
+        if(Hector.config.runMode < RunModes.Production) {
+          "Actor "+actor+" did not respond within "+timeout.duration+"."
+        } else {
+          "ERROR"
+        }, status = 500)
+
     case throwable: Throwable ⇒
       import hector.http.PlainTextResponse
-      //TODO(joa): proper html, stats
-      println("[ERROR]: "+throwable.getMessage)
-      println(throwable)
-      PlainTextResponse(throwable.getMessage, status = 500)
+      log.error(throwable, "Exception occurred in "+actor+".")
+
+      //TODO(joa): proper html
+      PlainTextResponse(
+        if(Hector.config.runMode < RunModes.Production) {
+          throwable.getMessage
+        } else {
+          "ERROR"
+        }, status = 500)
   }
 }

@@ -9,14 +9,7 @@ import hector.actor.RequestActor
  */
 final class HectorFilter extends Filter {
   def init(filterConfig: FilterConfig) {
-    // Warm-up:
-    //
-
-    Hector.system
-    Hector.requests
-    Hector.session
-    Hector.callback
-    Hector.statistics
+    Hector.main()
   }
 
   def destroy() {
@@ -90,7 +83,7 @@ final class HectorFilter extends Filter {
     // Tell Hector we have an asynchronous context and act upon it.
     //
 
-    (Hector.requests ? RequestActor.HandleAsync(asyncContext))(asyncContext.getTimeout) onComplete {
+    (Hector.request ? RequestActor.HandleAsync(asyncContext))(asyncContext.getTimeout) onComplete {
       case _ ⇒ asyncContext.complete()
     }
   }
@@ -106,7 +99,7 @@ final class HectorFilter extends Filter {
 
     try {
       val future =
-        ask(Hector.requests, RequestActor.HandleRequest(httpRequest, httpResponse))(Hector.config.responseTimeout)
+        ask(Hector.request, RequestActor.HandleRequest(httpRequest, httpResponse))(Hector.config.responseTimeout)
 
       Await.result(
         awaitable = future.mapTo[Option[Unit]],

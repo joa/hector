@@ -1,24 +1,26 @@
 package hector.actor
 
-import akka.actor.Actor
+
 import hector.util.{RMS, letItCrash}
-
-
-object StatisticsActor {
-  final case class RequestCompleted(ms: Float)
-}
+import akka.actor.{ActorLogging, Actor}
+import com.google.common.collect.HashMultimap
+import hector.actor.stats.{ExceptionOccurred, RequestCompleted}
+import hector.Hector
+import hector.config.RunModes
 
 /**
  */
-final class StatisticsActor extends Actor {
-  import StatisticsActor._
-
+final class StatisticsActor extends Actor with ActorLogging {
   //STATEFUL!
 
+  // Variables for time-tracking operations.
   private[this] var minMs: Float = Float.MaxValue
   private[this] var maxMs: Float = Float.MinValue
   private[this] var numSamples: Int = 0
   private[this] val rms: RMS = new RMS(0x400)
+
+  // Variables for error tracking
+  private[this] val errorMap = HashMultimap.create[Class[_], Throwable]()
 
   override protected def receive = {
     case RequestCompleted(ms) ⇒
@@ -28,18 +30,43 @@ final class StatisticsActor extends Actor {
       rms += ms.toDouble
       numSamples += 1
 
-      println("Completed request in "+ms+"ms. (min: "+minMs+"ms, max: "+maxMs+"ms, rms: "+rmsMs+"ms)")
+      if(Hector.config.runMode < RunModes.Production) {
+        log.info("Completed request in {}ms. (min: {}ms, max: {}ms, rms: {}ms)", ms, minMs, maxMs, rmsMs)
+      } else {
+        log.debug("Completed request in {}ms. (min: {}ms, max: {}ms, rms: {}ms)", ms, minMs, maxMs, rmsMs)
+      }
+
+    case ExceptionOccurred(exception) ⇒
+      errorMap.put(exception.getClass, exception)
 
     case CreateResponse(request, _) ⇒
       import hector.http.PlainTextResponse
 
       letItCrash()
 
+      val sb = new StringBuilder()
+      val keys =  errorMap.keys()
+      val iter = keys.iterator()
+      while(iter.hasNext) {
+        val key = iter.next()
+        sb.append("\t"+key.toString+":\n")
+
+        val values = errorMap.get(key)
+        val iter2 = values.iterator()
+
+        while(iter2.hasNext) {
+          val value = iter2.next()
+          "\t\t"+value.getMessage+"\n"
+        }
+      }
+
+
       sender ! PlainTextResponse(
         "min[ms]:\t"+minMs+"\n"+
         "max[ms]:\t"+maxMs+"\n"+
         "rms[ms]:\t"+rmsMs+"\n"+
-        "total:\t"+numSamples+"\n"
+        "total:\t\t"+numSamples+"\n"+
+        "exceptions:\n"+sb.toString+"\n"
       )
   }
 

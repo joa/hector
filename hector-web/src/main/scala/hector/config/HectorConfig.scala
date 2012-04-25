@@ -8,6 +8,7 @@ import hector.actor.RouterActor.Route
 import hector.session.backends.SessionRamBackend
 import hector.Hector
 import hector.session.SessionBackend
+import com.google.common.base.Charsets
 
 /**
  */
@@ -40,6 +41,9 @@ abstract class HectorConfig {
 
   /** The session backend. <code>None</code> if your application is completely stateless. */
   def sessionBackend: Option[SessionBackend] = Some(new SessionRamBackend(Hector.system.dispatcher))
+
+  /** The default character set. */
+  def defaultCharset = Charsets.UTF_8
 
   def runMode: RunMode =
     System.getProperty("hector.runMode", "").toLowerCase match {

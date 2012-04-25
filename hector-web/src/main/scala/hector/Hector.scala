@@ -2,18 +2,59 @@ package hector
 
 import hector.session.SessionActor
 
-import akka.routing.{DefaultResizer, RoundRobinRouter}
-import akka.actor.{Props, ActorSystem}
 import hector.actor._
 import hector.config.HectorConfig
 import akka.pattern.ask
-import hector.http.HttpRequest
 import scala.Serializable
+import akka.actor._
 import akka.dispatch.Future
+import hector.http.HttpRequest
 
 /**
  */
 object Hector {
+  val system = ActorSystem("hector")
+
+  val config: HectorConfig = try {
+    val className = System.getProperty("hector.config", "hector.Configuration")
+
+    try {
+      val klass = Class.forName(className)
+
+      if(!classOf[HectorConfig].isAssignableFrom(klass)) {
+        throw new RuntimeException("Error: "+className+" has to extend "+classOf[HectorConfig].getName)
+      }
+
+      klass.newInstance().asInstanceOf[HectorConfig]
+    } catch {
+      case classNotFound: ClassNotFoundException ⇒ throw new RuntimeException("Error: Class "+className+" could not be found.")
+      case linkageError: LinkageError ⇒ throw new RuntimeException("Error: Could not link class "+className+".")
+      case instantiationException: InstantiationException ⇒ throw new RuntimeException("Error: Could not instantiate "+className+". Make sure it is a class and has a zero-arguments constructor.")
+    }
+  } catch {
+    case exception =>
+      system.log.error(exception, "Could not initialize configuration.")
+      throw exception
+  }
+
+  val root: ActorRef = system.actorOf(Props[RootActor], "hector") // For now ...
+
+  def main() {
+    system.log.info("********************************")
+    system.log.info("*           HECTOR             *")
+    system.log.info("********************************")
+
+    system.eventStream.subscribe(system.actorOf(Props(new Actor {
+      def receive = {
+        case deadLetter: DeadLetter ⇒
+          //TODO(joa): what about a helper mode?
+          system.log.warning("Received dead letter: {}", deadLetter)
+      }
+    })), classOf[DeadLetter])
+
+    root ! "run"
+  }
+
   //TODO(joa): get rid of me after on
   /*import com.typesafe.config.ConfigFactory
   val config = ConfigFactory.parseString("""
@@ -25,22 +66,21 @@ object Hector {
     """)
 
   val system = ActorSystem("hector", config)*/
-  val system = ActorSystem("hector")
 
-  val requests =
-    system.actorOf(
-      Props[RequestActor].
-        withRouter(
-          RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 32, upperBound = 64)))), name = "requests")
+  /** Actor responsible for handling Http requests. */
+  def request = system.actorFor("/user/hector/request")
 
-  /**
-   * Actor responsible for handling session storage.
-   */
-  val session =
-    system.actorOf(
-      Props[SessionActor].
-        withRouter(
-          RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))), name = "session")
+  /** Actor responsible for session storage. */
+  def session = system.actorFor("/user/hector/session")
+
+  /** Actor responsible for JavaScript callbacks. */
+  def callback = system.actorFor("/user/hector/callback")
+
+  /** Actor responsible for gathering statistics. */
+  def statistics = system.actorFor("/user/hector/stats")
+
+  /** Actor responsible for HTML 5 event streams. */
+  def eventStream = system.actorFor("/hector/eventStream")
 
   //TODO(joa): those two methods should reside somewhere else
   def sessionStore[V <: Serializable](request: HttpRequest, key: String, value: V): Future[Unit] = {
@@ -51,32 +91,10 @@ object Hector {
     ask(session, SessionActor.Load(request, key))(Hector.config.defaultSessionTimeout).mapTo[V]
   }
 
-  val callback =
-    system.actorOf(
-      Props[CallbackActor].
-        withRouter(
-          RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))), name = "callback")
-
-  val statistics =
-    system.actorOf(
-      Props[StatisticsActor],
-      name = "statistics"
-    )
-
-  val eventStream =
-    system.actorOf(
-      Props[EventStreamSupervisor],
-      name = "eventStream"
-    )
-
-  /**
-   * Prefix for internal actions.
-   */
+  /**  Prefix for internal actions. */
   val internalPrefix = "__hector__"
 
-  /**
-   * Script that allows client-server communication.
-   */
+  /** Script that allows client-server communication. */
   val clientSupport = {
     import scala.xml.Unparsed
 
@@ -115,6 +133,4 @@ object Hector {
 })();
 """)}</script>
   }
-
-  val config: HectorConfig = null
 }

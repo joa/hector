@@ -1,11 +1,17 @@
 package hector.js
 
 import hector.js.emitter.JsEmitter
+import scala.xml.Unparsed
+import scala.Char
 
 /**
  */
 sealed trait JsAST extends Serializable {
+  import scala.xml.Node
+
   def emit(humanReadable: Boolean = false): String = JsEmitter.toString(this, humanReadable)
+
+  def toNode(humanReadable: Boolean = false): Node = <script type="text/javascript">{Unparsed(emit(humanReadable))}</script>
 }
 
 case class JsProgram(statements: Seq[JsStatement]) extends JsAST

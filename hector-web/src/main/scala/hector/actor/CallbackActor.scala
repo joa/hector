@@ -4,7 +4,6 @@ import akka.dispatch.Promise
 import akka.pattern.pipe
 import akka.util.Timeout
 import akka.util.duration._
-import akka.actor.{ActorRef, Actor}
 import akka.pattern.ask
 
 import hector.Hector
@@ -13,6 +12,7 @@ import hector.js.JsAST
 import hector.util.randomHash
 import hector.config.RunModes
 import hector.http.{EmptyResponse, HttpRequest, HttpResponse}
+import akka.actor.{ActorLogging, ActorRef, Actor}
 
 /**
  */
@@ -140,7 +140,7 @@ object CallbackActor {
  *   }
  * }}}
  */
-final class CallbackActor extends Actor {
+final class CallbackActor extends Actor with ActorLogging {
   import CallbackActor._
 
   private[this] implicit val implicitDispatcher = context.dispatcher
@@ -320,7 +320,7 @@ final class CallbackActor extends Actor {
             status = Accepted
           )
         } else {
-          //TODO(joa): log a warning here
+          log.warning("Cannot convert {} to a response. The actor {} is responsible for this missbehaviour.", other, actor)
           EmptyResponse(status = Accepted)
         }
     }
