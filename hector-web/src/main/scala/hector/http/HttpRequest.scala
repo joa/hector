@@ -15,6 +15,8 @@ trait HttpRequest extends Serializable {
 
   def info: HttpRequestInfo = new HttpRequestInfo(this)
 
+  def session: Option[HttpSession]
+
   //TODO(joa): def node = The node in the cluster representing the frontend which the client is connected to. 
 }
 

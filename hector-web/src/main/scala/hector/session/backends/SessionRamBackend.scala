@@ -21,7 +21,7 @@ final class SessionRamBackend(private[this] val context: ExecutionContext) exten
     asScalaConcurrentMap(new JConcurrentHashMap[String, ConcurrentMap[String, Any]]())
   }
 
-  override def store[V <: Serializable](request: HttpRequest, key: String, value: V) =
+  override def store[V](id: String, key: String, value: V) =
     Future {
       import java.util.concurrent.{ConcurrentHashMap ⇒ JConcurrentHashMap}
       import scala.collection.JavaConversions.asScalaConcurrentMap
@@ -30,7 +30,7 @@ final class SessionRamBackend(private[this] val context: ExecutionContext) exten
       val newMap = asScalaConcurrentMap(new JConcurrentHashMap[String, Any]())
 
       val sessionValues =
-        map.putIfAbsent("dummy", newMap) match { //TODO(joa) use correct session key!
+        map.putIfAbsent(id, newMap) match {
           case Some(existing) ⇒ existing
           case None ⇒ newMap
         }
@@ -40,9 +40,9 @@ final class SessionRamBackend(private[this] val context: ExecutionContext) exten
       ()
     }
 
-  override def load[V <: Serializable](request: HttpRequest, key: String) =
+  override def load[V](id: String, key: String) =
     Future {
-      val sessionValues = map.get("dummy")  //TODO(joa) use correct session key!
+      val sessionValues = map.get(id)
       val sessionValue = sessionValues flatMap { _.get(key) }
 
       sessionValue map { _.asInstanceOf[V] }

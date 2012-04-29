@@ -204,7 +204,7 @@ final class CallbackActor extends Actor with ActorLogging {
    */
   private[this] def newCallback(request: HttpRequest, target: ActorRef, message: Any) = {
     val callbackName = randomHash()
-    val storeFuture = Hector.sessionStore(request, createSessionHash(callbackName), (target, message))
+    val storeFuture = request.session map { _.set(createSessionHash(callbackName), (target, message)) } getOrElse Promise.successful(())
 
     val jsFunctionFuture =
       storeFuture map { unit ⇒ createJavaScriptCall(callbackName) }
@@ -241,24 +241,29 @@ final class CallbackActor extends Actor with ActorLogging {
       // The user provided an illegal callback name.
       sender ! PlainTextResponse("Invalid callback.\n", BadRequest)
     } else {
-      val sessionFuture =
-        Hector.sessionLoad[Option[(ActorRef, Any)]](request, createSessionHash(callbackName))
+      request.session match {
+        case Some(session) =>
+          val sessionFuture = session[(ActorRef, Any)](createSessionHash(callbackName))
 
-      sessionFuture flatMap {
-        sessionValue ⇒
-          sessionValue match {
-            case Some((actor, message)) ⇒
-              (ask(actor, message)(Timeout(10.seconds))) map toResponse(actor) //TODO(joa): timeout should be configurable
+          sessionFuture flatMap {
+            sessionValue ⇒
+              sessionValue match {
+                case Some((actor, message)) ⇒
+                  (ask(actor, message)(Timeout(10.seconds))) map toResponse(actor) //TODO(joa): timeout should be configurable
 
-            case None ⇒
-              Promise.successful(
-                PlainTextResponse(
-                  text = "No such callback.\n",
-                  status = NotFound
-                )
-              )
-          }
-      } pipeTo sender
+                case None ⇒
+                  Promise.successful(
+                    PlainTextResponse(
+                      text = "No such callback.\n",
+                      status = NotFound
+                    )
+                  )
+              }
+          } pipeTo sender
+
+        case None =>
+          sender ! PlainTextResponse("Invalid callback.\n", BadRequest)
+      }
     }
   }
 

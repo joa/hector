@@ -41,7 +41,7 @@ final class EventStreamSupervisor extends Actor {
       val actor = context.actorOf(Props(new EventStreamActor(timeout, retry)), name = hash)
 
       val eventStream =
-        Hector.sessionStore(request, "hector:eventStream:"+hash, actor) map {
+        request.session map { _.set("hector:eventStream:"+hash, actor) } getOrElse Promise.successful(()) map {
           x ⇒ EventStream(urlOf(hash), actor)
         }
 
@@ -50,14 +50,20 @@ final class EventStreamSupervisor extends Actor {
     case message @ CreateResponse(request, Some(ReRoute(name))) ⇒
       import hector.http.status.NoContent
 
-      val actorRefFuture =
-        Hector.sessionLoad[Option[ActorRef]](request, "hector:eventStream:"+name)
-
       val response =
-        actorRefFuture flatMap {
-          case Some(actor) ⇒ ask(actor, message)(Timeout(5.seconds)) //TODO(joa): make configurable
-          case None ⇒ Promise.successful(EmptyResponse(status = NoContent))
+        request.session match {
+          case Some(session) =>
+            val actorRefFuture =
+              session[ActorRef]("hector:eventStream:"+name)
+
+            actorRefFuture flatMap {
+              case Some(actor) ⇒ ask(actor, message)(Timeout(5.seconds)) //TODO(joa): make configurable
+              case None ⇒ Promise.successful(EmptyResponse(status = NoContent))
+            }
+          case None =>
+            Promise.successful(EmptyResponse(status = NoContent))
         }
+      
 
       response pipeTo sender
   }

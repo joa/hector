@@ -15,6 +15,8 @@ object HttpRequestConversion {
     val headers = HttpHeaderConversion fromHttpServletRequest httpServletRequest
 
     val authType = HttpAuthTypeConversion fromHttpServletRequest httpServletRequest
+
+    val session = HttpSessionConversion fromHttpServletRequest httpServletRequest
   }
 
   def fromHttpServletRequest(httpServletRequest: HttpServletRequest): HttpRequest =

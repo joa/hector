@@ -30,6 +30,12 @@ abstract class HectorConfig {
    */
   def defaultSessionTimeout = Timeout(1.second)
 
+  /** The name of the session cookie. */
+  def sessionCookieName = "__hector_session__"
+
+  /** How long a session is kept alive. */
+  def sessionLifetime = 1.minute
+
   /** Timeout for the router to reply. */
   def defaultRouteTimeout = Timeout(1.second)
 

@@ -12,9 +12,11 @@ import akka.dispatch.Promise
 object SessionActor {
   sealed trait SessionActorMessage
 
-  case class Store[V <: Serializable](request: HttpRequest, key: String, value: V) extends SessionActorMessage
+  case class Store[V](id: String, key: String, value: V) extends SessionActorMessage
 
-  case class Load(request: HttpRequest, key: String) extends SessionActorMessage
+  case class Load(id: String, key: String) extends SessionActorMessage
+
+  case class KeepAlive(id: String) extends SessionActorMessage
 
   private[session] val backend: Option[SessionBackend] = Hector.config.sessionBackend
 }
@@ -22,19 +24,19 @@ object SessionActor {
 /**
  *
  * {{{
- * sessionActor ! Store(request, "count", 0)
- * val count = (sessionActor ? Load(request, "count")).mapTo[Option[Int]]
+ * sessionActor ! Store(id, "count", 0)
+ * val count = (sessionActor ? Load(id, "count")).mapTo[Option[Int]]
  * }}}
  */
 final class SessionActor extends Actor {
   import SessionActor._
 
   override protected def receive = {
-    case Store(request, key, value) ⇒
-      backend map { _.store(request, key, value) } getOrElse fail() pipeTo sender
+    case Store(id, key, value) ⇒
+      backend map { _.store(id, key, value) } getOrElse fail() pipeTo sender
 
-    case Load(request, key) ⇒
-      backend map { _.load(request, key) } getOrElse fail() pipeTo sender
+    case Load(id, key) ⇒
+      backend map { _.load(id, key) } getOrElse fail() pipeTo sender
   }
 
   private def fail() = {

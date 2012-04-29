@@ -7,7 +7,7 @@ import akka.dispatch.Future
 /**
  */
 trait SessionBackend {
-  def store[V <: Serializable](request: HttpRequest, key: String, value: V): Future[Unit]
+  def store[V](id: String, key: String, value: V): Future[Unit]
 
-  def load[V <: Serializable](request: HttpRequest, key: String): Future[Option[V]]
+  def load[V](id: String, key: String): Future[Option[V]]
 }

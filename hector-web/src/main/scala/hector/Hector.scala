@@ -82,17 +82,8 @@ object Hector {
   /** Actor responsible for HTML 5 event streams. */
   def eventStream = system.actorFor("/hector/eventStream")
 
-  //TODO(joa): those two methods should reside somewhere else
-  def sessionStore[V <: Serializable](request: HttpRequest, key: String, value: V): Future[Unit] = {
-    ask(session, SessionActor.Store(request, key, value))(Hector.config.defaultSessionTimeout).mapTo[Unit]
-  }
-
-  def sessionLoad[V <: Serializable](request: HttpRequest, key: String)(implicit manifest: Manifest[V]): Future[V] = {
-    ask(session, SessionActor.Load(request, key))(Hector.config.defaultSessionTimeout).mapTo[V]
-  }
-
   /**  Prefix for internal actions. */
-  val internalPrefix = "__hector__"
+  val internalPrefix = "__hector__" //TODO(joa): move into config
 
   /** Script that allows client-server communication. */
   val clientSupport = {
