@@ -1,9 +1,6 @@
 #!/bin/bash
 
-#
-# This is supposed to be a Git commit hook once it is
-# finished. The check_style function must simply be 
-# called for each file in the changeset.
+# Hector style check
 #
 
 function check_style {
@@ -47,6 +44,41 @@ function check_style {
     exit 1
   fi
 
+  # Naming conventions for getters and setters
+  # Currently problematic with overriden methods like override def setUp() for Caliper.
+
+: <<'END'
+  if egrep -q "def\s+?get(.+?)(\s|\:|=)" $1
+  then
+    egrep -C 1 --color=auto "def\s+?get(.+?)(\s|\:|=)" $1
+    echo "ERROR: Prefixed getter in $1. A getter like \"def getCount: Int = ...\" should be named \"def count: Int = ...\"."
+    exit 1
+  fi
+
+  if egrep -q "def\s+?set(.+?)\(" $1
+  then
+    egrep -C 1 --color=auto "def\s+?set(.+?)\(" $1
+    echo "ERROR: Prefixed setter in $1. A setter like \"def setCount(value: Int) { ... }\" should be named \"def count_=(value: Int) { ... }\"."
+    exit 1
+  fi
+END
+
+: <<'END'
+  if egrep -q "def\s+?(.+?)\((.+?)\)[^\:]" $1
+  then
+    egrep -C 1 --color=auto "def\s+?(.+?)\((.+?)\)[^\:]" $1
+    echo "ERROR: Explicit return-type is missing. 1"
+    exit 1
+  fi
+
+  if egrep -q "def\s+?(.+)[^\:]\s+?=" $1
+  then
+    egrep -C 1 --color=auto "def\s+?(.+)[^\:]\s+?=" $1
+    echo "ERROR: Explicit return-type is missing. 2"
+    exit 1
+  fi
+END
+
   # File must end in new line.
 
   if [ "`tail -c 1 $1`" != "" ]
@@ -56,6 +88,35 @@ function check_style {
   fi
 }
 
-for file in `find . -iname *.scala -type f` ; do
-  check_style $file
-done
+#
+# This is what you could use to check all files in the repo.
+#
+# for file in `find . -iname *.scala -type f` ; do
+#   check_style $file
+# done
+#
+
+#
+# Git pre-commit hook stuff behaviour
+#
+
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+        against=HEAD
+else
+        # Initial commit: diff against an empty tree object
+        against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+fi
+
+files=$(git diff-index --name-status --cached $against | grep -v ^D | cut -c3-)
+
+if [ "$files" != "" ]
+then
+  for file in $files
+  do
+    if [[ "$file" =~ [.]scala$ ]]
+    then
+      check_style $file
+    fi
+  done
+fi

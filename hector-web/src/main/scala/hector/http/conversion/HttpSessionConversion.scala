@@ -25,4 +25,5 @@ object HttpSessionConversion {
 
         new HttpSession(id)
     }
+  def count = 1
 }
