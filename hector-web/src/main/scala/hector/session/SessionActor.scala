@@ -9,6 +9,8 @@ import akka.actor._
 import akka.pattern._
 import akka.dispatch.Promise
 
+import scala.compat.Platform
+
 object SessionActor {
   sealed trait SessionActorMessage
 
@@ -41,7 +43,7 @@ final class SessionActor extends Actor {
     case KeepAlive(id) ⇒
       //TODO(joa): "hector:session:lastSeen" needs to be a constant somewhere accessible
       import java.util.{Date ⇒ JDate}
-      backend map { _.store(id, "hector:session:lastSeen", System.currentTimeMillis()) }
+      backend map { _.store(id, "hector:session:lastSeen", Platform.currentTime) }
   }
 
   private def fail() = {
