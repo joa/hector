@@ -113,6 +113,20 @@ Top-level variabes and functions are all prefixed with *js* so they do not accid
 
 On a side-note: `JsAST` is not of type `HttpResponse`. Hector performs automatic response conversion for a set of types. Those include `JsAST`, `Seq[JsStatement]`, `Node` or `String`. However it is clearly stated which types are converted to a response. Only in development Hector will tell the developer which actor did not create a response suitable for automatic conversion.
 
+## Development
+
+### Pre-Commit Hook
+
+In order to avoid stupid mistakes and enforce a consistent style one should enable Hector's pre-commit hook. 
+It is a simple shell script which runs before each commit and makes sure that some constraints are valid.
+
+The best idea is to create a symlink for the pre-commit hook. This is done by issuing the following command inside
+the Hector repository.
+
+```
+ln -s pre-commit .git/hooks/pre-commit
+```
+
 ## Configuration
 
 {TODO}
