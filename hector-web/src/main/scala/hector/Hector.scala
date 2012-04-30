@@ -32,7 +32,7 @@ object Hector {
       case instantiationException: InstantiationException ⇒ throw new RuntimeException("Error: Could not instantiate "+className+". Make sure it is a class and has a zero-arguments constructor.")
     }
   } catch {
-    case exception =>
+    case exception ⇒
       system.log.error(exception, "Could not initialize configuration.")
       throw exception
   }

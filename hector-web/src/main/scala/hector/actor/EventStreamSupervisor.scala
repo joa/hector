@@ -52,7 +52,7 @@ final class EventStreamSupervisor extends Actor {
 
       val response =
         request.session match {
-          case Some(session) =>
+          case Some(session) ⇒
             val actorRefFuture =
               session[ActorRef]("hector:eventStream:"+name)
 
@@ -60,7 +60,7 @@ final class EventStreamSupervisor extends Actor {
               case Some(actor) ⇒ ask(actor, message)(Timeout(5.seconds)) //TODO(joa): make configurable
               case None ⇒ Promise.successful(EmptyResponse(status = NoContent))
             }
-          case None =>
+          case None ⇒
             Promise.successful(EmptyResponse(status = NoContent))
         }
       

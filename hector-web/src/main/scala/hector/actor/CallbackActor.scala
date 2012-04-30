@@ -242,7 +242,7 @@ final class CallbackActor extends Actor with ActorLogging {
       sender ! PlainTextResponse("Invalid callback.\n", BadRequest)
     } else {
       request.session match {
-        case Some(session) =>
+        case Some(session) ⇒
           val sessionFuture = session[(ActorRef, Any)](createSessionHash(callbackName))
 
           sessionFuture flatMap {
@@ -261,7 +261,7 @@ final class CallbackActor extends Actor with ActorLogging {
               }
           } pipeTo sender
 
-        case None =>
+        case None ⇒
           sender ! PlainTextResponse("Invalid callback.\n", BadRequest)
       }
     }
