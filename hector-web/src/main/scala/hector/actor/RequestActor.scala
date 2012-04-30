@@ -14,7 +14,7 @@ import hector.Hector
 import hector.util.letItCrash
 import hector.actor.stats.ExceptionOccurred
 import hector.config.RunModes
-import hector.http.HttpResponse
+import hector.http.{HttpResponse, HttpSession}
 
 object RequestActor {
   sealed trait RootMessage
@@ -132,7 +132,7 @@ final class RequestActor extends Actor with ActorLogging {
               // the buffer or create an output stream the NoContent header is replaced with
               // 200. If we omit the flushBuffer() the servlet container creates a 404.
 
-              fillServletResponse(value, httpResponse)
+              fillServletResponse(value, httpResponse, request.session)
               httpResponse.flushBuffer()
 
               Promise.successful(Some(()))
@@ -144,7 +144,7 @@ final class RequestActor extends Actor with ActorLogging {
                   output = outputStream
                 )
 
-              fillServletResponse(value, httpResponse)
+              fillServletResponse(value, httpResponse, request.session)
 
               letItCrash()
 
@@ -171,7 +171,7 @@ final class RequestActor extends Actor with ActorLogging {
             log.error(throwable, "Exception occurred while serving {}.", request)
 
             if(httpResponse.isCommitted) {
-              println("HttpResponse is already comitted. Cannot do anything about this.")
+              log.warning("HttpResponse is already comitted. Cannot do anything about this.")
             } else {
               import java.io.{PrintStream ⇒ JPrintStream}
 
@@ -199,7 +199,7 @@ final class RequestActor extends Actor with ActorLogging {
       output pipeTo sender
   }
 
-  private def fillServletResponse(source: HttpResponse,  target: HttpServletResponse) {
+  private def fillServletResponse(source: HttpResponse,  target: HttpServletResponse, session: Option[HttpSession]) {
     import hector.http.conversion._
     import hector.http.status.NoContent
 
@@ -209,6 +209,20 @@ final class RequestActor extends Actor with ActorLogging {
     source.cookies map HttpCookieConversion.toServletCookie foreach target.addCookie
     source.headers foreach { header ⇒ target.setHeader(header.name, header.value) }
 
+    session foreach {
+      value =>
+        import javax.servlet.http.Cookie
+
+        val sessionCookie = new Cookie(Hector.config.sessionCookieName, value.id)
+
+        sessionCookie.setMaxAge(Hector.config.sessionLifetime.toSeconds.toInt)
+        sessionCookie.setPath("/")
+        sessionCookie.setHttpOnly(Hector.config.sessionCookieHttpOnly)
+        sessionCookie.setSecure(Hector.config.sessionCookieSecure)
+
+        target.addCookie(sessionCookie)
+    }
+    
     letItCrash()
 
     if(source.status != NoContent) {

@@ -41,7 +41,11 @@ final class SessionRamBackend(private[this] val context: ExecutionContext, maxNr
           val currentTime = Platform.currentTime
 
           val map = 
-            asScalaConcurrentMap(new JConcurrentHashMap[String, Any](2, 0.75f, 1))
+            asScalaConcurrentMap(
+              new JConcurrentHashMap[String, Any](
+                /*initialCapacity = */2,
+                /*loadFactor = */0.75f,
+                /*concurrencyLevel = */1))
 
           //TODO(joa): those strings must be constants
           map.put("hector:session:created", currentTime)

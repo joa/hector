@@ -33,8 +33,14 @@ abstract class HectorConfig {
   /** The name of the session cookie. */
   def sessionCookieName = "__hector_session__"
 
+  /** Whether or not the cookie is only valid for HTTP requests and not exposed to client-side scripting. */
+  def sessionCookieHttpOnly = true
+
+  /** Whether or not the cookie should be transmitted only for secure connections like HTTPS/SSL. */
+  def sessionCookieSecure = false
+
   /** How long a session is kept alive. */
-  def sessionLifetime = 1.minute
+  def sessionLifetime = 15.minutes
 
   /** Timeout for the router to reply. */
   def defaultRouteTimeout = Timeout(1.second)
