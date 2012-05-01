@@ -9,14 +9,11 @@ import hector.actor.RequestActor
  */
 final class HectorFilter extends Filter {
   def init(filterConfig: FilterConfig) {
-    Hector.main()
+    Hector.start()
   }
 
   def destroy() {
-    // Shutdown
-    //
-
-    Hector.system.shutdown()
+    Hector.stop()
   }
 
   def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
@@ -26,9 +23,11 @@ final class HectorFilter extends Filter {
           case httpResponse: HttpServletResponse ⇒
             //TODO(joa): create custom HttpRequest / HttpResponse object here
             doFilter(httpRequest, httpResponse, chain)
+
           case _ ⇒
             chain.doFilter(request, response)
         }
+
       case _ ⇒
         chain.doFilter(request, response)
     }
@@ -110,11 +109,14 @@ final class HectorFilter extends Filter {
       }
     } catch {
       case timeout: JTimeoutException ⇒
+        Hector.statistics ! ExceptionOccurred(timeout)
         //TODO(joa): timeout needs to be logged. we need to generate a 505 response
-      case _ ⇒
+        
+      case exception ⇒
+        Hector.statistics ! ExceptionOccurred(error)
         // We have nothing to do here. RootActor should have already performed the necessary work.
     } finally {
-      println("Completed sync request in "+(System.currentTimeMillis() - t0)+"ms.")
+      Hector.statistics ! RequestCompleted((System.nanoTime() - t0).toFloat * 0.000001f)
     }
   }
 }

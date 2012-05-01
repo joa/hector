@@ -1,14 +1,9 @@
 package hector
 
-import hector.session.SessionActor
+import akka.actor._
 
 import hector.actor._
-import hector.config.HectorConfig
-import akka.pattern.ask
-import scala.Serializable
-import akka.actor._
-import akka.dispatch.Future
-import hector.http.HttpRequest
+import hector.config._
 
 /**
  */
@@ -39,20 +34,59 @@ object Hector {
 
   val root: ActorRef = system.actorOf(Props[RootActor], "hector") // For now ...
 
-  def main() {
+  def start() {
+    config.preStart()
+
     system.log.info("********************************")
     system.log.info("*           HECTOR             *")
     system.log.info("********************************")
 
-    system.eventStream.subscribe(system.actorOf(Props(new Actor {
-      def receive = {
-        case deadLetter: DeadLetter ⇒
-          //TODO(joa): what about a helper mode?
-          system.log.warning("Received dead letter: {}", deadLetter)
-      }
-    })), classOf[DeadLetter])
+    if(config.runMode < RunModes.Staging) {
+      system.eventStream.subscribe(system.actorOf(Props(new Actor {
+        def receive = {
+          case deadLetter: DeadLetter ⇒
+            //TODO(joa): what about a helper mode?
+            system.log.warning("Received dead letter: {}", deadLetter)
+        }
+      })), classOf[DeadLetter])
+    }
 
     root ! "run"
+
+    config.postStart()
+  }
+
+  def stop() {
+    config.preStop()
+
+    system.log.info("Shutdown initiated ...")
+
+    stopRoot()
+    system.shutdown()
+
+    config.postStop()
+  }
+
+  private[this] def stopRoot(trial: Int = 0) {
+    import akka.actor.ActorTimeoutException
+    import akka.dispatch.{Await, Future}
+    import akka.pattern.gracefulStop
+    import akka.util.duration._
+
+    try {
+      val stopped: Future[Boolean] = gracefulStop(root, 5.seconds)(system)
+      Await.result(stopped, 6.seconds)
+    } catch {
+      case timeout: ActorTimeoutException ⇒
+        (trial + 1) match {
+          case maxTrials if maxTrials > 2 ⇒ 
+            system.log.warning("Could not stop root actor.")
+            
+          case retry ⇒ 
+            system.log.warning("Could not shutdown root actor. Retrying ...")
+            stopRoot(retry)
+        }
+    }
   }
 
   //TODO(joa): get rid of me after on
@@ -83,7 +117,7 @@ object Hector {
   def eventStream = system.actorFor("/hector/eventStream")
 
   /**  Prefix for internal actions. */
-  val internalPrefix = "__hector__" //TODO(joa): move into config
+  val internalPrefix = Hector.config.hectorInternal
 
   /** Script that allows client-server communication. */
   val clientSupport = {

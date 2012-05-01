@@ -57,6 +57,10 @@ abstract class HectorConfig {
   /** The default character set. */
   def defaultCharset = Charsets.UTF_8
 
+  /** The prefix for internal requests. */
+  def hectorInternal = "__hector__"
+
+  /** The mode in which Hector runs. */
   def runMode: RunMode =
     System.getProperty("hector.runMode", "").toLowerCase match {
       case "" | "local" | "dev" | "development" ⇒ RunModes.Development
@@ -64,4 +68,16 @@ abstract class HectorConfig {
       case "stage" | "staging" ⇒ RunModes.Staging
       case "test" | "unittest" | "testing" ⇒ RunModes.Testing
     }
+
+  /** Method executed before Hector starts. */
+  def preStart() {}
+
+  /** Method executed after the startup sequence completed. */
+  def postStart() {}
+
+  /** Method executed before Hector stops. */
+  def preStop() {}
+
+  /** Method executed after the shutdown sequence completed. */
+  def postStop() {}
 }
