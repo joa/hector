@@ -21,12 +21,19 @@ package hector {
       id = "hector",
       base = file("."),
       settings = parentSettings,
-      aggregate = Seq(web, microbencmark)
+      aggregate = Seq(web, microbencmark, demo)
     )
 
     lazy val web = Project(
       id = "hector-web",
       base = file("hector-web"),
+      settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.web)
+    )
+
+    lazy val demo = Project(
+      id = "hector-demo",
+      base = file("hector-demo"),
+      dependencies = Seq(web),
       settings = defaultSettings ++ webSettings ++ Seq( // For now we use the webSettings here too.
         libraryDependencies ++= Dependencies.web ++ Seq(Dependency.Container.jettyWebapp) // And jettyWebapp as well ...
       )

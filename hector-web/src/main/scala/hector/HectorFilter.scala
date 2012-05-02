@@ -1,9 +1,10 @@
 package hector
 
+import hector.actor.RequestActor
+import hector.actor.stats.{RequestCompleted, ExceptionOccurred}
+
 import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-
-import hector.actor.RequestActor
 
 /**
  */
@@ -113,7 +114,7 @@ final class HectorFilter extends Filter {
         //TODO(joa): timeout needs to be logged. we need to generate a 505 response
         
       case exception ⇒
-        Hector.statistics ! ExceptionOccurred(error)
+        Hector.statistics ! ExceptionOccurred(exception)
         // We have nothing to do here. RootActor should have already performed the necessary work.
     } finally {
       Hector.statistics ! RequestCompleted((System.nanoTime() - t0).toFloat * 0.000001f)
