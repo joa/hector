@@ -91,15 +91,15 @@ END
 #
 # This is what you could use to check all files in the repo.
 #
-# for file in `find . -iname *.scala -type f` ; do
-#   check_style $file
-# done
+for file in `find . -iname *.scala -type f` ; do
+  check_style $file
+done
 #
 
 #
 # Git pre-commit hook stuff behaviour
 #
-
+: <<'END'
 if git rev-parse --verify HEAD >/dev/null 2>&1
 then
         against=HEAD
@@ -120,3 +120,4 @@ then
     fi
   done
 fi
+END

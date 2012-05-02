@@ -6,10 +6,7 @@ import akka.util.Duration
 import com.google.common.cache.{LoadingCache, CacheBuilder, CacheLoader}
 
 import hector.Hector
-import hector.http.HttpRequest
 import hector.session.SessionBackend
-
-import java.util.concurrent.{Callable => JCallable}
 
 import scala.collection.mutable.ConcurrentMap
 import scala.compat.Platform
