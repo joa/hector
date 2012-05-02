@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Hector style check
-#
-
 function check_style {
   # No tab characters allowed.
   #
@@ -35,7 +32,7 @@ function check_style {
   fi
 
   # Do not allow <- character sequence.
-  # 
+  #
 
   if grep -q "<-" $1
   then
@@ -43,41 +40,6 @@ function check_style {
     echo "ERROR: File $1 contains \"<-\" instead of \"←\"."
     exit 1
   fi
-
-  # Naming conventions for getters and setters
-  # Currently problematic with overriden methods like override def setUp() for Caliper.
-
-: <<'END'
-  if egrep -q "def\s+?get(.+?)(\s|\:|=)" $1
-  then
-    egrep -C 1 --color=auto "def\s+?get(.+?)(\s|\:|=)" $1
-    echo "ERROR: Prefixed getter in $1. A getter like \"def getCount: Int = ...\" should be named \"def count: Int = ...\"."
-    exit 1
-  fi
-
-  if egrep -q "def\s+?set(.+?)\(" $1
-  then
-    egrep -C 1 --color=auto "def\s+?set(.+?)\(" $1
-    echo "ERROR: Prefixed setter in $1. A setter like \"def setCount(value: Int) { ... }\" should be named \"def count_=(value: Int) { ... }\"."
-    exit 1
-  fi
-END
-
-: <<'END'
-  if egrep -q "def\s+?(.+?)\((.+?)\)[^\:]" $1
-  then
-    egrep -C 1 --color=auto "def\s+?(.+?)\((.+?)\)[^\:]" $1
-    echo "ERROR: Explicit return-type is missing. 1"
-    exit 1
-  fi
-
-  if egrep -q "def\s+?(.+)[^\:]\s+?=" $1
-  then
-    egrep -C 1 --color=auto "def\s+?(.+)[^\:]\s+?=" $1
-    echo "ERROR: Explicit return-type is missing. 2"
-    exit 1
-  fi
-END
 
   # File must end in new line.
 
@@ -91,15 +53,15 @@ END
 #
 # This is what you could use to check all files in the repo.
 #
-for file in `find . -iname *.scala -type f` ; do
-  check_style $file
-done
+#for file in `find . -iname *.scala -type f` ; do
+#  check_style $file
+#done
 #
 
 #
 # Git pre-commit hook stuff behaviour
 #
-: <<'END'
+
 if git rev-parse --verify HEAD >/dev/null 2>&1
 then
         against=HEAD
@@ -120,4 +82,3 @@ then
     fi
   done
 fi
-END
