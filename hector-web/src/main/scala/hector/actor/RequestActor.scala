@@ -210,7 +210,7 @@ final class RequestActor extends Actor with ActorLogging {
     source.headers foreach { header ⇒ target.setHeader(header.name, header.value) }
 
     session foreach {
-      value =>
+      value ⇒
         import javax.servlet.http.Cookie
 
         val sessionCookie = new Cookie(Hector.config.sessionCookieName, value.id)
