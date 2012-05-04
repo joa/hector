@@ -1,11 +1,13 @@
 package hector
 
-import hector.config.HectorConfig
-import hector.http.extractors.Get
-import hector.http./:
-import hector.actor.RouterActor.Route
-import user.HelloWorldActor
 import akka.actor.{ActorSystem, Props}
+
+import hector.actor.route.Route
+import hector.config.HectorConfig
+import hector.http.extractors._
+import hector.http._
+
+import user.HelloWorldActor
 
 /**
  */
