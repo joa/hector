@@ -11,10 +11,11 @@ import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
 import hector.Hector
-import hector.util.letItCrash
 import hector.actor.stats.ExceptionOccurred
+import hector.actor.route.Route
 import hector.config.RunModes
 import hector.http.{HttpResponse, HttpSession}
+import hector.util.letItCrash
 
 object RequestActor {
   sealed trait RootMessage
@@ -73,7 +74,6 @@ final class RequestActor extends Actor with ActorLogging {
     case HandleRequest(httpRequest, httpResponse) ⇒
       import akka.pattern.pipe
       import context.dispatcher
-      import hector.actor.RouterActor.Route
       import hector.http.{OutputStreamHttpResponseOutput, HttpResponse}
       import hector.http.conversion._
 

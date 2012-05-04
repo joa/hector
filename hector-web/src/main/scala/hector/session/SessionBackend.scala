@@ -1,7 +1,5 @@
 package hector.session
 
-import hector.http.HttpRequest
-
 import akka.dispatch.Future
 
 /**

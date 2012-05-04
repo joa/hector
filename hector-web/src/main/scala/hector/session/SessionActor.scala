@@ -1,8 +1,5 @@
 package hector.session
 
-import hector.http._
-import hector.session.backends._
-
 import hector.Hector
 
 import akka.actor._
@@ -42,7 +39,6 @@ final class SessionActor extends Actor {
     
     case KeepAlive(id) ⇒
       //TODO(joa): "hector:session:lastSeen" needs to be a constant somewhere accessible
-      import java.util.{Date ⇒ JDate}
       backend map { _.store(id, "hector:session:lastSeen", Platform.currentTime) }
   }
 

@@ -3,12 +3,13 @@ package hector.config
 import akka.util.Timeout
 import akka.util.duration._
 
-import hector.http.HttpRequest
-import hector.actor.RouterActor.Route
-import hector.session.backends.SessionRamBackend
-import hector.Hector
-import hector.session.SessionBackend
 import com.google.common.base.Charsets
+
+import hector.Hector
+import hector.actor.route.Route
+import hector.http.HttpRequest
+import hector.session.backends.SessionRamBackend
+import hector.session.SessionBackend
 
 /**
  */

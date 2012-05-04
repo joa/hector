@@ -467,7 +467,7 @@ object HtmlEmitter {
     }
 
     _name(label)
-    writer.print('>')
+    _gt()
 
     writer.popIndent()
   }

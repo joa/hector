@@ -13,8 +13,8 @@ object HttpSessionConversion {
       backend ⇒
         val existingId =
           for {
-            cookies ← Option(httpServletRequest.getCookies())
-            sessionCookie ← cookies find { _.getName == Hector.config.sessionCookieName }
+            cookies ← Option(httpServletRequest.getCookies)
+            sessionCookie ← cookies find { _.getName == Hector.config.sessionCookieName } //TODO(joa): get rid of implicit conversion
           } yield {
             sessionCookie.getValue
           }
@@ -25,5 +25,4 @@ object HttpSessionConversion {
 
         new HttpSession(id)
     }
-  def count = 1
 }
