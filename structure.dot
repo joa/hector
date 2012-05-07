@@ -1,0 +1,45 @@
+digraph HectorStructure {
+  size="7.5,10";
+  ratio=auto;
+  node[fontname="Arial", fontsize=11, color="#2b2b2b"];
+  edge[fontname="Arial", fontsize=8, color="#2b2b2b"];
+
+  HECTOR [shape="box", label="Hector", style="filled", fillcolor="#f8f8f8"];
+
+  HECTOR_CONFIG [shape="box", label="Configuration", style="filled", fillcolor="#f8f8f8"];
+
+  ACTOR_SYSTEM [shape="box", label="ActorSystem", style="filled", fillcolor="#f8f8f8"];
+  CALLBACK_ACTOR [shape="box", label="CallbackActor", style="filled", fillcolor="#f8f8f8"];
+  EVENTSTREAM_ACTOR [shape="box", label="EventStreamActor", style="filled", fillcolor="#f8f8f8"];
+  EVENTSTREAM_SUPERVISOR [shape="box", label="EventStreamSupervisorActor", style="filled", fillcolor="#f8f8f8"];
+  IO_ACTOR [shape="box", label="IOActor", style="filled", fillcolor="#f8f8f8"];
+  REQUEST_ACTOR [shape="box", label="RequestActor", style="filled", fillcolor="#f8f8f8"];
+  REQUEST_INPUT_ACTOR [shape="box", label="HttpRequestInputActor", style="filled", fillcolor="#f8f8f8"];
+  RESPONSE_OUTPUT_ACTOR [shape="box", label="HttpResponseOutputActor", style="filled", fillcolor="#f8f8f8"];
+  ROUTER_ACTOR [shape="box", label="RouterActor", style="filled", fillcolor="#f8f8f8"];
+  SESSION_ACTOR [shape="box", label="SessionActor", style="filled", fillcolor="#f8f8f8"];
+  SESSION_BACKEND [shape="box", label="SessionBackend", style="filled", fillcolor="#f8f8f8"];
+  STATS_ACTOR [shape="box", label="StatisticsActor", style="filled", fillcolor="#f8f8f8"];
+  ROOT_ACTOR [shape="box", label="RootActor", style="filled", fillcolor="#f8f8f8"];
+
+  HECTOR -> ACTOR_SYSTEM;
+  HECTOR -> HECTOR_CONFIG;
+
+  ACTOR_SYSTEM -> ROOT_ACTOR;
+
+  ROOT_ACTOR -> CALLBACK_ACTOR;
+  ROOT_ACTOR -> EVENTSTREAM_SUPERVISOR;
+  ROOT_ACTOR -> REQUEST_ACTOR;
+  ROOT_ACTOR -> SESSION_ACTOR;
+  ROOT_ACTOR -> STATS_ACTOR;
+
+  REQUEST_ACTOR -> IO_ACTOR;
+  REQUEST_ACTOR -> ROUTER_ACTOR;
+
+  IO_ACTOR -> REQUEST_INPUT_ACTOR;
+  IO_ACTOR -> RESPONSE_OUTPUT_ACTOR;
+
+  EVENTSTREAM_SUPERVISOR -> EVENTSTREAM_ACTOR;
+
+  SESSION_ACTOR -> SESSION_BACKEND [label="(optional)", style="dashed"];
+}
