@@ -129,10 +129,10 @@ ln -s pre-commit .git/hooks/pre-commit
 
 ## Configuration
 
-Hector is configured by extending `hector.config.HectorConfig`. Usually a lot of default options are
-already configured.
+Hector is configured by extending `hector.config.HectorConfig`. It is assumed that a configuration
+is immutable and only one instance (per node) will ever be created.
 
-`routes` is a method that must be overridden. A minimal configuration might look like this:
+The abstract `routes` method must always be overridden. A minimal configuration might look like this:
 
 ```
 package hector
