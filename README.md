@@ -129,7 +129,45 @@ ln -s pre-commit .git/hooks/pre-commit
 
 ## Configuration
 
-{TODO}
+Hector is configured by extending `hector.config.HectorConfig`. Usually a lot of default options are
+already configured.
+
+`routes` is a method that must be overridden. A minimal configuration might look like this:
+
+```
+package hector
+
+import akka.actor.ActorSystem
+
+import hector.actor.route.Route
+import hector.config.HectorConfig
+import hector.http.extractors._
+import hector.http._
+
+final class Configuration extends HectorConfig {
+  private[this] val system = ActorSystem("userCode")
+
+  def routes = {
+    case Any(_) ⇒ Route(system.actorFor("/user/404"))
+  }
+}
+
+```
+
+Another very important configuration property is the session storage. The default option is using
+an in-memory storage only suitable for development. If you go for a RESTful API you might want to
+make sure to keep everything stateless via `override def sessionBackend = None`.
+
+### Startup
+
+By default Hector will try to create an instance of `hector.Configuration`. This class needs to be
+provided by the user and it must extend `hector.config.HectorConfig`.
+
+The configuration instance will be created after the `ActorSystem` of Hector has been created and before
+any internal actor is started.
+
+It is possible to change the class which Hector tries to instantiate for the configuration by providing
+`-Dhector.config=foo.BarConfig` as a JVM argument.
 
 ## Fault Tolerance
 
