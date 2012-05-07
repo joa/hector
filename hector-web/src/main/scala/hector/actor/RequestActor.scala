@@ -34,6 +34,9 @@ final class RequestActor extends Actor with ActorLogging {
           withRouter(
             RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))))
 
+  private[this] val io =
+    context.actorOf(Props[IOActor])
+
   override protected def receive = {
     case HandleAsync(asyncContext) ⇒
       import akka.pattern.pipe

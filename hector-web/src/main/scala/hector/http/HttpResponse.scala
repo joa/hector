@@ -50,7 +50,6 @@ trait HttpResponse extends Serializable {
    */
   def contentType: String
 
-
   /**
    * The encoding used for the response.
    *
