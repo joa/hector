@@ -8,9 +8,9 @@ import akka.util.duration._
 import akka.pattern.ask
 
 import hector.Hector
-import hector.js.JsAST
 import hector.util.{randomHash, isAlphaNumeric}
 import hector.config.RunModes
+import hector.js.{JsObj, JsAST}
 import hector.http.{EmptyResponse, HttpRequest, HttpResponse}
 
 /**
@@ -268,7 +268,7 @@ final class CallbackActor extends Actor with ActorLogging {
   }
 
   private[this] def toResponse(actor: ActorRef)(value: Any): HttpResponse = {
-    import hector.http.{XMLResponse, JsResponse, PlainTextResponse}
+    import hector.http.{XMLResponse, JsResponse, JsonResponse, PlainTextResponse}
     import hector.js.JsAST
 
     import scala.xml.Node
@@ -287,6 +287,10 @@ final class CallbackActor extends Actor with ActorLogging {
         // but for the sake of simplicity we treat it as normal XML data since
         // the client-side scripting will pick it up as an XML literal.
         XMLResponse(node)
+
+      case json: JsObj ⇒
+        // Pure JavaScript object will be sent as application/json.
+        JsonResponse(json)
 
       case ast: JsAST ⇒
         // A JavaScript syntax tree will be sent as application/javascript.

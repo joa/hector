@@ -1,11 +1,12 @@
 package hector.actor
 
-import akka.actor.{ActorLogging, ActorRef, Props, Actor}
 import akka.dispatch._
 import akka.pattern.{AskTimeoutException, ask}
 import akka.routing.RoundRobinRouter
 import akka.routing.DefaultResizer
 import akka.util.Timeout
+
+import java.io.{OutputStream ⇒ JOutputStream}
 
 import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
@@ -16,6 +17,7 @@ import hector.actor.route.Route
 import hector.config.RunModes
 import hector.http.{HttpResponse, HttpSession}
 import hector.util.letItCrash
+import akka.actor._
 
 object RequestActor {
   sealed trait RootMessage
@@ -54,10 +56,10 @@ final class RequestActor extends Actor with ActorLogging {
         ))(Hector.config.responseTimeout)
 
       request onComplete {
-        case Right(Some(_)) ⇒
+        case Right(true) ⇒
           Hector.statistics ! RequestCompleted((System.nanoTime() - t0).toFloat * 0.000001f)
 
-        case Right(None) ⇒
+        case Right(false) ⇒
           // Nothing to do. We did not participate.
 
         case Left(error) ⇒
@@ -75,9 +77,8 @@ final class RequestActor extends Actor with ActorLogging {
       request pipeTo sender
 
     case HandleRequest(httpRequest, httpResponse) ⇒
-      import akka.pattern.pipe
       import context.dispatcher
-      import hector.http.{OutputStreamHttpResponseOutput, HttpResponse}
+      import hector.http.HttpResponse
       import hector.http.conversion._
 
       // Create a Hector HttpRequest form a given ServletRequest
@@ -119,90 +120,77 @@ final class RequestActor extends Actor with ActorLogging {
       // value.writeContent takes a long time to complete or "never" completes in case of
       // a long-polling scenario.
 
-      val output: Future[Option[Unit]] =
-        response flatMap {
-          case Some(nullThing) if nullThing == null ⇒
-            log.error("The request {} lead to a null-response.", request)
-            throw new RuntimeException("Null-response for "+request+".")
+      val receiver = sender
 
-          case Some(value) ⇒
-            import hector.http.status.NoContent
+      response onComplete {
+        case Right(result) ⇒
+          result match {
+            case Some(nullThing) if nullThing == null ⇒
+              log.error("The request {} lead to a null-response.", request)
+              throw new RuntimeException("Null-response for "+request+".")
 
-            letItCrash()
-
-            if(value.status == NoContent) {
-              // This is a workaround for Jetty which is quite annoying. If we do not flush
-              // the buffer or create an output stream the NoContent header is replaced with
-              // 200. If we omit the flushBuffer() the servlet container creates a 404.
-
-              fillServletResponse(value, httpResponse, request.session)
-              httpResponse.flushBuffer()
-
-              Promise.successful(Some(()))
-            } else {
-              val outputStream = httpResponse.getOutputStream
-              val responseOutput =
-                new OutputStreamHttpResponseOutput(
-                  encoding = value.characterEncoding getOrElse Hector.config.defaultCharset,
-                  output = outputStream
-                )
-
-              fillServletResponse(value, httpResponse, request.session)
+            case Some(value) ⇒
+              import hector.http.status.NoContent
 
               letItCrash()
 
-              // Write the body to the output stream
+              if(value.status == NoContent) {
+                // This is a workaround for Jetty which is quite annoying. If we do not flush
+                // the buffer or create an output stream the NoContent header is replaced with
+                // 200. If we omit the flushBuffer() the servlet container creates a 404.
 
-              import java.io.{EOFException ⇒ JEOFException}
+                fillServletResponse(value, httpResponse, request.session)
+                httpResponse.flushBuffer()
 
-              value.writeContent(responseOutput) recover {
-                case eofException: JEOFException ⇒
-                  // In case of a premature end of file because the client closed the
-                  // connection we are not interested in what happens.
-                  ()
-              } map { Some(_) }
-            }
-
-          case None ⇒
-            // Nothing to do for us.
-
-            Promise.successful(None)
-        } recover {
-          case throwable: Throwable ⇒
-            Hector.statistics ! ExceptionOccurred(throwable)
-
-            log.error(throwable, "Exception occurred while serving {}.", request)
-
-            if(httpResponse.isCommitted) {
-              log.warning("HttpResponse is already comitted. Cannot do anything about this.")
-            } else {
-              import java.io.{PrintStream ⇒ JPrintStream}
-
-              httpResponse.setStatus(500)
-              httpResponse.setHeader("X-Powered-By", "Hector")
-              httpResponse.setContentType("text/plain")
-
-              val output = httpResponse.getOutputStream
-              val printStream = new JPrintStream(output)
-
-              if(Hector.config.runMode < RunModes.Production) {
-                //TODO(joa): proper html
-                throwable.printStackTrace(printStream)
+                receiver ! true
               } else {
-                printStream.print("ERROR")
+                fillServletResponse(value, httpResponse, request.session)
+
+                letItCrash()
+
+                // Write the body to the output stream
+
+                writeContent(value, httpResponse.getOutputStream, receiver)
               }
 
-              printStream.flush()
-              output.flush()
+            case None ⇒
+              // Nothing to do for us.
+              receiver ! false
+          }
+
+        case Left(error) ⇒
+          Hector.statistics ! ExceptionOccurred(error)
+
+          log.error(error, "Exception occurred while serving {}.", request)
+
+          if(httpResponse.isCommitted) {
+            log.warning("HttpResponse is already comitted. Cannot do anything about this.")
+          } else {
+            import java.io.{PrintStream ⇒ JPrintStream}
+
+            httpResponse.setStatus(500)
+            httpResponse.setHeader("X-Powered-By", "Hector")
+            httpResponse.setContentType("text/plain")
+
+            val output = httpResponse.getOutputStream
+            val printStream = new JPrintStream(output)
+
+            if(Hector.config.runMode < RunModes.Production) {
+              //TODO(joa): proper html
+              error.printStackTrace(printStream)
+            } else {
+              printStream.print("ERROR")
             }
 
-            Some(())
-        }
+            printStream.flush()
+            output.flush()
+          }
 
-      output pipeTo sender
+          receiver ! true
+      }
   }
 
-  private def fillServletResponse(source: HttpResponse,  target: HttpServletResponse, session: Option[HttpSession]) {
+  private[this] def fillServletResponse(source: HttpResponse,  target: HttpServletResponse, session: Option[HttpSession]) {
     import hector.http.conversion._
     import hector.http.status.NoContent
 
@@ -236,7 +224,7 @@ final class RequestActor extends Actor with ActorLogging {
     target.setHeader("X-Powered-By", "Hector")
   }
 
-  private def createTypeErrorResponse(actor: ActorRef,  value: Any) = {
+  private[this] def createTypeErrorResponse(actor: ActorRef,  value: Any) = {
     import hector.http.HtmlResponse
     import hector.http.status.InternalServerError
     import hector.html.DocTypes
@@ -257,7 +245,7 @@ final class RequestActor extends Actor with ActorLogging {
     )
   }
 
-  private def defaultRecoverStrategy(actor: ActorRef, timeout: Timeout): PartialFunction[Throwable, HttpResponse] = {
+  private[this] def defaultRecoverStrategy(actor: ActorRef, timeout: Timeout): PartialFunction[Throwable, HttpResponse] = {
     case askTimeoutException: AskTimeoutException ⇒
       import hector.http.PlainTextResponse
       Hector.statistics ! ExceptionOccurred(askTimeoutException)
@@ -282,5 +270,30 @@ final class RequestActor extends Actor with ActorLogging {
         } else {
           "ERROR"
         }, status = 500)
+  }
+
+  private[this] def writeContent(response: HttpResponse, outputStream: JOutputStream, receiver: ActorRef) {
+    val writeActor =
+      context.actorOf(
+        Props(
+          new Actor {
+            override protected def receive = {
+              case outputActor: ActorRef ⇒
+                response.writeContent(outputActor)
+                log.debug("Response written. Ready to tell {} about it.", sender)
+
+                receiver ! true
+
+                self ! PoisonPill
+            }
+          }
+        )
+      )
+
+    io ! IOActor.NewOutput(
+      receiver = writeActor,
+      encoding = response.characterEncoding getOrElse Hector.config.defaultCharset,
+      output = outputStream
+    )
   }
 }

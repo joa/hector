@@ -12,7 +12,6 @@ import hector.html.DocTypes
 import hector.js.JsAST
 import scala.xml.Node
 import hector.actor.{CallbackActor, CreateResponse}
-import hector.http.util.ETagCalculatingResponse
 
 /**
  */
@@ -45,7 +44,7 @@ final class HelloWorldActor extends Actor {
           }, false)
                         """)}</script>
            */
-          ETagCalculatingResponse(HtmlResponse(<html>
+          HtmlResponse(<html>
             <head>
               <title>Hector</title>
               {Hector.clientSupport}
@@ -57,7 +56,7 @@ final class HelloWorldActor extends Actor {
               <a href="#" title={"test \" escaping"} onclick={callback.emit()}>click me</a>
             </p>
             </body>
-          </html>, DocTypes.`HTML 5`))
+          </html>, DocTypes.`HTML 5`)
         }
 
       result pipeTo sender

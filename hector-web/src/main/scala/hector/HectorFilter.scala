@@ -102,11 +102,11 @@ final class HectorFilter extends Filter {
         ask(Hector.request, RequestActor.HandleRequest(httpRequest, httpResponse))(Hector.config.responseTimeout)
 
       Await.result(
-        awaitable = future.mapTo[Option[Unit]],
+        awaitable = future.mapTo[Boolean],
         atMost = 10.seconds
       ) match {
-        case Some(_) ⇒
-        case None ⇒ chain.doFilter(httpRequest, httpResponse)
+        case true ⇒
+        case false ⇒ chain.doFilter(httpRequest, httpResponse)
       }
     } catch {
       case timeout: JTimeoutException ⇒

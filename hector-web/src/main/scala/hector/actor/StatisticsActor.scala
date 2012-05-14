@@ -40,7 +40,7 @@ final class StatisticsActor extends Actor with ActorLogging {
     case ExceptionOccurred(exception) ⇒
       errorMap.put(exception.getClass.getName, exception)
 
-    case CreateResponse(request, _) ⇒
+    case CreateResponse(_, _) ⇒
       import hector.http.PlainTextResponse
 
       letItCrash()

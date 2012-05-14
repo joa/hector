@@ -1,9 +1,10 @@
 package hector.actor
 
-import akka.actor.Actor
 import akka.util.{Timeout, Duration}
 
 import hector.http.{HttpResponseOutput, EventStreamResponse}
+import akka.actor.{ActorRef, Actor}
+import hector.http.io.Flush
 
 object EventStreamActor {
   case class Event(data: String, id: Option[Int] = None, name: Option[String] = None)
@@ -17,7 +18,7 @@ final class EventStreamActor(private[this] val timeout: Timeout, private[this] v
 
   import EventStreamActor._
 
-  private[this] var outputOpt = Option.empty[HttpResponseOutput]
+  private[this] var outputOpt = Option.empty[ActorRef]
 
   private[this] var pending = List.empty[Event]
 
@@ -29,14 +30,14 @@ final class EventStreamActor(private[this] val timeout: Timeout, private[this] v
 
       sender ! EventStreamResponse(self, timeout)
 
-    case output: HttpResponseOutput ⇒
+    case output: ActorRef ⇒
       // Remember the output.
 
       outputOpt = Some(output)
 
       // Notify the client about our desired retry rate.
 
-      retryOpt foreach { retry ⇒ output.println("retry: "+retry.toMillis) }
+      retryOpt foreach { retry ⇒ output.tell("retry: "+retry.toMillis+"\n") }
 
       // Dispatch all pending events in the order they have been received.
 
@@ -47,11 +48,11 @@ final class EventStreamActor(private[this] val timeout: Timeout, private[this] v
       outputOpt match {
         case Some(output) ⇒
           try {
-            idOpt foreach { id ⇒ output.println("id: "+id) }
-            nameOpt foreach { name ⇒ output.println("event: "+name) }
-            data.split('\n') foreach { line ⇒ output.println("data: "+line) }
-            output.print('\n')
-            output.flush()
+            idOpt foreach { id ⇒ output.tell("id: "+id+"\n") }
+            nameOpt foreach { name ⇒ output.tell("event: "+name+"\n") }
+            data.split('\n') foreach { line ⇒ output.tell("data: "+line+"\n") }
+            output ! '\n'
+            output ! Flush
           } catch {
             case _: Throwable ⇒
               // It is quite likely that a client might reconnect to an event source at some

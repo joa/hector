@@ -2,18 +2,18 @@ package hector.http
 
 import akka.actor.ActorRef
 import akka.util.Timeout
-import akka.dispatch.{ExecutionContext, Future}
 
 import hector.html.{DocType, DocTypes}
 import hector.html.emitter.HtmlEmitter
 import hector.http.header.{Connection, CacheControl}
+import hector.http.io.Flush
 import hector.js.emitter.JsEmitter
-import hector.js.JsAST
 import hector.util.MimeType
 
 import java.nio.charset.{Charset ⇒ JCharset}
 
 import scala.xml.Node
+import hector.js.{JsObj, JsAST}
 
 /**
  */
@@ -73,7 +73,7 @@ trait HttpResponse extends Serializable {
    *
    * @return A <code>Future</code> which can be awaited in order to complete a response.
    */
-  def writeContent(output: HttpResponseOutput)(implicit executor: ExecutionContext): Future[Unit]
+  def writeContent(output: ActorRef)
 }
 
 final case class HtmlResponse(html: Node, docType: DocType = DocTypes.`HTML 5`, status: Int = 200, cookies: Seq[HttpCookie] = Seq.empty, headers: Seq[HttpHeader] = Seq.empty, characterEncoding: Option[JCharset] = None) extends HttpResponse {
@@ -83,20 +83,18 @@ final case class HtmlResponse(html: Node, docType: DocType = DocTypes.`HTML 5`, 
 
   override def contentLength = Some(htmlAsString.length)
 
-  override def writeContent(output: HttpResponseOutput)(implicit executor: ExecutionContext) = Future {
-    output.print(htmlAsString)
-    output.flush()
+  override def writeContent(output: ActorRef) {
+    output ! htmlAsString
+    output ! Flush
   }
 }
 
 final case class EmptyResponse(status: Int = 204, cookies: Seq[HttpCookie] = Seq.empty, headers: Seq[HttpHeader] = Seq.empty, characterEncoding: Option[JCharset] = None) extends HttpResponse {
-  import akka.dispatch.Promise
-
   override def contentType = MimeType.text.plain
 
   override def contentLength = Some(0)
 
-  override def writeContent(output: HttpResponseOutput)(implicit executor: ExecutionContext) = Promise.successful(())
+  override def writeContent(output: ActorRef) {}
 
 }
 
@@ -107,9 +105,9 @@ final case class XMLResponse(xml: Node, status: Int = 200, cookies: Seq[HttpCook
 
   override def contentLength = Some(xmlAsString.length)
 
-  override def writeContent(output: HttpResponseOutput)(implicit executor: ExecutionContext) = Future {
-    output.print(xmlAsString)
-    output.flush()
+  override def writeContent(output: ActorRef) {
+    output ! xmlAsString
+    output ! Flush
   }
 }
 
@@ -120,9 +118,22 @@ final case class JsResponse(js: JsAST, status: Int = 200, cookies: Seq[HttpCooki
 
   override def contentLength = Some(jsAsString.length)
 
-  override def writeContent(output: HttpResponseOutput)(implicit executor: ExecutionContext) = Future {
-    output.print(jsAsString)
-    output.flush()
+  override def writeContent(output: ActorRef) {
+    output ! jsAsString
+    output ! Flush
+  }
+}
+
+final case class JsonResponse(json: JsObj, status: Int = 200, cookies: Seq[HttpCookie] = Seq.empty, headers: Seq[HttpHeader] = Seq.empty, characterEncoding: Option[JCharset] = None, humanReadable: Boolean = false) extends HttpResponse {
+  @transient private[this] lazy val jsAsString = JsEmitter.toString(json, humanReadable)
+
+  override def contentType = MimeType.application.json
+
+  override def contentLength = Some(jsAsString.length)
+
+  override def writeContent(output: ActorRef) {
+    output ! jsAsString
+    output ! Flush
   }
 }
 
@@ -131,9 +142,9 @@ final case class PlainTextResponse(text: String, status: Int = 200, cookies: Seq
 
   override def contentLength = Some(text.length)
 
-  override def writeContent(output: HttpResponseOutput)(implicit executor: ExecutionContext) = Future {
-    output.print(text)
-    output.flush()
+  override def writeContent(output: ActorRef) {
+    output ! text
+    output ! Flush
   }
 }
 
@@ -142,7 +153,7 @@ final case class EventStreamResponse(target: ActorRef, timeout: Timeout, status:
 
   override def contentLength = None
 
-  override def writeContent(output: HttpResponseOutput)(implicit executor: ExecutionContext) = {
+  override def writeContent(output: ActorRef) = {
     import akka.pattern.ask
 
     ask(target, output)(timeout).mapTo[Unit] recover {

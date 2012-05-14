@@ -1,8 +1,5 @@
 package hector
 
-import java.util.UUID
-import hector.util._
-
 package object util {
   // Utility methods should perform as fast as possible. Therefore you will not find many use
   // of Scala features like for-comprehension in here.
