@@ -2,7 +2,7 @@ package hector.actor
 
 import akka.util.{Timeout, Duration}
 
-import hector.http.{HttpResponseOutput, EventStreamResponse}
+import hector.http.EventStreamResponse
 import akka.actor.{ActorRef, Actor}
 import hector.http.io.Flush
 

@@ -11,15 +11,47 @@ final class HttpResponseOutputActor(
     private[this] val encoding: JCharset,
     private[this] val output: JOutputStream) extends Actor {
   override protected def receive = {
-    case Write(data, offset, length) ⇒ output.write(data.backingArray, offset, length)
-    case Flush ⇒ output.flush()
-    case value: String ⇒ print(value)
-    case value: Byte ⇒ print(String.valueOf(value))
-    case value: Int ⇒ print(String.valueOf(value))
-    case value: Long ⇒ print(String.valueOf(value))
-    case value: Float ⇒ print(String.valueOf(value))
-    case value: Double ⇒ print(String.valueOf(value))
-    case value: Char ⇒ print(String.valueOf(value))
+    case Write(data, offset, length) ⇒
+      output.write(data.backingArray, offset, length)
+      ack()
+
+    case Flush ⇒
+      output.flush()
+      ack()
+
+    case value: String ⇒
+      print(value)
+      ack()
+
+    case value: Byte ⇒
+      print(String.valueOf(value))
+      ack()
+
+    case value: Int ⇒
+      print(String.valueOf(value))
+      ack()
+
+    case value: Long ⇒
+      print(String.valueOf(value))
+      ack()
+
+    case value: Float ⇒
+      print(String.valueOf(value))
+      ack()
+
+    case value: Double ⇒
+      print(String.valueOf(value))
+      ack()
+
+    case value: Char ⇒
+      print(String.valueOf(value))
+      ack()
+  }
+
+  private[this] def ack() {
+    if(sender != null) {
+      sender ! Ack
+    }
   }
 
   private[this] def print(value: String) {

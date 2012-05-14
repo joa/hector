@@ -2,6 +2,7 @@ package hector.http
 
 import akka.actor.ActorRef
 import akka.util.Timeout
+import akka.pattern.ask
 
 import hector.html.{DocType, DocTypes}
 import hector.html.emitter.HtmlEmitter
@@ -14,10 +15,16 @@ import java.nio.charset.{Charset ⇒ JCharset}
 
 import scala.xml.Node
 import hector.js.{JsObj, JsAST}
+import akka.dispatch.{Promise, Future, ExecutionContext}
 
 /**
  */
 trait HttpResponse extends Serializable {
+  protected implicit def defaultTimeout: Timeout = {
+    import akka.util.duration._
+    Timeout(5.seconds)
+  }
+
   /**
    * The status code of the response.
    *
@@ -67,13 +74,8 @@ trait HttpResponse extends Serializable {
   def contentLength: Option[Int]
 
   /**
-   * Writes the content of this response to a HttpResponseOutput.
-   *
-   * @param output The output to fill.
-   *
-   * @return A <code>Future</code> which can be awaited in order to complete a response.
-   */
-  def writeContent(output: ActorRef)
+   * Writes the content of this response to a HttpResponseOutput. */
+  def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_]
 }
 
 final case class HtmlResponse(html: Node, docType: DocType = DocTypes.`HTML 5`, status: Int = 200, cookies: Seq[HttpCookie] = Seq.empty, headers: Seq[HttpHeader] = Seq.empty, characterEncoding: Option[JCharset] = None) extends HttpResponse {
@@ -83,9 +85,9 @@ final case class HtmlResponse(html: Node, docType: DocType = DocTypes.`HTML 5`, 
 
   override def contentLength = Some(htmlAsString.length)
 
-  override def writeContent(output: ActorRef) {
+  override def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_] = {
     output ! htmlAsString
-    output ! Flush
+    output ? Flush
   }
 }
 
@@ -94,7 +96,7 @@ final case class EmptyResponse(status: Int = 204, cookies: Seq[HttpCookie] = Seq
 
   override def contentLength = Some(0)
 
-  override def writeContent(output: ActorRef) {}
+  override def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_] = { Promise.successful(null) }
 
 }
 
@@ -105,9 +107,9 @@ final case class XMLResponse(xml: Node, status: Int = 200, cookies: Seq[HttpCook
 
   override def contentLength = Some(xmlAsString.length)
 
-  override def writeContent(output: ActorRef) {
+  override def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_] = {
     output ! xmlAsString
-    output ! Flush
+    output ? Flush
   }
 }
 
@@ -118,9 +120,9 @@ final case class JsResponse(js: JsAST, status: Int = 200, cookies: Seq[HttpCooki
 
   override def contentLength = Some(jsAsString.length)
 
-  override def writeContent(output: ActorRef) {
+  override def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_] = {
     output ! jsAsString
-    output ! Flush
+    output ? Flush
   }
 }
 
@@ -131,9 +133,9 @@ final case class JsonResponse(json: JsObj, status: Int = 200, cookies: Seq[HttpC
 
   override def contentLength = Some(jsAsString.length)
 
-  override def writeContent(output: ActorRef) {
+  override def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_] = {
     output ! jsAsString
-    output ! Flush
+    output ? Flush
   }
 }
 
@@ -142,9 +144,9 @@ final case class PlainTextResponse(text: String, status: Int = 200, cookies: Seq
 
   override def contentLength = Some(text.length)
 
-  override def writeContent(output: ActorRef) {
+  override def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_] = {
     output ! text
-    output ! Flush
+    output ? Flush
   }
 }
 
@@ -153,7 +155,7 @@ final case class EventStreamResponse(target: ActorRef, timeout: Timeout, status:
 
   override def contentLength = None
 
-  override def writeContent(output: ActorRef) = {
+  override def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_] = {
     import akka.pattern.ask
 
     ask(target, output)(timeout).mapTo[Unit] recover {

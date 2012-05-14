@@ -34,10 +34,10 @@ final class RequestActor extends Actor with ActorLogging {
       context.actorOf(
         Props[RouterActor].
           withRouter(
-            RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))))
+            RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))), "router")
 
   private[this] val io =
-    context.actorOf(Props[IOActor])
+    context.actorOf(Props[IOActor], "io")
 
   override protected def receive = {
     case HandleAsync(asyncContext) ⇒
@@ -279,10 +279,20 @@ final class RequestActor extends Actor with ActorLogging {
           new Actor {
             override protected def receive = {
               case outputActor: ActorRef ⇒
-                response.writeContent(outputActor)
-                log.debug("Response written. Ready to tell {} about it.", sender)
+                val future =
+                  response.writeContent(outputActor)(context.dispatcher)
 
-                receiver ! true
+                future onComplete {
+                  case Right(_) ⇒
+                    log.debug("Response written. Ready to tell {} about it.", receiver)
+                    receiver ! true
+                  case Left(error) ⇒
+                    Hector.statistics ! ExceptionOccurred(error)
+
+                    log.error(error, "Failed to write response.")
+
+                    receiver ! true //TODO(joa): writing failed, need a strategy to resolve this
+                }
 
                 self ! PoisonPill
             }
