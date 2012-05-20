@@ -105,7 +105,10 @@ object Hector {
   def request = system.actorFor("/user/hector/request")
 
   /** Actor responsible for session storage. */
-  def session = system.actorFor("/user/hector/session")
+  def session = system.actorFor("/user/hector/sessionStorage")
+
+  /** Actor responsible for session signals. */
+  def sessionSignals = system.actorFor("/user/hector/sessionSignals")
 
   /** Actor responsible for JavaScript callbacks. */
   def callback = system.actorFor("/user/hector/callback")

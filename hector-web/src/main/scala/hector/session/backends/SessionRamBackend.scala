@@ -3,10 +3,11 @@ package hector.session.backends
 import akka.dispatch._
 import akka.util.Duration
 
-import com.google.common.cache.{LoadingCache, CacheBuilder, CacheLoader}
+import com.google.common.cache.{LoadingCache, CacheBuilder, CacheLoader, RemovalListener, RemovalNotification}
 
 import hector.Hector
 import hector.session.SessionBackend
+import hector.session.signals.{Create, Destroy}
 
 import scala.collection.mutable.ConcurrentMap
 import scala.compat.Platform
@@ -24,6 +25,13 @@ final class SessionRamBackend(private[this] val context: ExecutionContext, maxNr
   type Session = ConcurrentMap[String, Any]
 
   private[this] implicit val implicitContext = context
+
+  private[this] val removalListener: RemovalListener[String, Session] = 
+    new RemovalListener[String, Session] {
+      override def onRemoval(notification: RemovalNotification[String, Session]) {
+        Hector.sessionSignals ! Destroy(notification.getKey)
+      }
+    }
 
   private[this] val cache: LoadingCache[String, Session] = {
     val cacheBuilder = 
@@ -44,6 +52,7 @@ final class SessionRamBackend(private[this] val context: ExecutionContext, maxNr
                 /*loadFactor = */0.75f,
                 /*concurrencyLevel = */1))
 
+          Hector.sessionSignals ! Create(key)
           //TODO(joa): those strings must be constants
           map.put("hector:session:created", currentTime)
           map.put("hector:session:lastSeen", currentTime)
@@ -56,6 +65,7 @@ final class SessionRamBackend(private[this] val context: ExecutionContext, maxNr
     cacheBuilder.
       maximumSize(maxNrOfSessions).
       expireAfterAccess(lifetime, lifetimeUnit).
+      removalListener(removalListener).
       build(cacheLoader)
   }
 

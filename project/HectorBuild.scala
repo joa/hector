@@ -121,7 +121,7 @@ package hector {
   //
 
   object Dependency {
-    val guava          = "com.google.guava"     %     "guava"              %  "11.0.2"                           // Apache 2.0
+    val guava          = "com.google.guava"     %     "guava"              %  "12.0"                           // Apache 2.0
     val akkaActor      = "com.typesafe.akka"    %     "akka-actor"         %  "2.0"                              // Apache 2.0
     
     object Container {

@@ -2,7 +2,6 @@ package hector.actor
 
 import akka.actor.{ActorLogging, ActorRef, Actor}
 
-
 object SignalActor {
   sealed trait SignalActorMessage
   case class Subscribe(target: ActorRef) extends SignalActorMessage
@@ -10,6 +9,14 @@ object SignalActor {
 }
 
 /**
+ * The SignalActor represents a clusterable publishing mechanism.
+ *
+ * <p>The only difference between the EventBus and the SignalActor is
+ * that it is location transparent.</p>
+ *
+ * <p>It is also worth noting that there is no additional filter for
+ * a signal. A subscriber will always receive all events published
+ * by a signal.</p>
  */
 final class SignalActor extends Actor with ActorLogging {
   //STATEFUL!
@@ -27,7 +34,8 @@ final class SignalActor extends Actor with ActorLogging {
         subscribers = target +: subscribers
       }
 
-    case Unsubscribe(target) ⇒ unsubscribe(target)
+    case Unsubscribe(target) ⇒ 
+      unsubscribe(target)
 
     case message ⇒
       val deadSubscriptions =

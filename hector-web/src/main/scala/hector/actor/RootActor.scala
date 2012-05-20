@@ -29,12 +29,16 @@ final class RootActor extends Actor with ActorLogging {
           RoundRobinRouter(
             resizer = Some(DefaultResizer(lowerBound = 32, upperBound = 64)))), name = "request"))
 
+      // The actor responsible for session signals
+      log.debug("Created "+actorOf(
+        Props[SignalActor], name = "sessionSignals"))
+
       // The actor responsible for session handling
 
       log.debug("Created "+actorOf(
         Props[SessionActor].
           withRouter(
-          RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))), name = "session"))
+          RoundRobinRouter(resizer = Some(DefaultResizer(lowerBound = 1, upperBound = 10)))), name = "sessionStorage"))
 
       // The actor responsible for JavaScript callbacks
 
