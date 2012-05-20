@@ -2,13 +2,13 @@ package hector.actor
 
 import akka.util.Duration
 import akka.pattern.ask
+import akka.actor._
 import akka.actor.SupervisorStrategy._
 import akka.util.duration._
 import akka.util.Timeout
 
 import hector.Hector
 import hector.util._
-import akka.actor.{ActorRef, OneForOneStrategy, Props, Actor}
 import hector.http.{EmptyResponse, HttpRequest}
 
 object EventStreamSupervisor {
@@ -37,6 +37,7 @@ final class EventStreamSupervisor extends Actor {
 
   override protected def receive = {
     case Create(request, timeout, retry) ⇒
+      //TODO(joa): only create if session exists
       val hash = randomHash()
       val actor = context.actorOf(Props(new EventStreamActor(timeout, retry)), name = hash)
 
@@ -44,6 +45,12 @@ final class EventStreamSupervisor extends Actor {
         request.session map { _.set("hector:eventStream:"+hash, actor) } getOrElse Promise.successful(()) map {
           x ⇒ EventStream(urlOf(hash), actor)
         }
+
+      request.session foreach { 
+        _ onDestroy { 
+          actor ! PoisonPill
+        } 
+      }
 
       eventStream pipeTo sender
 

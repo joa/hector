@@ -53,6 +53,7 @@ final class SessionRamBackend(private[this] val context: ExecutionContext, maxNr
                 /*concurrencyLevel = */1))
 
           Hector.sessionSignals ! Create(key)
+          
           //TODO(joa): those strings must be constants
           map.put("hector:session:created", currentTime)
           map.put("hector:session:lastSeen", currentTime)

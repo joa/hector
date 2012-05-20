@@ -1,5 +1,6 @@
 package hector.http
 
+import akka.actor._
 import akka.dispatch.Future
 import akka.pattern.ask
 
@@ -28,4 +29,22 @@ final class HttpSession(val id: String) extends Serializable {
 
   /** When the session has been seen for the last time. */
   def lastSeen: Future[Long] = get[Long]("hector:session:lastSeen") map { _ getOrElse 0L }
+
+  def onDestroy[U](f: => U) {
+    import SignalActor._
+    import hector.session.signals._
+
+    val actor =
+      Hector.system.actorOf(Props(new Actor {
+        override protected def receive = {
+          case Destroy(destroyedId) =>
+            if(destroyedId == id) {
+              f
+              self ! PoisonPill
+            }
+        }
+      }))
+
+    Hector.sessionSignals ! Subscribe(actor)
+  }
 }
