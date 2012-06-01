@@ -58,6 +58,8 @@ object toplevel {
 
   def jsWindow = new JsIdentifier('window) with JsDOMWindowType
 
+  def jsDocument = new JsIdentifier('document) with JsDOMDocumentType
+
   trait JsObjectType {
     self: JsExpression ⇒
 
@@ -450,5 +452,11 @@ object toplevel {
     def setInterval = new JsMember(this, JsIdentifier('setInterval)) with JsNumberType
 
     def setTimeout = new JsMember(this, JsIdentifier('setTimeout)) with JsNumberType
+  }
+
+  trait JsDOMDocumentType extends JsObjectType {
+    self: JsExpression ⇒
+
+    def body = new JsMember(this, JsIdentifier('body))
   }
 }

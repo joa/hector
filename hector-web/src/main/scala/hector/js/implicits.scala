@@ -21,6 +21,10 @@ object implicits {
 
   implicit def statementToSeq(statement: JsStatement): Seq[JsStatement] = Seq(statement)
 
+  implicit def astToSeq[T <% JsAST](ast: T): Seq[T] = Seq(ast)
+
+  implicit def astToOption[T <% JsAST](ast: T): Option[T] = Some(ast)
+
   implicit def expressionToSeqOfStatements(expression: JsExpression): Seq[JsStatement] = Seq(jsExpToJsStmt(expression))
 
   implicit def mapToJsObj(map: Map[JsIdentifier, JsExpression]): JsObj =

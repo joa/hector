@@ -28,14 +28,14 @@ sealed trait JsStatement extends JsAST {
 }
 
 case object JsEmptyStatement extends JsStatement
-case class JsBlock(stmt: Seq[JsStatement]) extends JsStatement
+case class JsBlock(stmt: Seq[JsStatement] = Seq.empty) extends JsStatement
 case class JsExpStatement(exp: JsExpression) extends JsStatement
-case class JsIf(test: JsExpression, trueCase: JsStatement, falseCase: Option[JsStatement]) extends JsStatement
+case class JsIf(test: JsExpression, trueCase: JsStatement, falseCase: Option[JsStatement] = None) extends JsStatement
 case class JsLabeledStatement(label: JsIdentifier, body: JsStatement) extends JsStatement
-case class JsBreak(label: Option[JsIdentifier]) extends JsStatement
-case class JsContinue(label: Option[JsIdentifier]) extends JsStatement
+case class JsBreak(label: Option[JsIdentifier] = None) extends JsStatement
+case class JsContinue(label: Option[JsIdentifier] = None) extends JsStatement
 //TODO(joa): case class JsSwitch(test: JsExpression, cases: Seq[JsSwitchCase])
-case class JsReturn(value: Option[JsExpression]) extends JsStatement
+case class JsReturn(value: Option[JsExpression] = None) extends JsStatement
 case class JsThrow(value: JsExpression) extends JsStatement
 case class JsWhile(test: JsExpression, body: JsStatement) extends JsStatement
 case class JsDoWhile(test: JsExpression,  body: JsStatement) extends JsStatement
@@ -48,7 +48,7 @@ case class JsForIn(left: JsStatement, right: JsExpression,  body: JsStatement) e
  * @param name
  * @param init
  */
-case class JsVar(name: JsIdentifier, init: Option[JsExpression]) extends JsStatement
+case class JsVar(name: JsIdentifier, init: Option[JsExpression] = None) extends JsStatement
 
 /**
  * var x = y
@@ -204,12 +204,12 @@ case class JsBinary(left: JsExpression, op: JsBinop, right: JsExpression) extend
 case class JsPrefix(op: JsUnop, exp: JsExpression) extends JsExpression
 case class JsPostfix(op: JsUnop, exp: JsExpression) extends JsExpression
 case class JsCondition(test: JsExpression, trueCase: JsExpression, falseCase: JsExpression) extends JsExpression
-case class JsNew(constructor: JsExpression, arguments: Seq[JsExpression]) extends JsExpression
-case class JsCall(callee: JsExpression, arguments: Seq[JsExpression]) extends JsExpression
+case class JsNew(constructor: JsExpression, arguments: Seq[JsExpression] = Seq.empty) extends JsExpression
+case class JsCall(callee: JsExpression, arguments: Seq[JsExpression] = Seq.empty) extends JsExpression
 case class JsMember(obj: JsExpression, property: JsIdentifier) extends JsExpression with JsAssignments
 sealed trait JsLiteral extends JsExpression
 case class JsString(value: String) extends JsLiteral
-case class JsArray(elements: Seq[JsExpression]) extends JsLiteral
+case class JsArray(elements: Seq[JsExpression] = Seq.empty) extends JsLiteral
 sealed trait JsBool extends JsLiteral
 case object JsTrue extends JsBool
 case object JsFalse extends JsBool
