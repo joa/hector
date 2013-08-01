@@ -131,7 +131,7 @@ final class RequestActor extends Actor with ActorLogging {
           result match {
             case Some(nullThing) if nullThing == null ⇒
               log.error("The request {} lead to a null-response.", request)
-              throw new RuntimeException("Null-response for "+request+".")
+              throw new RuntimeException(s"Null-response for ${request}.")
 
             case Some(value) ⇒
               import hector.http.status.NoContent
@@ -227,8 +227,8 @@ final class RequestActor extends Actor with ActorLogging {
     target.setStatus(source.status)
     target.setHeader("X-Powered-By", "Hector")
   }
-
-  private[this] def createTypeErrorResponse(actor: ActorRef,  value: Any) = {
+ActorSelection
+  private[this] def createTypeErrorResponse(actor: ActorSelection,  value: Any) = {
     import hector.http.HtmlResponse
     import hector.http.status.InternalServerError
     import hector.html.DocTypes
@@ -249,23 +249,23 @@ final class RequestActor extends Actor with ActorLogging {
     )
   }
 
-  private[this] def defaultRecoverStrategy(actor: ActorRef, timeout: Timeout): PartialFunction[Throwable, HttpResponse] = {
+  private[this] def defaultRecoverStrategy(actor: ActorSelection, timeout: Timeout): PartialFunction[Throwable, HttpResponse] = {
     case askTimeoutException: AskTimeoutException ⇒
       import hector.http.PlainTextResponse
       Hector.statistics ! ExceptionOccurred(askTimeoutException)
-      log.error("Actor "+actor+" did not respond within "+timeout.duration+".")
+      log.error(s"Actor ${actor} did not respond within ${timeout.duration}.")
 
       //TODO(joa): proper html
       PlainTextResponse(
         if(Hector.config.runMode < RunModes.Production) {
-          "Actor "+actor+" did not respond within "+timeout.duration+"."
+          s"Actor ${actor} did not respond within ${timeout.duration}."
         } else {
           "ERROR"
         }, status = 500)
 
     case throwable: Throwable ⇒
       import hector.http.PlainTextResponse
-      log.error(throwable, "Exception occurred in "+actor+".")
+      log.error(throwable, s"Exception occurred in ${actor}.")
 
       //TODO(joa): proper html
       PlainTextResponse(

@@ -14,9 +14,10 @@ import user.HelloWorldActor
  */
 final class Configuration extends HectorConfig {
   private[this] val helloWorld = Hector.system.actorOf(Props[HelloWorldActor])//.withRouter(RoundRobinRouter(nrOfInstances = 128)))
+  private[this] val helloWorldSelection = Hector.system.actorSelection(helloWorld.path)
 
   def routes = {
-    case Get("user" /: publicKey /: _) ⇒ Route(helloWorld, Some(publicKey))
+    case Get("user" /: publicKey /: _) ⇒ Route(helloWorldSelection, Some(publicKey))
     case Get(Required_/ | No_/) ⇒ respond(
       HtmlResponse(
         <html>

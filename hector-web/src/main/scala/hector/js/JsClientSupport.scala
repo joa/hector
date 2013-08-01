@@ -63,7 +63,7 @@ import hector.config.RunModes
 
     @inline def log(level: String, message: JsExpression): JsStatement =
       if(Hector.config.runMode < RunModes.Production) {
-        (('console : JsIdentifier) ~> 'log)(JsString("[HECTOR-"+level+"]: ")+message)
+        (('console : JsIdentifier) ~> 'log)(JsString(s"[HECTOR-${level}]: ")+message)
       } else {
         JsEmptyStatement
       }
@@ -124,7 +124,7 @@ import hector.config.RunModes
 
       anonymousFunction('name)(
         vars(xhr → JsNew('XMLHttpRequest)),
-        (xhr ~> 'open)("POST", JsString("/"+Hector.config.hectorInternal+"/cb/") + 'name, true),
+        (xhr ~> 'open)("POST", JsString(s"/${Hector.config.hectorInternal}/cb/") + 'name, true),
         xhr('onload) = anonymousFunction('e)(
           JsIf(
             statusCodeIsSuccess,

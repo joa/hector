@@ -29,7 +29,7 @@ final class ChatRoom extends Actor {
       members = members - actor
 
     case "dispatch" ⇒
-      val message = EventStreamActor.Event("Hello World! "+counter)
+      val message = EventStreamActor.Event(s"Hello World! ${counter}")
 
       counter += 1
 

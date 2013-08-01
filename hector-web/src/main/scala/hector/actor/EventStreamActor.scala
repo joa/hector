@@ -39,7 +39,7 @@ final class EventStreamActor(private[this] val timeout: Timeout, private[this] v
 
       // Notify the client about our desired retry rate.
 
-      retryOpt foreach { retry ⇒ output ! ("retry: "+retry.toMillis+"\n") }
+      retryOpt foreach { retry ⇒ output ! (s"retry: ${retry.toMillis}\n") }
 
       // Dispatch all pending events in the order they have been received.
 
@@ -50,9 +50,9 @@ final class EventStreamActor(private[this] val timeout: Timeout, private[this] v
       outputOpt match {
         case Some(output) ⇒
           try {
-            idOpt foreach { id ⇒ output ! ("id: "+id+"\n") }
-            nameOpt foreach { name ⇒ output ! ("event: "+name+"\n") }
-            data.split('\n') foreach { line ⇒ output ! ("data: "+line+"\n") }
+            idOpt foreach { id ⇒ output ! (s"id: ${id}\n") }
+            nameOpt foreach { name ⇒ output ! (s"event: ${name}\n") }
+            data.split('\n') foreach { line ⇒ output ! (s"data: ${line}\n") }
             output ! '\n'
             output ! Flush
           } catch {

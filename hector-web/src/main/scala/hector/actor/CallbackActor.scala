@@ -157,7 +157,7 @@ final class CallbackActor extends Actor with ActorLogging {
    * @return The session key.
    */
   private[this] def createSessionHash(callbackName: String): String =
-    "hector:callback:"+callbackName
+    s"hector:callback:${callbackName}"
 
   /**
    * Creates and returns an appropriate JavaScript AST which will execute the
@@ -328,11 +328,11 @@ final class CallbackActor extends Actor with ActorLogging {
           import hector.js.toplevel.{jsWindow ⇒ window}
 
           JsResponse(
-            js = window.alert("Error: Cannot convert "+other+" to a response.\nThe actor "+actor+" is responsible.\nVisit TODO for more help."),
+            js = window.alert(s"Error: Cannot convert ${other} to a response.\nThe actor ${actor} is responsible.\nVisit TODO for more help."),
             status = Accepted
           )
         } else {
-          log.warning("Cannot convert {} to a response. The actor {} is responsible for this missbehaviour.", other, actor)
+          log.warning(s"Cannot convert {} to a response. The actor {} is responsible for this missbehaviour.", other, actor)
           EmptyResponse(status = Accepted)
         }
     }

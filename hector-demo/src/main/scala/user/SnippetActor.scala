@@ -18,7 +18,7 @@ final class SnippetActor extends Actor {
       import implicits._
       import toplevel.{jsWindow ⇒ window}
 
-      sender ! ((window.status := "hello") & window.alert(2 * window.status.length))
+      sender ! ((window.status := "hello") & window.alert(JsString("Hello World! ")+(2 * window.status.length)))
 
     case publicKey ⇒
       sender ! <span>

@@ -54,24 +54,44 @@ final class HtmlEmitterBenchmark extends HectorBenchmark {
       data.toString()
     }
 
-  def timeUtilityWithTrimAndStripComments(reps: Int) =
+  def timeUtilityToXMLWithTrimAndStripComments(reps: Int) =
     benchmark(reps) {
       Utility.toXML(Utility.trim(data), stripComments = true, preserveWhitespace = false).toString()
     }
 
-  def timeUtilityWithTrim(reps: Int) =
+  def timeUtilityToXMLWithTrim(reps: Int) =
     benchmark(reps) {
       Utility.toXML(Utility.trim(data), preserveWhitespace = false).toString()
     }
 
-  def timeUtilityWithStripComments(reps: Int) =
+  def timeUtilityToXMLWithStripComments(reps: Int) =
     benchmark(reps) {
       Utility.toXML(data, stripComments = true).toString()
     }
 
-  def timeUtility(reps: Int) =
+  def timeUtilityToXML(reps: Int) =
     benchmark(reps) {
       Utility.toXML(data).toString()
+    }
+
+  def timeUtilitySerializeWithTrimAndStripComments(reps: Int) =
+    benchmark(reps) {
+      Utility.serialize(Utility.trim(data), stripComments = true, preserveWhitespace = false).toString()
+    }
+
+  def timeUtilitySerializeWithTrim(reps: Int) =
+    benchmark(reps) {
+      Utility.serialize(Utility.trim(data), preserveWhitespace = false).toString()
+    }
+
+  def timeUtilitySerializeWithStripComments(reps: Int) =
+    benchmark(reps) {
+      Utility.serialize(data, stripComments = true).toString()
+    }
+
+  def timeUtilitySerialize(reps: Int) =
+    benchmark(reps) {
+      Utility.serialize(data).toString()
     }
 }
 

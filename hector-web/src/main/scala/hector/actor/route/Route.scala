@@ -1,6 +1,6 @@
 package hector.actor.route
 
-import akka.actor.ActorRef
+import akka.actor.ActorSelection
 import akka.util.Timeout
 import hector.Hector
 import hector.http.HttpResponse
@@ -18,7 +18,7 @@ import hector.http.HttpResponse
  * @tparam A Type of arguments.
  */
 final case class Route[A](
-  target: ActorRef,
+  target: ActorSelection,
   arguments: Option[A] = None,
   timeout: Timeout = Hector.config.defaultRequestTimeout,
   recover: Option[PartialFunction[Throwable, HttpResponse]] = None

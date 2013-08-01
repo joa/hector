@@ -452,7 +452,7 @@ object HtmlEmitter {
           _attributeValue(iterator.next())
         }
 
-      case invalid ⇒ sys.error("Invalid node "+invalid+" in attribute value.")
+      case invalid ⇒ sys.error(s"Invalid node ${invalid} in attribute value.")
     }
   }
 

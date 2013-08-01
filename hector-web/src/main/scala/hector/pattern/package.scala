@@ -26,7 +26,7 @@ package object pattern {
    * @return A route to an anonymous actor.
    */
   def respond[R <% HttpResponse](response: R): Route[Any] = {
-    Route[Any](
+    val actor =
       Hector.system.actorOf(Props(new Actor {
           override def receive = {
             case CreateResponse(_, _) ⇒
@@ -35,6 +35,10 @@ package object pattern {
           }
         }
       ))
-    )
+
+    val selection =
+      Hector.system.actorSelection(actor.path)
+
+    Route[Any](selection)
   }
 }

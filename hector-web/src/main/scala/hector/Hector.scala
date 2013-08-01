@@ -21,14 +21,14 @@ object Hector {
       val klass = Class.forName(className)
 
       if(!classOf[HectorConfig].isAssignableFrom(klass)) {
-        throw new RuntimeException("Error: "+className+" has to extend "+classOf[HectorConfig].getName)
+        throw new RuntimeException(s"Error: ${className} has to extend ${classOf[HectorConfig].getName}")
       }
 
       klass.newInstance().asInstanceOf[HectorConfig]
     } catch {
-      case classNotFound: ClassNotFoundException ⇒ throw new RuntimeException("Error: Class "+className+" could not be found.")
-      case linkageError: LinkageError ⇒ throw new RuntimeException("Error: Could not link class "+className+".")
-      case instantiationException: InstantiationException ⇒ throw new RuntimeException("Error: Could not instantiate "+className+". Make sure it is a class and has a zero-arguments constructor.")
+      case classNotFound: ClassNotFoundException ⇒ throw new RuntimeException(s"Error: Class ${className} could not be found.")
+      case linkageError: LinkageError ⇒ throw new RuntimeException(s"Error: Could not link class ${className}.")
+      case instantiationException: InstantiationException ⇒ throw new RuntimeException(s"Error: Could not instantiate ${className}. Make sure it is a class and has a zero-arguments constructor.")
     }
   } catch {
     case exception: Throwable ⇒
@@ -104,22 +104,22 @@ object Hector {
   val system = ActorSystem("hector", config)*/
 
   /** Actor responsible for handling Http requests. */
-  def request = system.actorFor("/user/hector/request")
+  def request = system.actorSelection("/user/hector/request")
 
   /** Actor responsible for session storage. */
-  def session = system.actorFor("/user/hector/sessionStorage")
+  def session = system.actorSelection("/user/hector/sessionStorage")
 
   /** Actor responsible for session signals. */
-  def sessionSignals = system.actorFor("/user/hector/sessionSignals")
+  def sessionSignals = system.actorSelection("/user/hector/sessionSignals")
 
   /** Actor responsible for JavaScript callbacks. */
-  def callback = system.actorFor("/user/hector/callback")
+  def callback = system.actorSelection("/user/hector/callback")
 
   /** Actor responsible for gathering statistics. */
-  def statistics = system.actorFor("/user/hector/stats")
+  def statistics = system.actorSelection("/user/hector/stats")
 
   /** Actor responsible for HTML 5 event streams. */
-  def eventStream = system.actorFor("/hector/eventStream")
+  def eventStream = system.actorSelection("/hector/eventStream")
 
   /**  Prefix for internal actions. */
   val internalPrefix = Hector.config.hectorInternal

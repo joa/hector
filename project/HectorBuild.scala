@@ -66,9 +66,10 @@ package hector {
         "/home/joa/Development/hector/hector-microbenchmark/target/scala-2.10/classes",
         "/home/joa/Development/hector/hector-web/target/scala-2.10/classes",
         "/home/joa/.sbt/boot/scala-2.10.2/lib/scala-library.jar",
-        "/home/joa/.ivy2/cache/com.google.guava/guava/jars/guava-11.0.2.jar",
+        "/home/joa/.ivy2/cache/com.google.guava/guava/bundles/guava-14.0.1.jar",
         "/home/joa/.ivy2/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar",
-        "/home/joa/.ivy2/cache/com.typesafe.akka/akka-actor/jars/akka-actor-2.0.jar",
+        "/home/joa/.ivy2/cache/com.typesafe.akka/akka-actor_2.10/jars/akka-actor_2.10-2.2.0.jar",
+        "/home/joa/.ivy2/cache/com.typesafe/config/bundles/config-1.0.2.jar",
         "/home/joa/.ivy2/cache/com.google.caliper/caliper/jars/caliper-0.5-rc1.jar",
         "/home/joa/.ivy2/cache/com.google.code.gson/gson/jars/gson-1.7.1.jar",
         "/home/joa/.ivy2/cache/com.google.code.java-allocation-instrumenter/java-allocation-instrumenter/jars/java-allocation-instrumenter-2.0.jar",
@@ -86,6 +87,10 @@ package hector {
 
       fork in run := true,
 
+      scalacOptions ++= Scalac.defaultOptions,
+
+      javacOptions ++= Javac.defaultOptions,
+
       javaOptions in run ++= Seq("-cp", AfterWastingThreeHoursWithSBTThisIsTheBestICouldComeUpWith mkString ":")
     )
 
@@ -94,22 +99,30 @@ package hector {
 
       resolvers += "Sonatype Repository" at "https://oss.sonatype.org/content/repositories/releases/",
 
-      scalacOptions ++= Seq(
+      scalacOptions ++= Scalac.defaultOptions,
+
+      javacOptions  ++= Javac.defaultOptions
+    )
+  }
+
+  object Scalac {
+    val defaultOptions = Seq(
         "-encoding", "UTF-8",
         "-deprecation",
         "-unchecked", 
         "-feature",
         "-Yinline-warnings",
-        "-language:implicitConversions"),
+        "-language:implicitConversions")
+  }
 
-      javacOptions  ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
-    )
+  object Javac {
+    val defaultOptions = Seq("-Xlint:unchecked", "-Xlint:deprecation")
   }
 
   object Dependencies {
     import Dependency._
 
-    val web = Seq(guava, akkaActor, Provided.servletApi, Test.scalaTest)
+    val web = Seq(guava, akkaActor, jsr305, Provided.servletApi, Test.scalaTest)
 
     val benchmarking = web ++ Seq(Benchmark.caliper, Benchmark.allocInstr, Benchmark.gson)
   }
@@ -127,10 +140,16 @@ package hector {
   //
 
   object Dependency {
-    val guava          = "com.google.guava"     %     "guava"              %  "12.0"                             // Apache 2.0
+    private[this] val google = "com.google."
+    private[this] val JAI = "java-allocation-instrumenter"
 
-    val akkaActor      = "com.typesafe.akka"    %%     "akka-actor"         %  "2.2.0"                           // Apache 2.0
-    val akkaCluster    = "com.typesafe.akka"    %%     "akka-cluster"       %  "2.2.0"                           // Apache 2.0
+    val guava          = (google+"guava")       %     "guava"              %  "14.0.1"                           // Apache 2.0
+
+    val akkaActor      = "com.typesafe.akka"    %%    "akka-actor"         %  "2.2.0"                            // Apache 2.0
+    val akkaCluster    = "com.typesafe.akka"    %%    "akka-cluster"       %  "2.2.0"                            // Apache 2.0
+
+
+    val jsr305         = (google+"code.findbugs")%    "jsr305"             %  "1.3.7"                            // Apache 2.0
 
     object Container {
       val jettyWebapp  = "org.eclipse.jetty"    %     "jetty-webapp"       %  "8.0.4.v20111024"  % "container"   // Eclipse License
@@ -141,13 +160,13 @@ package hector {
     }
 
     object Test {
-      val scalaTest    = "org.scalatest"        %%   "scalatest"           %  "1.9.1"            % "test"        // Apache 2.0
+      val scalaTest    = "org.scalatest"        %%    "scalatest"          %  "1.9.1"            % "test"        // Apache 2.0
     }
 
     object Benchmark {
-      val caliper      = "com.google.caliper"   %     "caliper"            %  "0.5-rc1"                          // Apache 2.0
-      val gson         = "com.google.code.gson" %     "gson"               % "1.7.1"                             // Apache 2.0
-      val allocInstr   = "com.google.code.java-allocation-instrumenter" % "java-allocation-instrumenter" % "2.0" // Apache 2.0
+      val caliper      = (google+"caliper")     %     "caliper"            %  "0.5-rc1"                          // Apache 2.0
+      val gson         = (google+"code.gson")   %     "gson"               %  "1.7.1"                            // Apache 2.0
+      val allocInstr   = (google+"code."+JAI)   %     JAI                  %  "2.0"                              // Apache 2.0
     }
   }
 }

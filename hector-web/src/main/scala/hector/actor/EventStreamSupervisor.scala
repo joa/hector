@@ -42,7 +42,7 @@ final class EventStreamSupervisor extends Actor {
       val actor = context.actorOf(Props(new EventStreamActor(timeout, retry)), name = hash)
 
       val eventStream =
-        request.session map { _.set("hector:eventStream:"+hash, actor) } getOrElse Future.successful(()) map {
+        request.session map { _.set(s"hector:eventStream:${hash}", actor) } getOrElse Future.successful(()) map {
           x ⇒ EventStream(urlOf(hash), actor)
         }
 
@@ -61,7 +61,7 @@ final class EventStreamSupervisor extends Actor {
         request.session match {
           case Some(session) ⇒
             val actorRefFuture =
-              session[ActorRef]("hector:eventStream:"+name)
+              session[ActorRef](s"hector:eventStream:${name}")
 
             actorRefFuture flatMap {
               case Some(actor) ⇒ ask(actor, message)(Timeout(5.seconds)) //TODO(joa): make configurable
@@ -76,5 +76,5 @@ final class EventStreamSupervisor extends Actor {
   }
 
   private def urlOf(name: String) =
-    "/"+Hector.internalPrefix+"/es/"+name
+    s"/${Hector.internalPrefix}/es/${name}"
 }

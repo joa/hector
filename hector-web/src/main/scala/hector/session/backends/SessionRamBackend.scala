@@ -6,7 +6,7 @@ import hector.Hector
 import hector.session.SessionBackend
 import hector.session.signals.{Create, Destroy}
 
-import scala.collection.mutable.ConcurrentMap
+import scala.collection.concurrent.Map
 import scala.compat.Platform
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -21,7 +21,7 @@ import scala.concurrent.duration._
  */
 final class SessionRamBackend(private[this] val context: ExecutionContext, maxNrOfSessions: Int = 10000) extends SessionBackend {
 
-  type Session = ConcurrentMap[String, Any]
+  type Session = Map[String, Any]
 
   private[this] implicit val implicitContext = context
 
@@ -40,12 +40,12 @@ final class SessionRamBackend(private[this] val context: ExecutionContext, maxNr
       new CacheLoader[String, Session] {
         override def load(key: String): Session = {
           import java.util.concurrent.{ConcurrentHashMap ⇒ JConcurrentHashMap}
-          import scala.collection.JavaConversions.asScalaConcurrentMap
+          import scala.collection.JavaConversions.mapAsScalaConcurrentMap
           
           val currentTime = Platform.currentTime
 
           val map = 
-            asScalaConcurrentMap(
+            mapAsScalaConcurrentMap(
               new JConcurrentHashMap[String, Any](
                 /*initialCapacity = */2,
                 /*loadFactor = */0.75f,
