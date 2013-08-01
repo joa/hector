@@ -13,9 +13,10 @@ Here is an example of a user-defined route:
 
 ```
 val helloWorldActor = context.actorOf(Props[HelloWorldActor])
+val helloWorldSelector = context.actorSelection(helloWorldActor.path)
 
 def routes = {
-  case Get("user" /: publicKey /: _) ⇒  Route(helloWorldActor, Some(publicKey))
+  case Get("user" /: publicKey /: _) ⇒  Route(helloWorldSelector, Some(publicKey))
 }
 ```
 
@@ -51,7 +52,7 @@ class HelloWorldActor extends Actor {
   override def receive = {
     case CreateResponse(request, Some(publicKey: String)) ⇒
       val greetingFuture = (snippetActor ? publicKey)
-      val jsCallback = Hector.callback ? NewCallback(request, snippetActor, "Message")
+      val jsCallback = Hector.callback ? NewCallback(request, context.actorSelection(snippetActor.path), "Message")
 
       val result =
         for {
@@ -148,7 +149,7 @@ final class Configuration extends HectorConfig {
   private[this] val system = ActorSystem("userCode")
 
   def routes = {
-    case Any(_) ⇒ Route(system.actorFor("/user/404"))
+    case Any(_) ⇒ Route(system.actorSelection("/user/404"))
   }
 }
 
