@@ -17,9 +17,9 @@ object RouterActor {
 final class RouterActor extends Actor {
   import RouterActor._
 
-  override protected def receive = {
+  override def receive = {
     case request: HttpRequest ⇒
-      sender.tell(
+      sender ! (
         if(routes isDefinedAt request) {
           letItCrash()
           Some(routes(request))

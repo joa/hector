@@ -25,7 +25,7 @@ final class SignalActor extends Actor with ActorLogging {
 
   private var subscribers: Seq[ActorRef] = Seq.empty
 
-  override protected def receive = {
+  override def receive = {
     case Subscribe(target) ⇒
       if(subscribers contains target) {
         log.warning("Actor {} has already been subscribed to {}.", target, self)
@@ -47,7 +47,7 @@ final class SignalActor extends Actor with ActorLogging {
             target ! message
             None
           } catch {
-            case exception ⇒
+            case exception: Throwable ⇒
               log.error(exception, "Could not send {} to {} from {}. Removing subscription.", message, target, self)
               Some(target)
           }

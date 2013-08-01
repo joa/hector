@@ -1,13 +1,14 @@
 package hector.actor
 
-import java.nio.charset.{Charset ⇒ JCharset}
-import hector.http.io.{HttpRequestInputActor, HttpResponseOutputActor}
 import akka.actor.{OneForOneStrategy, Props, ActorRef, Actor}
-import java.io.{IOException, OutputStream ⇒ JOutputStream, InputStream ⇒ JInputStream}
-import hector.Hector
-import stats.ExceptionOccurred
 import akka.actor.SupervisorStrategy.{Escalate, Stop}
 
+import hector.Hector
+import hector.actor.stats.ExceptionOccurred
+import hector.http.io.{HttpRequestInputActor, HttpResponseOutputActor}
+
+import java.io.{IOException, OutputStream ⇒ JOutputStream, InputStream ⇒ JInputStream}
+import java.nio.charset.{Charset ⇒ JCharset}
 
 /**
  */
@@ -41,7 +42,7 @@ private[actor] final class IOActor extends Actor {
       Escalate
   }
 
-  override protected def receive = {
+  override def receive = {
     case NewOutput(receiver, encoding, output) ⇒
       val outputActor = context.actorOf(Props(new HttpResponseOutputActor(encoding, output)))
       receiver ! outputActor

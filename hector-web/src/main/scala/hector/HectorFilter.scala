@@ -6,6 +6,10 @@ import hector.actor.stats.{RequestCompleted, ExceptionOccurred}
 import javax.servlet._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 
+import scala.concurrent._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+
 /**
  */
 final class HectorFilter extends Filter {
@@ -81,18 +85,16 @@ final class HectorFilter extends Filter {
     )
 
     // Tell Hector we have an asynchronous context and act upon it.
+    // For now this will run in the global execution context.
     //
 
-    (Hector.request ? RequestActor.HandleAsync(asyncContext))(asyncContext.getTimeout) onComplete {
+    (Hector.request ? RequestActor.HandleAsync(asyncContext))(timeout = asyncContext.getTimeout) onComplete {
       case _ ⇒ asyncContext.complete()
     }
   }
 
   private[this] def filterSync(httpRequest: HttpServletRequest, httpResponse: HttpServletResponse, chain: FilterChain) {
     import akka.pattern.ask
-    import akka.util.duration._
-    import akka.util.Timeout
-    import akka.dispatch.Await
     import java.util.concurrent.{TimeoutException ⇒ JTimeoutException}
 
     val t0 = System.currentTimeMillis()
@@ -113,7 +115,7 @@ final class HectorFilter extends Filter {
         Hector.statistics ! ExceptionOccurred(timeout)
         //TODO(joa): timeout needs to be logged. we need to generate a 505 response
         
-      case exception ⇒
+      case exception: Throwable ⇒
         Hector.statistics ! ExceptionOccurred(exception)
         // We have nothing to do here. RootActor should have already performed the necessary work.
     } finally {

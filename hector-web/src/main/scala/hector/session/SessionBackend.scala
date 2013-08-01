@@ -1,6 +1,6 @@
 package hector.session
 
-import akka.dispatch.Future
+import scala.concurrent.Future
 
 /**
  */

@@ -1,10 +1,12 @@
 package hector.actor
 
-import akka.util.{Timeout, Duration}
+import akka.actor.{ActorRef, Actor}
+import akka.util.Timeout
 
 import hector.http.EventStreamResponse
-import akka.actor.{ActorRef, Actor}
 import hector.http.io.Flush
+
+import scala.concurrent.duration._
 
 object EventStreamActor {
   case class Event(data: String, id: Option[Int] = None, name: Option[String] = None)
@@ -22,7 +24,7 @@ final class EventStreamActor(private[this] val timeout: Timeout, private[this] v
 
   private[this] var pending = List.empty[Event]
 
-  override protected def receive = {
+  override def receive = {
     case CreateResponse(request, _) ⇒
       // We are asked to create a response. Therefore we create an EventStream response.
       // This response is special in the way that it will send "self" a message which is
@@ -37,7 +39,7 @@ final class EventStreamActor(private[this] val timeout: Timeout, private[this] v
 
       // Notify the client about our desired retry rate.
 
-      retryOpt foreach { retry ⇒ output.tell("retry: "+retry.toMillis+"\n") }
+      retryOpt foreach { retry ⇒ output ! ("retry: "+retry.toMillis+"\n") }
 
       // Dispatch all pending events in the order they have been received.
 
@@ -48,9 +50,9 @@ final class EventStreamActor(private[this] val timeout: Timeout, private[this] v
       outputOpt match {
         case Some(output) ⇒
           try {
-            idOpt foreach { id ⇒ output.tell("id: "+id+"\n") }
-            nameOpt foreach { name ⇒ output.tell("event: "+name+"\n") }
-            data.split('\n') foreach { line ⇒ output.tell("data: "+line+"\n") }
+            idOpt foreach { id ⇒ output ! ("id: "+id+"\n") }
+            nameOpt foreach { name ⇒ output ! ("event: "+name+"\n") }
+            data.split('\n') foreach { line ⇒ output ! ("data: "+line+"\n") }
             output ! '\n'
             output ! Flush
           } catch {

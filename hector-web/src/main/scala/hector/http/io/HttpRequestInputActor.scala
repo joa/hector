@@ -10,7 +10,7 @@ import java.io.{InputStream ⇒ JInputStream}
 final class HttpRequestInputActor(
     private[this] val encoding: JCharset,
     private[this] val input: JInputStream) extends Actor {
-  override protected def receive = {
+  override def receive = {
     case _ ⇒
   }
 }

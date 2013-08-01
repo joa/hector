@@ -6,6 +6,9 @@ import hector.actor._
 import hector.config._
 import hector.js.JsClientSupport
 
+import scala.concurrent._
+import scala.concurrent.duration._
+
 /**
  */
 object Hector {
@@ -28,7 +31,7 @@ object Hector {
       case instantiationException: InstantiationException ⇒ throw new RuntimeException("Error: Could not instantiate "+className+". Make sure it is a class and has a zero-arguments constructor.")
     }
   } catch {
-    case exception ⇒
+    case exception: Throwable ⇒
       system.log.error(exception, "Could not initialize configuration.")
       throw exception
   }
@@ -69,16 +72,14 @@ object Hector {
   }
 
   private[this] def stopRoot(trial: Int = 0) {
-    import akka.actor.ActorTimeoutException
-    import akka.dispatch.{Await, Future}
     import akka.pattern.gracefulStop
-    import akka.util.duration._
+    import akka.pattern.AskTimeoutException
 
     try {
-      val stopped: Future[Boolean] = gracefulStop(root, 5.seconds)(system)
+      val stopped: Future[Boolean] = gracefulStop(root, 5.seconds)
       Await.result(stopped, 6.seconds)
     } catch {
-      case timeout: ActorTimeoutException ⇒
+      case timeout: AskTimeoutException ⇒
         (trial + 1) match {
           case maxTrials if maxTrials > 2 ⇒ 
             system.log.warning("Could not stop root actor.")

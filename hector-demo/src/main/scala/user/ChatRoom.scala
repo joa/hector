@@ -15,11 +15,13 @@ final class ChatRoom extends Actor {
   private var counter = 0
 
   override def preStart() {
-    import akka.util.duration._
+    import scala.concurrent.duration._
+    import context.dispatcher
+    
     context.system.scheduler.schedule(0.seconds, 250.milliseconds, self, "dispatch")
   }
 
-  override protected def receive = {
+  override def receive = {
     case Join(actor) ⇒
       members = members + actor
 

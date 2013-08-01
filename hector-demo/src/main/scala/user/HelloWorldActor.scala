@@ -4,14 +4,15 @@ import akka.actor.{Props, Actor}
 import akka.pattern.pipe
 import akka.pattern.ask
 import akka.util.Timeout
-import akka.util.duration._
 
 import hector.Hector
 import hector.http.{HtmlResponse, HttpRequest}
 import hector.html.DocTypes
 import hector.js.JsAST
-import scala.xml.Node
 import hector.actor.{CallbackActor, CreateResponse}
+
+import scala.concurrent.duration._
+import scala.xml.Node
 
 /**
  */
@@ -20,8 +21,10 @@ final class HelloWorldActor extends Actor {
 
   implicit val askTimeout = Timeout(10.seconds)
 
-  protected override def receive = {
+  override def receive = {
     case CreateResponse(request, Some(publicKey: String)) ⇒
+      import context.dispatcher
+
       //val streamFuture = (Hector.eventStream ? EventStreamSupervisor.Create(request, 10.minutes)).mapTo[EventStream]
       val dateFuture = (snippetActor ? "giveMeTheDate")
       val greetingFuture = (snippetActor ? publicKey)

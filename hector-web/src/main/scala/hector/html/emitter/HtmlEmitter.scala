@@ -1,7 +1,5 @@
 package hector.html.emitter
 
-import com.google.common.collect.ImmutableSortedSet
-
 import hector.html._
 import hector.util.{TextOutput, trimToOption}
 
@@ -863,7 +861,7 @@ object HtmlEmitter {
   private[this] val ValidHashEntityRegex = """^#x[abcdefABCDEF0-9]{1,4}$""".r
 
   private[this] val ValidEntities =
-    ImmutableSortedSet.of[String](
+    Set(
       "quot",  "amp", "apos", "lt", "gt", "nbsp",
       "iexcl", "cent", "pound", "curren", "yen", "brvbar",
       "sect", "uml", "copy", "ordf", "laquo", "not", "shy", "reg",

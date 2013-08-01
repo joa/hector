@@ -15,13 +15,14 @@ import java.nio.charset.{Charset ⇒ JCharset}
 
 import scala.xml.Node
 import hector.js.{JsObj, JsAST}
-import akka.dispatch.{Promise, Future, ExecutionContext}
+
+import scala.concurrent._
 
 /**
  */
 trait HttpResponse extends Serializable {
   protected implicit def defaultTimeout: Timeout = {
-    import akka.util.duration._
+    import scala.concurrent.duration._
     Timeout(5.seconds)
   }
 
@@ -96,7 +97,7 @@ final case class EmptyResponse(status: Int = 204, cookies: Seq[HttpCookie] = Seq
 
   override def contentLength = Some(0)
 
-  override def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_] = { Promise.successful(null) }
+  override def writeContent(output: ActorRef)(implicit executionContext: ExecutionContext): Future[_] = { Future.successful(null) }
 
 }
 

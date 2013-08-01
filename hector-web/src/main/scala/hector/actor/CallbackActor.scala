@@ -1,17 +1,18 @@
 package hector.actor
 
 import akka.actor.{ActorLogging, ActorRef, Actor}
-import akka.dispatch.Promise
 import akka.pattern.pipe
-import akka.util.Timeout
-import akka.util.duration._
 import akka.pattern.ask
+import akka.util.Timeout
 
 import hector.Hector
 import hector.util.{randomHash, isAlphaNumeric}
 import hector.config.RunModes
 import hector.js.{JsObj, JsAST}
 import hector.http.{EmptyResponse, HttpRequest, HttpResponse}
+
+import scala.concurrent._
+import scala.concurrent.duration._
 
 /**
  */
@@ -142,9 +143,7 @@ object CallbackActor {
 final class CallbackActor extends Actor with ActorLogging {
   import CallbackActor._
 
-  private[this] implicit val implicitDispatcher = context.dispatcher
-
-  override protected def receive = {
+  override def receive = {
     case NewCallback(request, target, message) ⇒ newCallback(request, target, message)
 
     case CreateResponse(request, Some(Execute(callbackName))) ⇒ executeCallback(request, callbackName)
@@ -203,8 +202,10 @@ final class CallbackActor extends Actor with ActorLogging {
    * @return The JavaScript code to execute the callback.
    */
   private[this] def newCallback(request: HttpRequest, target: ActorRef, message: Any) = {
+    import context.dispatcher
+
     val callbackName = randomHash()
-    val storeFuture = request.session map { _.set(createSessionHash(callbackName), (target, message)) } getOrElse Promise.successful(())
+    val storeFuture = request.session map { _.set(createSessionHash(callbackName), (target, message)) } getOrElse Future.successful(())
 
     val jsFunctionFuture =
       storeFuture map { unit ⇒ createJavaScriptCall(callbackName) }
@@ -243,6 +244,8 @@ final class CallbackActor extends Actor with ActorLogging {
     } else {
       request.session match {
         case Some(session) ⇒
+          import context.dispatcher
+          
           val sessionFuture = session[(ActorRef, Any)](createSessionHash(callbackName))
 
           sessionFuture flatMap {
@@ -252,7 +255,7 @@ final class CallbackActor extends Actor with ActorLogging {
                   (ask(actor, message)(Timeout(10.seconds))) map toResponse(actor) //TODO(joa): timeout should be configurable
 
                 case None ⇒
-                  Promise.successful(
+                  Future.successful(
                     PlainTextResponse(
                       text = "No such callback.\n",
                       status = NotFound

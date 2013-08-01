@@ -1,15 +1,16 @@
 package hector.actor
 
-import akka.util.Duration
-import akka.pattern.ask
 import akka.actor._
 import akka.actor.SupervisorStrategy._
-import akka.util.duration._
+import akka.pattern.ask
 import akka.util.Timeout
 
 import hector.Hector
 import hector.util._
 import hector.http.{EmptyResponse, HttpRequest}
+
+import scala.concurrent._
+import scala.concurrent.duration._
 
 object EventStreamSupervisor {
   case class Create(request: HttpRequest, timeout: Timeout, retry: Option[Duration] = None)
@@ -24,7 +25,6 @@ final class EventStreamSupervisor extends Actor {
   import EventStreamSupervisor._
   import akka.pattern.pipe
   import context.dispatcher
-  import akka.dispatch.Promise
 
   override val supervisorStrategy = OneForOneStrategy() {
     case _: Throwable ⇒
@@ -35,14 +35,14 @@ final class EventStreamSupervisor extends Actor {
       Restart
   }
 
-  override protected def receive = {
+  override def receive = {
     case Create(request, timeout, retry) ⇒
       //TODO(joa): only create if session exists
       val hash = randomHash()
       val actor = context.actorOf(Props(new EventStreamActor(timeout, retry)), name = hash)
 
       val eventStream =
-        request.session map { _.set("hector:eventStream:"+hash, actor) } getOrElse Promise.successful(()) map {
+        request.session map { _.set("hector:eventStream:"+hash, actor) } getOrElse Future.successful(()) map {
           x ⇒ EventStream(urlOf(hash), actor)
         }
 
@@ -65,10 +65,10 @@ final class EventStreamSupervisor extends Actor {
 
             actorRefFuture flatMap {
               case Some(actor) ⇒ ask(actor, message)(Timeout(5.seconds)) //TODO(joa): make configurable
-              case None ⇒ Promise.successful(EmptyResponse(status = NoContent))
+              case None ⇒ Future.successful(EmptyResponse(status = NoContent))
             }
           case None ⇒
-            Promise.successful(EmptyResponse(status = NoContent))
+            Future.successful(EmptyResponse(status = NoContent))
         }
       
 

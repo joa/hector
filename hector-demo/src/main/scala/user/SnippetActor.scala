@@ -7,8 +7,7 @@ import java.util.Date
 /**
  */
 final class SnippetActor extends Actor {
-  override protected def receive = {
-
+  override def receive = {
     case "giveMeTheDate" ⇒
       sender ! <p>The current date is:
         {(new Date()).toString}

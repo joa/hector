@@ -23,7 +23,7 @@ final class StatisticsActor extends Actor with ActorLogging {
   // Variables for error tracking
   private[this] val errorMap = HashMultimap.create[String, Throwable]()
 
-  override protected def receive = {
+  override def receive = {
     case RequestCompleted(ms) ⇒
       if(ms < minMs) { minMs = ms }
       if(ms > maxMs) { maxMs = ms }

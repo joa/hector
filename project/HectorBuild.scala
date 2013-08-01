@@ -6,13 +6,13 @@ package hector {
 
   import sbt._
   import sbt.Keys._
-  import com.github.siasia.WebPlugin.webSettings
+  import com.earldouglas.xsbtwebplugin.WebPlugin.webSettings
 
   object HectorBuild extends Build {
     lazy val buildSettings = Seq(
       organization := "hector",
       version      := "1.0-SNAPSHOT",
-      scalaVersion := "2.9.1-1"//"2.10.0-M2"//
+      scalaVersion := "2.10.2"
     )
 
     // Projects
@@ -65,7 +65,7 @@ package hector {
       Seq(
         "/home/joa/Development/hector/hector-microbenchmark/target/scala-2.10/classes",
         "/home/joa/Development/hector/hector-web/target/scala-2.10/classes",
-        "/home/joa/.sbt/boot/scala-2.10.0-M2/lib/scala-library.jar",
+        "/home/joa/.sbt/boot/scala-2.10.2/lib/scala-library.jar",
         "/home/joa/.ivy2/cache/com.google.guava/guava/jars/guava-11.0.2.jar",
         "/home/joa/.ivy2/cache/com.google.code.findbugs/jsr305/jars/jsr305-1.3.9.jar",
         "/home/joa/.ivy2/cache/com.typesafe.akka/akka-actor/jars/akka-actor-2.0.jar",
@@ -94,7 +94,13 @@ package hector {
 
       resolvers += "Sonatype Repository" at "https://oss.sonatype.org/content/repositories/releases/",
 
-      scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked", "-optimise"),
+      scalacOptions ++= Seq(
+        "-encoding", "UTF-8",
+        "-deprecation",
+        "-unchecked", 
+        "-feature",
+        "-Yinline-warnings",
+        "-language:implicitConversions"),
 
       javacOptions  ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
     )
@@ -121,9 +127,11 @@ package hector {
   //
 
   object Dependency {
-    val guava          = "com.google.guava"     %     "guava"              %  "12.0"                           // Apache 2.0
-    val akkaActor      = "com.typesafe.akka"    %     "akka-actor"         %  "2.0"                              // Apache 2.0
-    
+    val guava          = "com.google.guava"     %     "guava"              %  "12.0"                             // Apache 2.0
+
+    val akkaActor      = "com.typesafe.akka"    %%     "akka-actor"         %  "2.2.0"                           // Apache 2.0
+    val akkaCluster    = "com.typesafe.akka"    %%     "akka-cluster"       %  "2.2.0"                           // Apache 2.0
+
     object Container {
       val jettyWebapp  = "org.eclipse.jetty"    %     "jetty-webapp"       %  "8.0.4.v20111024"  % "container"   // Eclipse License
     }
@@ -133,13 +141,13 @@ package hector {
     }
 
     object Test {
-      val scalaTest    = "org.scalatest"        %    "scalatest_2.9.1-1"          %  "1.7.1"            % "test"        // Apache 2.0
+      val scalaTest    = "org.scalatest"        %%   "scalatest"           %  "1.9.1"            % "test"        // Apache 2.0
     }
 
     object Benchmark {
       val caliper      = "com.google.caliper"   %     "caliper"            %  "0.5-rc1"                          // Apache 2.0
-      val allocInstr   = "com.google.code.java-allocation-instrumenter" % "java-allocation-instrumenter" % "2.0" // Apache 2.0
       val gson         = "com.google.code.gson" %     "gson"               % "1.7.1"                             // Apache 2.0
+      val allocInstr   = "com.google.code.java-allocation-instrumenter" % "java-allocation-instrumenter" % "2.0" // Apache 2.0
     }
   }
 }

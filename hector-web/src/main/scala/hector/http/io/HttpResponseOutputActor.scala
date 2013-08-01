@@ -10,7 +10,7 @@ import java.io.{OutputStream ⇒ JOutputStream}
 final class HttpResponseOutputActor(
     private[this] val encoding: JCharset,
     private[this] val output: JOutputStream) extends Actor {
-  override protected def receive = {
+  override def receive = {
     case Write(data, offset, length) ⇒
       output.write(data.backingArray, offset, length)
       ack()

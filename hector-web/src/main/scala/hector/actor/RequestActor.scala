@@ -1,6 +1,6 @@
 package hector.actor
 
-import akka.dispatch._
+import akka.actor._
 import akka.pattern.{AskTimeoutException, ask}
 import akka.routing.RoundRobinRouter
 import akka.routing.DefaultResizer
@@ -17,7 +17,10 @@ import hector.actor.route.Route
 import hector.config.RunModes
 import hector.http.{HttpResponse, HttpSession}
 import hector.util.letItCrash
-import akka.actor._
+
+import scala.concurrent._
+import scala.concurrent.duration._
+import scala.util.{Try, Success, Failure}
 
 object RequestActor {
   sealed trait RootMessage
@@ -39,30 +42,31 @@ final class RequestActor extends Actor with ActorLogging {
   private[this] val io =
     context.actorOf(Props[IOActor], "io")
 
-  override protected def receive = {
+  override def receive = {
     case HandleAsync(asyncContext) ⇒
       import akka.pattern.pipe
       import akka.pattern.AskTimeoutException
-      import stats.RequestCompleted
+      import hector.actor.stats.RequestCompleted
+      import context.dispatcher
 
       letItCrash()
 
       val t0 = System.nanoTime()
 
       val request =
-        ask(self, HandleRequest(
+        (ask(self, HandleRequest(
           asyncContext.getRequest.asInstanceOf[HttpServletRequest],
           asyncContext.getResponse.asInstanceOf[HttpServletResponse]
-        ))(Hector.config.responseTimeout)
+        ))(Hector.config.responseTimeout)).mapTo[Boolean]
 
       request onComplete {
-        case Right(true) ⇒
+        case Success(true) ⇒
           Hector.statistics ! RequestCompleted((System.nanoTime() - t0).toFloat * 0.000001f)
 
-        case Right(false) ⇒
+        case Success(false) ⇒
           // Nothing to do. We did not participate.
 
-        case Left(error) ⇒
+        case Failure(error) ⇒
           Hector.statistics ! ExceptionOccurred(error)
           Hector.statistics ! RequestCompleted((System.nanoTime() - t0).toFloat * 0.000001f)
 
@@ -110,7 +114,7 @@ final class RequestActor extends Actor with ActorLogging {
             // We are not participating in this request. Let someone
             // else handle this case.
 
-            Promise.successful(None)
+            Future.successful(None)
         }).mapTo[Option[HttpResponse]]
 
       // In this step we complete the response. It is Some in case we participated in the request
@@ -123,7 +127,7 @@ final class RequestActor extends Actor with ActorLogging {
       val receiver = sender
 
       response onComplete {
-        case Right(result) ⇒
+        case Success(result) ⇒
           result match {
             case Some(nullThing) if nullThing == null ⇒
               log.error("The request {} lead to a null-response.", request)
@@ -158,7 +162,7 @@ final class RequestActor extends Actor with ActorLogging {
               receiver ! false
           }
 
-        case Left(error) ⇒
+        case Failure(error) ⇒
           Hector.statistics ! ExceptionOccurred(error)
 
           log.error(error, "Exception occurred while serving {}.", request)
@@ -277,16 +281,18 @@ final class RequestActor extends Actor with ActorLogging {
       context.actorOf(
         Props(
           new Actor {
-            override protected def receive = {
+            override def receive = {
               case outputActor: ActorRef ⇒
+                import context.dispatcher
+                
                 val future =
                   response.writeContent(outputActor)(context.dispatcher)
 
                 future onComplete {
-                  case Right(_) ⇒
+                  case Success(_) ⇒
                     log.debug("Response written. Ready to tell {} about it.", receiver)
                     receiver ! true
-                  case Left(error) ⇒
+                  case Failure(error) ⇒
                     Hector.statistics ! ExceptionOccurred(error)
 
                     log.error(error, "Failed to write response.")

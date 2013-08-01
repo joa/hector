@@ -1,7 +1,6 @@
 package hector.config
 
 import akka.util.Timeout
-import akka.util.duration._
 
 import com.google.common.base.Charsets
 
@@ -10,6 +9,9 @@ import hector.actor.route.Route
 import hector.http.HttpRequest
 import hector.session.backends.SessionRamBackend
 import hector.session.SessionBackend
+
+import scala.concurrent._
+import scala.concurrent.duration._
 
 /**
  */

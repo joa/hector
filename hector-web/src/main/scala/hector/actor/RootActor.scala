@@ -17,7 +17,7 @@ final class RootActor extends Actor with ActorLogging {
         Restart
     }
 
-  override protected def receive = {
+  override def receive = {
     case "run" ⇒
       import context.actorOf
 

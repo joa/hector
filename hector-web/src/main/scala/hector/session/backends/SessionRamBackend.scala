@@ -1,8 +1,5 @@
 package hector.session.backends
 
-import akka.dispatch._
-import akka.util.Duration
-
 import com.google.common.cache.{LoadingCache, CacheBuilder, CacheLoader, RemovalListener, RemovalNotification}
 
 import hector.Hector
@@ -11,6 +8,8 @@ import hector.session.signals.{Create, Destroy}
 
 import scala.collection.mutable.ConcurrentMap
 import scala.compat.Platform
+import scala.concurrent._
+import scala.concurrent.duration._
 
 /**
  * The SessionRamBackend is a SessionBackend implementation for development.
@@ -75,13 +74,13 @@ final class SessionRamBackend(private[this] val context: ExecutionContext, maxNr
 
     session.put(key, value)
 
-    Promise.successful(())
+    Future.successful(())
   }
 
   override def load[V](id: String, key: String) = {
     val session = cache.getUnchecked(id)
     val value = session.get(key) map { _.asInstanceOf[V] }
 
-    Promise.successful(value)
+    Future.successful(value)
   }
 }

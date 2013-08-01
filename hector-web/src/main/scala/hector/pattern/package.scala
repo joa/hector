@@ -28,7 +28,7 @@ package object pattern {
   def respond[R <% HttpResponse](response: R): Route[Any] = {
     Route[Any](
       Hector.system.actorOf(Props(new Actor {
-          override protected def receive = {
+          override def receive = {
             case CreateResponse(_, _) ⇒
               sender ! response
               self ! PoisonPill
