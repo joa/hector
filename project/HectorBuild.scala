@@ -21,12 +21,26 @@ package hector {
       id = "hector",
       base = file("."),
       settings = parentSettings,
-      aggregate = Seq(web, microbencmark, demo)
+      aggregate = Seq(baze, js, web, microbencmark, demo)
+    )
+
+    lazy val baze = Project( //read base, but SBT ...
+      id = "hector-base",
+      base = file("hector-base"),
+      settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.base)
+    )
+
+    lazy val js = Project(
+      id = "hector-js",
+      base = file("hector-js"),
+      dependencies = Seq(baze),
+      settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.base)
     )
 
     lazy val web = Project(
       id = "hector-web",
       base = file("hector-web"),
+      dependencies = Seq(baze, js),
       settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.web)
     )
 
@@ -122,7 +136,9 @@ package hector {
   object Dependencies {
     import Dependency._
 
-    val web = Seq(guava, akkaActor, jsr305, Provided.servletApi, Test.scalaTest)
+    val base = Seq(guava, akkaActor, jsr305, Test.scalaTest)
+
+    val web = base ++ Seq(Provided.servletApi)
 
     val benchmarking = web ++ Seq(Benchmark.caliper, Benchmark.allocInstr, Benchmark.gson)
   }
