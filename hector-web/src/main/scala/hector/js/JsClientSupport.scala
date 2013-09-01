@@ -43,6 +43,55 @@ import hector.config.RunModes
  * <pre/></code></p>
  */
  object ScalacBug {
+  /**
+  ((function(){
+  if (window.hector)
+    return;
+  window.hector = ({execCallback: function(name){
+    var xhr = new XMLHttpRequest;
+    xhr.open('POST', '/__hector__/cb/' + name, true);
+    xhr.onload = (function(e){
+      if (200 <= this.status && this.status < 300) {
+        console.log('[HECTOR-DEBUG]: ' + this.response);
+        var contentType = this.getResponseHeader('Content-Type');
+        if (contentType == 'application/javascript' || contentType == 'text/javascript')
+          eval(this.response);
+        else if (contentType == 'text/xml') {
+          var root = this.responseXML, body = document.body;
+          for (var i = 0, n = root.childNodes.length; i < n; i++)
+            body.appendChild(document.importNode(root.childNodes[i], true));
+        }
+        ;
+      }
+      ;
+    }
+    );
+    xhr.send();
+  }
+  });
+}
+)());
+  */
+
+  def beMacroMyFriend: Seq[JsStatement] = {
+    import hector.js.Macro._
+    import hector.js.toplevel.jsWindow
+    
+    Seq(js {
+      (() ⇒  {
+        if(jsWindow.hector == null) {
+          ret()
+        }
+
+        jsWindow.hector = Map(
+          "execCallback" -> ((name: String) ⇒ {
+
+          })
+        )
+      })()
+    }) map { _.toStatement }
+  }
+
   def beWaterMyFriend: Seq[JsStatement] = {
     import hector.Hector
     import hector.js.toplevel.{jsWindow ⇒ window, jsDocument ⇒ document, jsEval ⇒ eval}
@@ -163,4 +212,6 @@ import hector.config.RunModes
   }
 }
 
-object JsClientSupport extends JsProgram(ScalacBug.beWaterMyFriend)
+object JsClientSupport extends JsProgram(ScalacBug.beWaterMyFriend) {
+  val test = JsProgram(ScalacBug.beMacroMyFriend)
+}

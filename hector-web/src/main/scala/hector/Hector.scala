@@ -125,5 +125,5 @@ object Hector {
   val internalPrefix = Hector.config.hectorInternal
 
   /** Script that allows client-server communication. */
-  val clientSupport = JsClientSupport.toNode(humanReadable = false)
+  val clientSupport = JsClientSupport.toNode(humanReadable = true)
 }

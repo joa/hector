@@ -21,13 +21,20 @@ package hector {
       id = "hector",
       base = file("."),
       settings = parentSettings,
-      aggregate = Seq(baze, js, web, microbencmark, demo)
+      aggregate = Seq(baze, js, macro, web, microbencmark, demo)
     )
 
     lazy val baze = Project( //read base, but SBT ...
       id = "hector-base",
       base = file("hector-base"),
       settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.base)
+    )
+
+    lazy val macro = Project(
+      id = "hector-macro",
+      base = file("hector-macro"),
+      dependencies = Seq(baze, js),
+      settings = defaultSettings ++ Seq(libraryDependencies <+= scalaVersion("org.scala-lang" % "scala-compiler" % _))
     )
 
     lazy val js = Project(
@@ -40,7 +47,7 @@ package hector {
     lazy val web = Project(
       id = "hector-web",
       base = file("hector-web"),
-      dependencies = Seq(baze, js),
+      dependencies = Seq(baze, js, macro),
       settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.web)
     )
 

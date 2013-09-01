@@ -1,8 +1,12 @@
 package hector.js
 
+import scala.language.dynamics
+
 import hector.js.emitter.JsEmitter
+
 import scala.xml.Unparsed
 import scala.Char
+
 
 /**
  */
@@ -12,9 +16,13 @@ sealed trait JsAST extends Serializable {
   def emit(humanReadable: Boolean = false): String = JsEmitter.toString(this, humanReadable)
 
   def toNode(humanReadable: Boolean = false): Node = <script type="text/javascript">{Unparsed(emit(humanReadable))}</script>
+
+  def toStatement: JsStatement
 }
 
-case class JsProgram(statements: Seq[JsStatement]) extends JsAST
+case class JsProgram(statements: Seq[JsStatement]) extends JsAST {
+  def toStatement = JsBlock(statements)
+}
 
 sealed trait JsPropertyKind
 case object JsGetProperty extends JsPropertyKind
@@ -25,10 +33,15 @@ sealed trait JsStatement extends JsAST {
   def and(that: JsStatement): Seq[JsStatement] = &(that)
   def &(that: Seq[JsStatement]): Seq[JsStatement] = this +: that
   def &(that: JsStatement): Seq[JsStatement] = Seq(this, that)
+  def toStatement: JsStatement = this
 }
 
 case object JsEmptyStatement extends JsStatement
-case class JsBlock(stmt: Seq[JsStatement] = Seq.empty) extends JsStatement
+case class JsBlock(stmt: Seq[JsStatement] = Seq.empty) extends JsStatement {
+  def toSeq: Seq[JsStatement] = stmt
+}
+
+//TODO(joa): get rid of JsExpStatement and the notion of a "JsStatement" since JsExp might as well just extend JsStmt
 case class JsExpStatement(exp: JsExpression) extends JsStatement
 case class JsIf(test: JsExpression, trueCase: JsStatement, falseCase: Option[JsStatement] = None) extends JsStatement
 case class JsLabeledStatement(label: JsIdentifier, body: JsStatement) extends JsStatement
@@ -138,7 +151,9 @@ trait JsAssignments {
   def :&=(value: JsExpression) = JsBinary(this, JsBinops.`&=`, value)
 }
 
-sealed trait JsExpression extends JsAST/* with Dynamic*/ {
+sealed trait JsExpression extends JsAST with Dynamic {
+  def toStatement: JsStatement = JsExpStatement(this)
+
   def unary_- = JsPrefix(JsUnops.`-`, this)
   def unary_+ = JsPrefix(JsUnops.`+`, this)
   def unary_! = JsPrefix(JsUnops.`!`, this)
@@ -183,13 +198,14 @@ sealed trait JsExpression extends JsAST/* with Dynamic*/ {
 
   def update(name: JsIdentifier, value: JsExpression) = JsBinary(JsMember(this, name), JsBinops.`=`, value)
 
-  /*
-  def applyDynamic(name: String)(args: Any*) = {
-    //XXX(joa): unless we have no way to distinguish between field and method access it is better to get rid of this!
-    require(args.isEmpty, "Unfortunately you have to use the syntax (obj.member)(arg) instead of obj.member(arg).")
+  def applyDynamic(name: String)(args: Any*) =
+    JsCall(JsMember(this, JsIdentifier(Symbol(name))), args map { _.asInstanceOf[JsExpression]})
+
+  def selectDynamic(name: String) =
     JsMember(this, JsIdentifier(Symbol(name)))
-  }
-  */
+
+  def updateDynamic(name: String)(value: Any) =
+    JsBinary(JsMember(this, JsIdentifier(Symbol(name))), JsBinops.`=`, value.asInstanceOf[JsExpression])
 
   def ~>(property: JsIdentifier): JsMember = JsMember(this, property)
 }

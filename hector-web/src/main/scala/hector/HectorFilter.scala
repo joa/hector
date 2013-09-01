@@ -15,6 +15,11 @@ import scala.concurrent.duration._
 final class HectorFilter extends Filter {
   def init(filterConfig: FilterConfig) {
     Hector.start()
+
+    import hector.js.Macro._
+
+    val ast = hector.js.JsClientSupport.test
+    println(ast.emit(humanReadable = true))
   }
 
   def destroy() {
