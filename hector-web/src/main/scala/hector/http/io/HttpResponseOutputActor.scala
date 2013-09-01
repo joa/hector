@@ -49,7 +49,7 @@ final class HttpResponseOutputActor(
   }
 
   private[this] def ack() {
-    if(sender != null) {
+    if(sender != null && sender != context.system.deadLetters) {
       sender ! Ack
     }
   }
